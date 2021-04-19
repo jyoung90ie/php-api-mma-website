@@ -1,6 +1,6 @@
 <?php
 
-require("config/Database.php");
+require("lib/Database.php");
 
 if (isset($db)) {
 

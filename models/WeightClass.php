@@ -6,13 +6,13 @@ class WeightClass
     const WEIGHT_IN_LBS_MIN = 100;
     const WEIGHT_IN_LBS_MAX = 500;
 
-    public ?int $id = null;
-    public ?string $weight_class = null;
-    public ?int $min_weight = null;
-    public ?int $max_weight = null;
-    public ?mysqli_result $results;
+    private ?int $id = null;
+    private ?string $weight_class = null;
+    private ?int $min_weight = null;
+    private ?int $max_weight = null;
+    private $results;
 
-    private mysqli $db;
+    private PDO $db;
     private string $table = "WeightClasses";
 
     public function __construct($db)
@@ -20,93 +20,100 @@ class WeightClass
         $this->db = $db;
     }
 
-    public function getOne(int $id): ?mysqli_result
+    public function getOne(int $id)
     {
         $this->setId($id);
 
-        $query = "SELECT * FROM $this->table WHERE WeightClassID=$this->id";
-        $result = $this->db->query($query);
+        $query = "SELECT * FROM $this->table WHERE WeightClassID = ?";
 
-        if (!empty($result) && $result->num_rows > 0) {
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->id]);
+
+            $result = $query->fetch();
             $this->results = $result;
 
-            $row = $result->fetch_assoc();
+            $this->weight_class = $result['WeightClass'];
+            $this->min_weight = $result['MinWeightInLB'];
+            $this->max_weight = $result['MaxWeightInLB'];
 
-            $this->weight_class = $row['WeightClass'];
-            $this->min_weight = $row['MinWeightInLB'];
-            $this->max_weight = $row['MaxWeightInLB'];
-
-            // reset cursor back to 0
-            $this->results->data_seek(0);
-        } else {
-            $this->results = null;
+            return $result;
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return $this->results;
     }
 
-    public function getAll(): ?mysqli_result
+    public function getAll(): array
     {
         $query = "SELECT * FROM $this->table";
-        $results = $this->db->query($query);
+        try {
+            $query = $this->db->query($query);
 
-        if (!empty($results) && $results->num_rows > 0) {
-            $this->results = $results;
-        } else {
-            $this->results = null;
+            $result = $query->fetchAll();
+            $this->results = $result;
+
+            return $result;
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return $this->results;
     }
 
 
-    public function create(): bool
+    public function create(): int
     {
         $this->validateData();
 
-        $query = "INSERT INTO $this->table (WeightClass, MinWeightInLB, MaxWeightInLB)
-                    VALUES ('$this->weight_class', $this->min_weight, $this->max_weight);";
+        $query = "INSERT INTO $this->table 
+                    (WeightClass, MinWeightInLB, MaxWeightInLB)
+                    VALUES (?, ?, ?);";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->weight_class, $this->min_weight, $this->max_weight]);
 
-        if (!empty($result) && $result) {
-            $this->id = $this->db->insert_id;
-            return true;
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-        return false;
     }
 
-    public function update(): bool
+    public function update(): int
     {
         $this->validateData();
         $this->validateIdSet();
 
-        $query = "UPDATE $this->table SET WeightClass = '$this->weight_class',
-                    MinWeightInLB=$this->min_weight, MaxWeightInLB=$this->max_weight
-                WHERE WeightClassID=$this->id";
+        $query = "UPDATE $this->table 
+                    SET 
+                        WeightClass = ?,
+                        MinWeightInLB = ?, 
+                        MaxWeightInLB = ?
+                    WHERE 
+                        WeightClassID = ?";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->weight_class, $this->min_weight, $this->max_weight, $this->id]);
 
-        if (!empty($result) && $result) {
-            return true;
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return false;
     }
 
     public function delete(): bool
     {
         $this->validateIdSet();
 
-        $query = "DELETE FROM $this->table WHERE WeightClassID=$this->id";
+        $query = "DELETE FROM $this->table WHERE WeightClassID = ?";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->id]);
 
-        if (!empty($result) && $result) {
-            return true;
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return false;
     }
 
     // utility functions
@@ -140,7 +147,7 @@ class WeightClass
     public function setId(int $id): void
     {
         if ($id <= 0) {
-            throw new InvalidArgumentException("Invalid ID");
+            throw new InvalidArgumentException("Invalid Weight Class ID");
         }
         $this->id = $id;
     }
@@ -158,7 +165,7 @@ class WeightClass
      */
     public function setWeightClass(string $weight_class): void
     {
-        $this->weight_class = $this->db->real_escape_string($weight_class);
+        $this->weight_class = $weight_class;
     }
 
     /**
@@ -202,9 +209,9 @@ class WeightClass
     }
 
     /**
-     * @return mysqli_result
+     * @return mixed
      */
-    public function getResults(): mysqli_result
+    public function getResults()
     {
         return $this->results;
     }

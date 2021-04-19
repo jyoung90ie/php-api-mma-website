@@ -3,7 +3,7 @@
 
 use PHPUnit\Framework\TestCase;
 
-include_once "../config/Database.php";
+include_once "../lib/Database.php";
 include_once "../models/AthleteStance.php";
 
 class AthleteStanceTest extends TestCase
@@ -26,6 +26,12 @@ class AthleteStanceTest extends TestCase
         $this->descriptionValid = "descriptionValid";
 
         $this->idInvalid = 0;
+    }
+
+    // run after each test
+    public function tearDown(): void
+    {
+        $this->db->close();
     }
 
     public function testDataStartsAsNull()
@@ -67,7 +73,7 @@ class AthleteStanceTest extends TestCase
     public function testGetOneInvalid()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("Invalid ID");
+        $this->expectExceptionMessage("Invalid Athlete Stance ID");
 
         $this->stance->getOne($this->idInvalid);
     }

@@ -9,11 +9,16 @@ if (count(get_included_files()) == 1) {
     die();
 }
 
+include_once '../models/Athlete.php';
+
 $athlete_id = intval($_GET['athlete']);
 
-$event_query = $db->query("SELECT * FROM Athletes WHERE AthleteID=$athlete_id");
-if ($event_query->num_rows > 0) {
-    $row = $event_query->fetch_object();
+$athlete = new Athlete($db);
+$result = $athlete->getOne($athlete_id);
+echo 'test';
+
+if (!is_null($athlete->getName())) {
+    $row = $result->fetch_object();
     $data = $row;
 } else {
     $status = 'error';

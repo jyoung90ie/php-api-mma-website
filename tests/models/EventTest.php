@@ -3,7 +3,7 @@
 
 use PHPUnit\Framework\TestCase;
 
-include_once "../config/Database.php";
+include_once "../lib/Database.php";
 include_once "../models/Event.php";
 
 class EventTest extends TestCase
@@ -30,9 +30,14 @@ class EventTest extends TestCase
         $this->dateValid = date('Y-m-d');
 
         $this->idInvalid = 0;
-        $this->locationInvalid = 'na';
         $this->dateInvalid = '31/02/1990';
         $this->dateInvalidBelowMin = '1993-11-11'; // see event::DATE_MIN
+    }
+
+    // run after each test
+    public function tearDown(): void
+    {
+        $this->db->close();
     }
 
     public function testDataStartsAsNull()
@@ -77,7 +82,7 @@ class EventTest extends TestCase
     public function testGetOneInvalid()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("Invalid ID");
+        $this->expectExceptionMessage("Invalid Event ID");
 
         $this->event->getOne($this->idInvalid);
     }

@@ -1,5 +1,7 @@
 <?php
 
+require_once "APIAccess.php";
+require_once "Permission.php";
 
 class User
 {
@@ -10,6 +12,9 @@ class User
     const NAME_MIN = 2;
     const NAME_MAX = 100;
 
+    const TABLE = "Users";
+    const ROLES_TABLE = "RolePermissions";
+
     private ?int $id = null;
     private ?string $username = null;
     private ?string $password = null;
@@ -17,12 +22,14 @@ class User
     private ?string $first_name = null;
     private ?string $last_name = null;
     private ?string $dob = null;
-    private ?mysqli_result $results = null;
+    private ?int $role_id = null;
+
+    private $results = null;
 
     private bool $authenticated = false;
+    private ?array $permissions = null;
 
-    private mysqli $db;
-    private string $table = "Users";
+    private PDO $db;
 
     public function __construct($db)
     {
@@ -32,33 +39,68 @@ class User
     /**
      * Returns whether a user exists. If user does exist, instance vars are set.
      *
-     * @param string $username
-     * @return bool true - if the user exists; false - otherwise
      */
-    public function get_user(string $username): bool
+    public function getByUsername(string $username)
     {
-        $username = $this->db->real_escape_string($username);
-        $query = "SELECT * FROM Users WHERE UserName='$username'";
-        $result = $this->db->query($query);
+        $query = "SELECT * FROM " . self::TABLE . " WHERE UserName=?";
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$username]);
 
-        if ($result->num_rows == 1) {
-            $row = $result->fetch_assoc();
 
-            $this->setUsername($username);
+            if ($query->rowCount() == 1) {
+                $result = $query->fetch();
 
-            $this->id = $row['UserID'];
-            $this->email = $row['UserEmail'];
-            $this->password = $row['UserPassword'];
-            $this->first_name = $row['UserFirstName'];
-            $this->last_name = $row['UserLastName'];
-            $this->dob = $row['UserDOB'];
+                $this->setUsername($username);
 
-            return true;
+                $this->id = $result['UserID'];
+                $this->email = $result['UserEmail'];
+                $this->password = $result['UserPassword'];
+                $this->first_name = $result['UserFirstName'];
+                $this->last_name = $result['UserLastName'];
+                $this->dob = $result['UserDOB'];
+                $this->role_id = $result['RoleID'];
+
+                $this->fetchPermissions();
+
+                return $result;
+            }
+
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-        return false;
     }
 
-    public function check_password(string $password): bool
+
+    public function getByApiKey(string $api_key): bool
+    {
+        $query = "SELECT UserID FROM " . APIAccess::TABLE . " WHERE ApiKey=?";
+
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$api_key]);
+
+            if ($query->rowCount() == 1) {
+                $result = $query->fetch();
+
+                $userId = intval($result['UserID']);
+
+                $query = "SELECT UserName FROM " . self::TABLE . " WHERE UserID=?";
+                $query = $this->db->prepare($query);
+                $query->execute($userId);
+
+                $result = $query->fetch();
+
+                return $this->getByUsername($result['UserName']);
+            }
+
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
+        }
+    }
+
+
+    public function checkPassword(string $password): bool
     {
         $this->validateIdSet();
 
@@ -75,70 +117,153 @@ class User
         return $this->authenticated;
     }
 
-    public function create_user(): bool
+    /**
+     * @return array
+     */
+    public function getPermissions(): array
+    {
+        return $this->permissions;
+    }
+
+    /**
+     * @param array $permissions
+     */
+    public function setPermissions(array $permissions): void
+    {
+        $this->permissions = $permissions;
+    }
+
+    /**
+     *
+     */
+    private function fetchPermissions(): void
+    {
+        $query = "SELECT * FROM " . self::ROLES_TABLE . " WHERE RoleID=?";
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute($this->role_id);
+
+            $result = $query->fetch();
+
+            // get and store all permissions in object
+            // this saves having to query the database for each permissionID
+            $permissions = new Permission($this->db);
+            // return all records as an associative and indexed array
+            $permissions_all = $permissions->getAll();
+
+            $this->permissions = [];
+
+            while ($permission = $result->fetch_assoc()) {
+                // array begins at 0, roleId's begin at 1
+                $index = intval($permission['PermissionID']) - 1;
+                $area = $permissions_all[$index]['PermissionArea'];
+                $type = $permissions_all[$index]['PermissionType'];
+
+                array_push($this->permissions, ['Area' => $area, 'Type' => $type]);
+            }
+
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
+        }
+    }
+
+    /**
+     * @param string $permission_area
+     * @param string $permission_type
+     * @return bool
+     */
+    public function hasPermission(string $permission_area, string $permission_type): bool
+    {
+        $permission = ['Area' => $permission_area, 'Type' => $permission_type];
+
+        return in_array($permission, $this->permissions);
+    }
+
+    /**
+     * @return bool
+     */
+    public function createUser(): bool
     {
         $this->validateData();
 
         // check if username already exists
-        if ($this->get_user($this->username)) {
+        if ($this->getByUsername($this->username)) {
             throw new InvalidArgumentException("Username has already been used");
         }
 
-        if ($this->check_email()) {
+        if ($this->checkEmail()) {
             throw new InvalidArgumentException("Email has already been used");
         }
 
-        $query = "INSERT INTO $this->table (UserName, UserEmail, UserPassword, UserFirstName, UserLastName, UserDOB)
-                    VALUES ('$this->username', '$this->email', '$this->password', '$this->first_name', 
-                            '$this->last_name', '$this->dob');";
+        $query = "INSERT INTO " . self::TABLE . " 
+                        (UserName, UserEmail, UserPassword, UserFirstName, UserLastName, UserDOB, RoleID)
+                    VALUES (?, ?, ?, ?, ?, ?, ?);";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->username, $this->email, $this->password, $this->first_name,
+                $this->last_name, $this->dob, $this->role_id]);
 
-        if (!empty($result) && $result) {
-            $this->id = $this->db->insert_id;
-            return true;
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-        return false;
     }
 
+    /**
+     * @return bool
+     */
     public function update(): bool
     {
         $this->validateData();
         $this->validateIdSet();
 
-        $query = "UPDATE $this->table SET UserName = '$this->username', UserEmail = '$this->email',
-                 UserFirstName = '$this->first_name', UserLastName = '$this->last_name', UserDOB = '$this->dob'
-                WHERE UserID=$this->id";
+        $query = "UPDATE " . self::TABLE . " 
+                SET 
+                    UserName = ?,
+                    UserEmail = ?,
+                    UserFirstName = ?,
+                    UserLastName = ?,
+                    UserDOB = ?,
+                    RoleID = ?
+                WHERE 
+                    UserID = ?";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->username, $this->email, $this->first_name, $this->last_name, $this->dob,
+                $this->role_id, $this->id]);
 
-        if (!empty($result) && $result) {
-            return true;
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return false;
     }
 
+    /**
+     * @return bool
+     */
     public function delete(): bool
     {
         $this->validateIdSet();
 
-        $query = "DELETE FROM $this->table WHERE UserID=$this->id";
+        $query = "DELETE FROM " . self::TABLE . " WHERE UserID=?";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->id]);
 
-        if (!empty($result) && $result) {
-            return true;
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return false;
     }
 
     // utility functions
     private function validateData(): void
     {
         if (is_null($this->username) || is_null($this->email) || is_null($this->password) || is_null($this->first_name)
-            || is_null($this->last_name) || is_null($this->dob)) {
+            || is_null($this->last_name) || is_null($this->dob) || is_null($this->role_id)) {
             throw new InvalidArgumentException("All object variables must have a value");
         }
     }
@@ -153,15 +278,17 @@ class User
     /**
      * @return bool true - if the email is already used in the users table; false - otherwise
      */
-    public function check_email() {
-        $query = "SELECT UserID FROM $this->table WHERE UserEmail='$this->email'";
-        $result = $this->db->query($query);
+    public function checkEmail(): bool
+    {
+        $query = "SELECT UserID FROM " . self::TABLE . " WHERE UserEmail=?";
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->email]);
 
-        if ($result->num_rows > 0) {
-            return true;
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return false;
     }
 
     /**
@@ -197,7 +324,7 @@ class User
             throw new InvalidArgumentException("Username must be between " . self::USERNAME_MIN . "-" .
                 self::USERNAME_MAX . " characters long");
         }
-        $this->username = $this->db->real_escape_string($username);
+        $this->username = $username;
     }
 
     /**
@@ -217,7 +344,7 @@ class User
             throw new InvalidArgumentException("Invalid email address");
         }
 
-        $this->email = strtolower($this->db->real_escape_string($email));
+        $this->email = strtolower($email);
     }
 
     /**
@@ -237,7 +364,7 @@ class User
             throw new InvalidArgumentException("First name must be between " . self::NAME_MIN . "-" .
                 self::NAME_MAX . " characters long");
         }
-        $this->first_name = $this->db->real_escape_string($first_name);
+        $this->first_name = $first_name;
     }
 
     /**
@@ -257,7 +384,7 @@ class User
             throw new InvalidArgumentException("Last name must be between " . self::NAME_MIN . "-" .
                 self::NAME_MAX . " characters long");
         }
-        $this->last_name = $this->db->real_escape_string($last_name);
+        $this->last_name = $last_name;
     }
 
     /**
@@ -299,6 +426,24 @@ class User
                 self::PASSWORD_MAX . " characters long");
         }
         $this->password = password_hash($password, PASSWORD_DEFAULT);
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getRoleId(): ?int
+    {
+        return $this->role_id;
+    }
+
+    /**
+     * @param int|null $role_id
+     */
+    public function setRoleId(?int $role_id): void
+    {
+        $this->role_id = $role_id;
+        // update permissions
+        $this->fetchPermissions();
     }
 
     /**

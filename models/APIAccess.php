@@ -3,6 +3,8 @@
 
 class APIAccess
 {
+    const TABLE = "ApiAccess";
+
     private ?int $id = null;
     private ?string $api_key = null;
     private ?string $start_date = null;
@@ -10,93 +12,103 @@ class APIAccess
     private ?int $user_id = null;
     private bool $verified = false;
 
-    private mysqli $db;
-    private string $table = "APIAccess";
+    private PDO $db;
+    static string $table = "APIAccess";
 
     public function __construct($db)
     {
         $this->db = $db;
     }
 
-    public function verifyKey($api_key): bool
+    public function verifyKey($api_key)
     {
-        $this->api_key = $this->db->real_escape_string($api_key);
-
         $now = date('Y-m-d');
 
-        $query = "SELECT * FROM $this->table WHERE ApiKey='$this->api_key'"
-            . " AND (StartDate <= '$now' OR StartDate IS NULL) AND (EndDate >= '$now' OR EndDate IS NULL)";
-        $result = $this->db->query($query);
+        $query = "SELECT * FROM " . self::TABLE . " 
+                    WHERE 
+                        ApiKey=?
+                    AND 
+                        (StartDate <= ? OR StartDate IS NULL) AND (EndDate >= ? OR EndDate IS NULL)";
 
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$api_key, $now, $now]);
 
-        if (!empty($result) && $result->num_rows > 0) {
-            $row = $result->fetch_assoc();
+            $result = $query->fetch();
 
-            $start_date = $row['StartDate'];
-            $end_date = $row['EndDate'];
-            $user_id = $row['UserID'];
+            $start_date = $result['StartDate'];
+            $end_date = $result['EndDate'];
+            $user_id = $result['UserID'];
 
-            $this->id = $row['ID'];
+            $this->id = $result['ID'];
+            $this->api_key = $result['ApiKey'];
             $this->start_date = (is_null($start_date)) ? "" : $start_date;
             $this->end_date = (is_null($end_date)) ? "" : $end_date;
             $this->user_id = (is_null($user_id)) ? -1 : $user_id;
             $this->verified = true;
 
-            return true;
+            return $result;
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return false;
     }
 
-    public function create(): bool
+    public function create(): int
     {
         $this->validateData();
 
-        $query = "INSERT INTO $this->table(ApiKey, StartDate, EndDate, UserID)
-                    VALUES('$this->api_key', '$this->start_date', '$this->end_date', $this->user_id);";
+        $query = "INSERT INTO " . self::TABLE . "(ApiKey, StartDate, EndDate, UserID)
+                    VALUES('?', '?', '?', ?);";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->api_key, $this->start_date, $this->end_date, $this->user_id]);
 
-        if (!empty($result) && $result) {
-            $this->id = $this->db->insert_id;
+            $this->id = $this->db->lastInsertId();
 
-            return true;
+            return $this->id;
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
 
-        return false;
     }
 
-    public function update(): bool
+    public function update(): int
     {
         $this->validateData();
         $this->validateIdSet();
 
-        $query = "UPDATE $this->table SET ApiKey = '$this->api_key', 
-                    StartDate = '$this->start_date', EndDate = '$this->end_date', UserID = '$this->user_id'
-                WHERE ID = $this->id";
+        $query = "UPDATE " . self::TABLE . " 
+                    SET 
+                        ApiKey = '?', StartDate = '?', EndDate = '?', UserID = ?
+                WHERE ID = ?";
 
-        $result = $this->db->query($query);
-
-        if (!empty($result) && $result) {
-            return true;
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->api_key, $this->start_date, $this->end_date, $this->user_id]);
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
 
-        return false;
     }
 
-    public function delete(): bool
+    public function delete(): int
     {
         $this->validateIdSet();
 
-        $query = "DELETE FROM $this->table WHERE ID = $this->id";
+        $query = "DELETE FROM " . self::TABLE . " WHERE ID = ?";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->id]);
 
-        if (!empty($result) && $result) {
-            return true;
+            return $query->rowCount();
+        } catch(PDOException $exception) {
+            die($exception->getMessage());
         }
 
-        return false;
+
     }
 
     /**
@@ -112,7 +124,7 @@ class APIAccess
      */
     public function setApiKey(string $api_key): void
     {
-        $this->api_key = $this->db->real_escape_string($api_key);
+        $this->api_key = $api_key;
     }
 
     /**
@@ -192,7 +204,6 @@ class APIAccess
     }
 
 
-
     public function isVerified(): bool
     {
         return $this->verified;
@@ -212,7 +223,8 @@ class APIAccess
         }
     }
 
-    private function isDate(string $date): bool {
+    private function isDate(string $date): bool
+    {
         if (strtotime($date)) {
             return true;
         }

@@ -3,7 +3,7 @@
 
 use PHPUnit\Framework\TestCase;
 
-include_once "../config/Database.php";
+include_once "../lib/Database.php";
 include_once "../models/FightResult.php";
 
 class FightResultTest extends TestCase
@@ -36,6 +36,12 @@ class FightResultTest extends TestCase
         $this->fightIdInvalid = -1;
         $this->resultIdInvalid = -1;
         $this->winnerIdInvalid = -1;
+    }
+
+    // run after each test
+    public function tearDown(): void
+    {
+        $this->db->close();
     }
 
     public function testDataStartsAsNull()

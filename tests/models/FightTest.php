@@ -3,7 +3,7 @@
 
 use PHPUnit\Framework\TestCase;
 
-include_once "../config/Database.php";
+include_once "../lib/Database.php";
 include_once "../models/Fight.php";
 
 class FightTest extends TestCase
@@ -47,6 +47,12 @@ class FightTest extends TestCase
         $this->roundsInvalidAbove = 6;
     }
 
+    // run after each test
+    public function tearDown(): void
+    {
+        $this->db->close();
+    }
+
     public function testDataStartsAsNull()
     {
         self::assertNull($this->fight->getId());
@@ -82,11 +88,13 @@ class FightTest extends TestCase
 
     public function testGetOneValid()
     {
-        $result = $this->fight->getOne($this->idValid);
+        self::assertTrue($this->fight->getOne($this->idValid));
 
-        self::assertTrue($result->num_rows == 1);
+        $results = $this->fight->getResults();
 
-        $data = $result->fetch_assoc();
+        self::assertTrue($results->num_rows == 1);
+
+        $data = $results->fetch_assoc();
 
         self::assertEquals($data['FightID'], $this->fight->getId());
         self::assertEquals($data['EventID'], $this->fight->getEventId());

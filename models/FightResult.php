@@ -3,13 +3,13 @@
 
 class FightResult
 {
-    public ?int $id = null;
-    public ?int $fight_id = null;
-    public ?int $result_id = null;
-    public ?int $winner_id = null;
-    public ?mysqli_result $results = null;
+    private ?int $id = null;
+    private ?int $fight_id = null;
+    private ?int $result_id = null;
+    private ?int $winner_id = null;
+    private $results = null;
 
-    private mysqli $db;
+    private PDO $db;
     private string $table = "FightResults";
 
     public function __construct($db)
@@ -17,43 +17,70 @@ class FightResult
         $this->db = $db;
     }
 
-    public function getOne(int $id): ?mysqli_result
+    public function getOne(int $id)
     {
         $this->setId($id);
 
-        $query = "SELECT * FROM $this->table WHERE FightResultID=$this->id";
-        $result = $this->db->query($query);
+        $query = "SELECT * FROM $this->table WHERE FightResultID = ?";
 
-        if (!empty($result) && $result->num_rows > 0) {
-            $this->results = $result;
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->id]);
 
-            $row = $result->fetch_assoc();
+            $result = $query->fetch();
 
-            $this->fight_id = $row['FightID'];
-            $this->result_id = $row['ResultTypeID'];
-            $this->winner_id = $row['WinnerAthleteID'];
+            $this->fight_id = $result['FightID'];
+            $this->result_id = $result['ResultTypeID'];
+            $this->winner_id = $result['WinnerAthleteID'];
 
-            // reset cursor back to 0
-            $this->results->data_seek(0);
-        } else {
-            $this->results = null;
+            return $result;
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return $this->results;
     }
 
-    public function getAll(): ?mysqli_result
+    public function getByFight(int $fight_id)
     {
-        $query = "SELECT * FROM $this->table";
-        $results = $this->db->query($query);
-
-        if (!empty($results) && $results->num_rows > 0) {
-            $this->results = $results;
-        } else {
-            $this->results = null;
+        if (!is_numeric($fight_id)) {
+            throw new InvalidArgumentException("Invalid Fight ID");
         }
 
-        return $this->results;
+        $this->setFightId($fight_id);
+
+        $query = "SELECT * FROM $this->table WHERE FightID = ?";
+
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->fight_id]);
+
+            $result = $query->fetch();
+
+            $this->id = $result['FightResultID'];
+            $this->result_id = $result['ResultTypeID'];
+            $this->winner_id = $result['WinnerAthleteID'];
+
+            $this->results = $result;
+
+            return $result;
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
+        }
+    }
+
+    public function getAll()
+    {
+        $query = "SELECT * FROM $this->table";
+
+        try {
+            $query = $this->db->query($query);
+            $result = $query->fetchAll();
+
+            $this->results = $result;
+
+            return $result;
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
+        }
     }
 
 
@@ -61,16 +88,18 @@ class FightResult
     {
         $this->validateData();
 
-        $query = "INSERT INTO $this->table (FightID, ResultTypeID, WinnerAthleteID)
-                    VALUES ($this->fight_id, $this->result_id, $this->winner_id);";
+        $query = "INSERT INTO $this->table 
+                    (FightID, ResultTypeID, WinnerAthleteID)
+                    VALUES (?, ?, ?);";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->fight_id, $this->result_id, $this->winner_id]);
 
-        if (!empty($result) && $result) {
-            $this->id = $this->db->insert_id;
-            return true;
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-        return false;
     }
 
     public function update(): bool
@@ -78,17 +107,22 @@ class FightResult
         $this->validateData();
         $this->validateIdSet();
 
-        $query = "UPDATE $this->table SET FightID=$this->fight_id, 
-                    ResultTypeID=$this->result_id, WinnerAthleteID=$this->winner_id
-                WHERE FightResultID=$this->id";
+        $query = "UPDATE $this->table 
+                    SET 
+                        FightID = ?, 
+                        ResultTypeID = ?, 
+                        WinnerAthleteID = ?
+                    WHERE 
+                        FightResultID = ?";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->fight_id, $this->result_id, $this->winner_id, $this->id]);
 
-        if (!empty($result) && $result) {
-            return true;
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return false;
     }
 
     public function delete(): bool
@@ -97,13 +131,14 @@ class FightResult
 
         $query = "DELETE FROM $this->table WHERE FightResultID=$this->id";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->id]);
 
-        if (!empty($result) && $result) {
-            return true;
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return false;
     }
 
     // utility functions
@@ -203,9 +238,9 @@ class FightResult
     }
 
     /**
-     * @return mysqli_result
+     * @return
      */
-    public function getResults(): ?mysqli_result
+    public function getResults()
     {
         return $this->results;
     }

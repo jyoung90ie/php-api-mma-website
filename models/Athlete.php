@@ -16,9 +16,9 @@ class Athlete
     private ?float $reach = null;
     private ?int $stance_id = null;
     private ?string $dob = null;
-    private ?mysqli_result $results = null;
+    private $results = null;
 
-    private mysqli $db;
+    private PDO $db;
     private string $table = "Athletes";
 
     public function __construct($db)
@@ -26,96 +26,107 @@ class Athlete
         $this->db = $db;
     }
 
-    public function getOne(int $id): ?mysqli_result
+    public function getOne(int $id)
     {
         $this->setId($id);
 
-        $query = "SELECT * FROM $this->table WHERE AthleteID=$this->id";
-        $result = $this->db->query($query);
+        $query = "SELECT * FROM $this->table WHERE AthleteID = ?";
 
-        if (!empty($result) && $result->num_rows > 0) {
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->id]);
+
+            $result = $query->fetch();
+
+            $this->id = $result['AthleteID'];
+            $this->name = $result['AthleteName'];
+            $this->height = $result['AthleteHeightInCM'];
+            $this->reach = $result['AthleteReachInCM'];
+            $this->stance_id = $result['AthleteStanceID'];
+            $this->dob = $result['AthleteDOB'];
+
             $this->results = $result;
-
-            $row = $result->fetch_assoc();
-
-            $this->id = $row['AthleteID'];
-            $this->name = $row['AthleteName'];
-            $this->height = $row['AthleteHeightInCM'];
-            $this->reach = $row['AthleteReachInCM'];
-            $this->stance_id = $row['AthleteStanceID'];
-            $this->dob = $row['AthleteDOB'];
-
-            // reset cursor back to 0 - this lets any other object access contents of results instance var
-            $this->results->data_seek(0);
-        } else {
-            $this->results = null;
+            return $result;
+                
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return $this->results;
     }
 
-    public function getAll(): ?mysqli_result
+    public function getAll()
     {
         $query = "SELECT * FROM $this->table";
-        $results = $this->db->query($query);
+        try {
+            $query = $this->db->query($query);
 
-        if (!empty($results) && $results->num_rows > 0) {
-            $this->results = $results;
-        } else {
-            $this->results = null;
+            $result = $query->fetchAll();
+            $this->results = $result;
+
+            return $result;
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return $this->results;
     }
 
-    public function create(): bool
+    public function create(): int
     {
         $this->validateData();
 
-        $query = "INSERT INTO $this->table (AthleteName, AthleteHeightInCM, AthleteReachInCM, AthleteStanceID, AthleteDOB)
-                    VALUES ('$this->name', $this->height, $this->reach, $this->stance_id, '$this->dob');";
+        $query = "INSERT INTO $this->table 
+                    (AthleteName, AthleteHeightInCM, AthleteReachInCM, AthleteStanceID, AthleteDOB)
+                    VALUES (?, ?, ?, ?, ?);";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->name, $this->height, $this->reach, $this->stance_id, $this->dob]);
 
-        if (!empty($result) && $result) {
-            $this->id = $this->db->insert_id;
-            return true;
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-        return false;
+
     }
 
-    public function update(): bool
+    public function update(): int
     {
         $this->validateData();
         $this->validateIdSet();
 
-        $query = "UPDATE $this->table SET AthleteName = '$this->name', 
-                    AthleteHeightInCM=$this->height, AthleteReachInCM=$this->reach, 
-                    AthleteStanceID=$this->stance_id, AthleteDOB='$this->dob'
-                WHERE AthleteID=$this->id";
+        $query = "UPDATE 
+                        $this->table 
+                    SET 
+                        AthleteName = ?, 
+                        AthleteHeightInCM = ?, 
+                        AthleteReachInCM = ?, 
+                        AthleteStanceID = ?, 
+                        AthleteDOB = ?
+                WHERE 
+                        AthleteID=$this->id";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->name, $this->height, $this->reach, $this->stance_id, $this->dob, $this->id]);
 
-        if (!empty($result) && $result) {
-            return true;
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return false;
     }
 
-    public function delete(): bool
+    public function delete(): int
     {
         $this->validateIdSet();
 
-        $query = "DELETE FROM $this->table WHERE AthleteID=$this->id";
+        $query = "DELETE FROM $this->table WHERE AthleteID = ?";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->id]);
 
-        if (!empty($result) && $result) {
-            return true;
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return false;
     }
 
     // utility functions
@@ -152,9 +163,9 @@ class Athlete
     public function setId(?int $id): void
     {
         if ($id <= 0) {
-            throw new InvalidArgumentException("Invalid ID");
+            throw new InvalidArgumentException("Invalid Athlete ID");
         }
-        $this->id = $id;
+        $this->id = intval($id);
     }
 
     /**

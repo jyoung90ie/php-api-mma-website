@@ -3,7 +3,7 @@
 
 use PHPUnit\Framework\TestCase;
 
-include_once "../config/Database.php";
+include_once "../lib/Database.php";
 include_once "../models/ResultType.php";
 
 class ResultTypeTest extends TestCase
@@ -26,6 +26,12 @@ class ResultTypeTest extends TestCase
         $this->descriptionValid = "descriptionValid";
 
         $this->idInvalid = 0;
+    }
+
+    // run after each test
+    public function tearDown(): void
+    {
+        $this->db->close();
     }
 
     public function testDataStartsAsNull()

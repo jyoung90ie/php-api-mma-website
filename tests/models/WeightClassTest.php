@@ -3,7 +3,7 @@
 
 use PHPUnit\Framework\TestCase;
 
-include_once "../config/Database.php";
+include_once "../lib/Database.php";
 include_once "../models/WeightClass.php";
 
 class WeightClassTest extends TestCase
@@ -20,6 +20,7 @@ class WeightClassTest extends TestCase
     private int $weightMinInvalid;
     private int $weightMaxInvalid;
 
+    // run before each test
     public function setUp(): void
     {
         $this->db = (new Database())->getConnection();
@@ -35,6 +36,13 @@ class WeightClassTest extends TestCase
         $this->weightMinInvalid = 99;
         $this->weightMaxInvalid = 501;
     }
+
+    // run after each test
+    public function tearDown(): void
+    {
+        $this->db->close();
+    }
+
 
     public function testDataStartsAsNull()
     {
@@ -81,7 +89,7 @@ class WeightClassTest extends TestCase
     public function testGetOneInvalid()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("Invalid ID");
+        $this->expectExceptionMessage("Invalid Weight Class ID");
 
         $this->weight_class->getOne($this->idInvalid);
     }

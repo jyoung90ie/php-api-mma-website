@@ -4,9 +4,9 @@
 class AthleteStance
 {
 
-    public ?int $id = null;
-    public ?string $description = null;
-    public ?mysqli_result $results;
+    private ?int $id = null;
+    private ?string $description = null;
+    private ?mysqli_result $results;
 
     private mysqli $db;
     private string $table = "AthleteStances";
@@ -16,7 +16,7 @@ class AthleteStance
         $this->db = $db;
     }
 
-    public function getOne(int $id): ?mysqli_result
+    public function getOne(int $id)
     {
         $this->setId($id);
 
@@ -39,7 +39,7 @@ class AthleteStance
         return $this->results;
     }
 
-    public function getAll(): ?mysqli_result
+    public function getAll()
     {
         $query = "SELECT * FROM $this->table";
         $results = $this->db->query($query);
@@ -133,7 +133,7 @@ class AthleteStance
     public function setId(int $id): void
     {
         if ($id <= 0) {
-            throw new InvalidArgumentException("Invalid ID");
+            throw new InvalidArgumentException("Invalid Athlete Stance ID");
         }
         $this->id = $id;
     }

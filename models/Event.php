@@ -5,12 +5,12 @@ class Event
 {
     const DATE_MIN = '1993-11-12'; // date of first ever event
 
-    public ?int $id = null;
-    public ?string $location = null;
-    public ?string $date = null;
-    public ?mysqli_result $results = null;
+    private ?int $id = null;
+    private ?string $location = null;
+    private ?string $date = null;
+    private $results = null;
 
-    private mysqli $db;
+    private PDO $db;
     private string $table = "Events";
 
     public function __construct($db)
@@ -18,92 +18,98 @@ class Event
         $this->db = $db;
     }
 
-    public function getOne(int $id): ?mysqli_result
+    public function getOne(int $id)
     {
+        // performs validation checks before setting
         $this->setId($id);
 
-        $query = "SELECT * FROM $this->table WHERE EventID=$this->id";
-        $result = $this->db->query($query);
+        $query = "SELECT * FROM $this->table WHERE EventID = ?";
 
-        if (!empty($result) && $result->num_rows > 0) {
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->id]);
+
+            $result = $query->fetch();
+
+            $this->location = $result['EventLocation'];
+            $this->date = $result['EventDate'];
+
             $this->results = $result;
 
-            $row = $result->fetch_assoc();
-
-            $this->location = $row['EventLocation'];
-            $this->date = $row['EventDate'];
-
-            // reset cursor back to 0
-            $this->results->data_seek(0);
-        } else {
-            $this->results = null;
+            return $result;
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return $this->results;
     }
 
-    public function getAll(): ?mysqli_result
+    public function getAll()
     {
         $query = "SELECT * FROM $this->table";
-        $results = $this->db->query($query);
+        try {
+            $query = $this->db->query($query);
 
-        if (!empty($results) && $results->num_rows > 0) {
-            $this->results = $results;
-        } else {
-            $this->results = null;
+            $result = $query->fetchAll();
+            $this->results = $result;
+
+            return $result;
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return $this->results;
     }
 
 
-    public function create(): bool
+    public function create(): int
     {
         $this->validateData();
 
-        $query = "INSERT INTO $this->table (EventLocation, EventDate)
-                    VALUES ('$this->location', '$this->date');";
+        $query = "INSERT INTO $this->table (EventLocation, EventDate) VALUES (?, ?);";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->location, $this->date]);
 
-        if (!empty($result) && $result) {
-            $this->id = $this->db->insert_id;
-            return true;
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-        return false;
     }
 
-    public function update(): bool
+    public function update(): int
     {
         $this->validateData();
         $this->validateIdSet();
 
-        $query = "UPDATE $this->table SET EventLocation = '$this->location', 
-                    EventDate='$this->date'
-                WHERE EventID=$this->id";
+        $query = "UPDATE $this->table 
+                    SET 
+                        EventLocation = ?, 
+                        EventDate = ?
+                    WHERE 
+                        EventID = ?";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->location, $this->date, $this->id]);
 
-        if (!empty($result) && $result) {
-            return true;
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return false;
     }
 
-    public function delete(): bool
+    public function delete(): int
     {
         $this->validateIdSet();
 
-        $query = "DELETE FROM $this->table WHERE EventID=$this->id";
+        $query = "DELETE FROM $this->table WHERE EventID = ?";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->id]);
 
-        if (!empty($result) && $result) {
-            return true;
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return false;
     }
 
     // utility functions
@@ -137,7 +143,7 @@ class Event
     public function setId(int $id): void
     {
         if ($id <= 0) {
-            throw new InvalidArgumentException("Invalid ID");
+            throw new InvalidArgumentException("Invalid Event ID");
         }
         $this->id = $id;
     }
@@ -155,7 +161,7 @@ class Event
      */
     public function setLocation(string $location): void
     {
-        $this->location = $this->db->real_escape_string($location);
+        $this->location = $location;
     }
 
     /**
@@ -183,9 +189,9 @@ class Event
     }
 
     /**
-     * @return mysqli_result
+     * @return
      */
-    public function getResults(): ?mysqli_result
+    public function getResults()
     {
         return $this->results;
     }

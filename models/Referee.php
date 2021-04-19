@@ -3,11 +3,11 @@
 
 class Referee
 {
-    public ?int $id = null;
-    public ?string $name = null;
-    public ?mysqli_result $results;
+    private ?int $id = null;
+    private ?string $name = null;
+    private $results;
 
-    private mysqli $db;
+    private PDO $db;
     private string $table = "Referees";
 
     public function __construct($db)
@@ -15,41 +15,39 @@ class Referee
         $this->db = $db;
     }
 
-    public function getOne(int $id): ?mysqli_result
+    public function getOne(int $id)
     {
         $this->setId($id);
 
-        $query = "SELECT * FROM $this->table WHERE RefereeID=$this->id";
-        $result = $this->db->query($query);
+        $query = "SELECT * FROM $this->table WHERE RefereeID=?";
 
-        if (!empty($result) && $result->num_rows > 0) {
-            $this->results = $result;
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->id]);
 
-            $row = $result->fetch_assoc();
+            $result = $query->fetch();
 
-            $this->name = $row['RefereeName'];
+            $this->name = $result['RefereeName'];
 
-            // reset cursor back to 0
-            $this->results->data_seek(0);
-        } else {
-            $this->results = null;
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return $this->results;
     }
 
-    public function getAll(): ?mysqli_result
+    public function getAll()
     {
         $query = "SELECT * FROM $this->table";
-        $results = $this->db->query($query);
+        try {
+            $query = $this->db->query($query);
+            $result = $query->fetchAll();
 
-        if (!empty($results) && $results->num_rows > 0) {
-            $this->results = $results;
-        } else {
-            $this->results = null;
+            $this->results = $result;
+
+            return $result;
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return $this->results;
     }
 
 
@@ -57,16 +55,16 @@ class Referee
     {
         $this->validateData();
 
-        $query = "INSERT INTO $this->table (RefereeName)
-                    VALUES ('$this->name');";
+        $query = "INSERT INTO $this->table (RefereeName) VALUES (?);";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->name]);
 
-        if (!empty($result) && $result) {
-            $this->id = $this->db->insert_id;
-            return true;
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-        return false;
     }
 
     public function update(): bool
@@ -74,31 +72,36 @@ class Referee
         $this->validateData();
         $this->validateIdSet();
 
-        $query = "UPDATE $this->table SET RefereeName = '$this->name'
-                WHERE RefereeID=$this->id";
+        $query = "UPDATE $this->table 
+                    SET 
+                        RefereeName = ?
+                    WHERE 
+                          RefereeID = ?";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->name, $this->id]);
 
-        if (!empty($result) && $result) {
-            return true;
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return false;
     }
 
     public function delete(): bool
     {
         $this->validateIdSet();
 
-        $query = "DELETE FROM $this->table WHERE RefereeID=$this->id";
+        $query = "DELETE FROM $this->table WHERE RefereeID=?";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->id]);
 
-        if (!empty($result) && $result) {
-            return true;
+            return $query->rowCount();
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
         }
-
-        return false;
     }
 
     // utility functions
@@ -132,7 +135,7 @@ class Referee
     public function setId(int $id): void
     {
         if ($id <= 0) {
-            throw new InvalidArgumentException("Invalid ID");
+            throw new InvalidArgumentException("Invalid Referee ID");
         }
         $this->id = $id;
     }
@@ -150,13 +153,13 @@ class Referee
      */
     public function setName(string $name): void
     {
-        $this->name = $this->db->real_escape_string($name);
+        $this->name = $name;
     }
 
     /**
-     * @return mysqli_result
+     * @return
      */
-    public function getResults(): mysqli_result
+    public function getResults()
     {
         return $this->results;
     }

@@ -3,7 +3,7 @@
 
 use PHPUnit\Framework\TestCase;
 
-include_once "../config/Database.php";
+include_once "../lib/Database.php";
 include_once "../models/Referee.php";
 
 class RefereeTest extends TestCase
@@ -26,6 +26,12 @@ class RefereeTest extends TestCase
         $this->nameValid = "nameValid";
 
         $this->idInvalid = 0;
+    }
+
+    // run after each test
+    public function tearDown(): void
+    {
+        $this->db->close();
     }
 
     public function testDataStartsAsNull()
@@ -67,7 +73,7 @@ class RefereeTest extends TestCase
     public function testGetOneInvalid()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("Invalid ID");
+        $this->expectExceptionMessage("Invalid Referee ID");
 
         $this->referee->getOne($this->idInvalid);
     }

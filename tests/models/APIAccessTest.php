@@ -3,21 +3,32 @@
 
 use PHPUnit\Framework\TestCase;
 
-include_once "../config/Database.php";
+// sets working directory to test folder - enables tests to be run all together
+chdir(__DIR__);
+
+include_once "../lib/Database.php";
 include_once "../models/APIAccess.php";
 
 class APIAccessTest extends TestCase
 {
+    private mysqli $db;
+
     private APIAccess $apiAccess;
     private string $apiKeyValid;
     private string $apiKeyInvalid;
 
     public function setUp(): void {
-        $db = (new Database())->getConnection();
+        $this->db = (new Database())->getConnection();
 
-        $this->apiAccess = new APIAccess($db);
+        $this->apiAccess = new APIAccess($this->db);
         $this->apiKeyValid = "test123";
         $this->apiKeyInvalid = "invalidKey";
+    }
+
+    // run after each test
+    public function tearDown(): void
+    {
+        $this->db->close();
     }
 
 

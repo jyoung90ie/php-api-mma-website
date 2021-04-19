@@ -2,56 +2,82 @@
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json; charset=UTF-8');
 
+// api endpoint variable names
+const API_KEY = 'key';
+const API_LIST = 'view-all';
+const API_CREATE = 'create';
+const API_UPDATE = 'update';
+const API_DELETE = 'delete';
+
+// api endpoint modules
+const API_FIGHT = 'fight';
+const API_ATHLETE = 'athlete';
+const API_EVENT = 'event';
+
 // provides database connection
-include_once '../config/Database.php';
+include_once '../lib/Database.php';
+include_once '../models/APIAccess.php';
+include_once '../models/User.php';
 
-$mysql = new Database();
-$db = $mysql->getConnection();
-
-$_GET['token'] = 'test123';
-$_GET['fight'] = 1;
+$db = (new Database())->getConnection();
+//$_GET['key'] = 'test123';
+//$_GET['fight'] = 141;
+//$_POST['fight'] = 1;
+//$_GET['athlete'] = 141;
 $data = [];
 
 
-if (isset($db)) {
-    if (isset($_GET['token'])) {
+if (!isset($db)) {
+    die('No database connection');
+}
 
-        $token = $db->real_escape_string($_GET['token']);
+if (!isset($_GET['key'])) {
+    die('API key missing');
+}
 
-        // check the token is valid
-        $event_query = $db->query("SELECT * FROM ApiAccess WHERE ApiKey='$token'");
+$key = $_GET[API_KEY];
+$valid_key = (new APIAccess($db))->verifyKey($key);
 
-        if ($event_query->num_rows > 0) {
-            $status = 'successful';
-            $type = 'connected with valid token';
+if (empty($valid_key) || !$valid_key) {
+    die('Invalid API key');
+}
 
-            // return athlete data
-            if (isset($_GET['athlete'])) {
-                include_once 'athlete.php';
-            }
+$user = new User($db);
 
-            // return event data including fights
-            if (isset($_GET['event'])) {
-                include_once 'event.php';
-            }
+if (empty($user)) {
+    die('Could not identify user');
+}
 
-            // return fight data
-            if (isset($_GET['fight'])) {
-                include_once 'fight.php';
-            }
+// return athlete data
+if (isset($_GET[API_FIGHT])) {
+    $fight = $_GET[API_FIGHT];
 
+    if (empty($fight)) {
+        if (isset($_GET[API_CREATE])) {
+            // create
+            include_once 'fight/create.php';
+        } else if (isset($_GET[API_LIST])) {
+            // view all
+            echo 'view all';
+        }
+    } else if (is_numeric($fight)) {
+        if (isset($_GET[API_UPDATE])) {
+            // update
+            echo 'update';
+        } else if (isset($_GET[API_DELETE])) {
+            // delete
+            echo 'delete';
         } else {
-            $status = 'error';
-            $type = 'Invalid token';
+            // read
+            echo $fight;
+            include_once 'fight/detail.php';
         }
     } else {
-        $status = 'error';
-        $type = 'Missing token';
+        die('Unknown');
     }
-} else {
-    $status = 'error';
-    $type = 'DB connection problem';
+
 }
+
 echo "\n";
 echo json_encode(['status' => $status, 'type' => $type, 'data' => $data]);
 

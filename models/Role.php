@@ -1,43 +1,25 @@
 <?php
 
 
-class ResultType
+class Role
 {
+    const TABLE = "Roles";
+
     private ?int $id = null;
     private ?string $description = null;
-    private $results;
 
+    private $results;
     private PDO $db;
-    private string $table = "ResultTypes";
 
     public function __construct($db)
     {
         $this->db = $db;
     }
 
-    public function getOne(int $id)
-    {
-        $this->setId($id);
-
-        $query = "SELECT * FROM $this->table WHERE ResultTypeID = ?";
-        try {
-            $query = $this->db->prepare($query);
-            $query->db->execute([$this->id]);
-
-            $result = $query->fetch();
-            $this->results = $result;
-
-            $this->description = $result['ResultDescription'];
-
-            return $result;
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
-    }
-
     public function getAll()
     {
-        $query = "SELECT * FROM $this->table";
+        $query = "SELECT * FROM " . self::TABLE;
+
         try {
             $query = $this->db->query($query);
 
@@ -51,11 +33,11 @@ class ResultType
     }
 
 
-    public function create(): bool
+    public function create(): int
     {
         $this->validateData();
 
-        $query = "INSERT INTO $this->table (ResultDescription) VALUES (?);";
+        $query = "INSERT INTO " . self::TABLE . " (RoleDescription) VALUES (?)";
 
         try {
             $query = $this->db->prepare($query);
@@ -67,16 +49,16 @@ class ResultType
         }
     }
 
-    public function update(): bool
+    public function update(): int
     {
         $this->validateData();
         $this->validateIdSet();
 
-        $query = "UPDATE $this->table 
+        $query = "UPDATE " . self::TABLE . " 
                 SET 
-                    ResultDescription = ?
+                    RoleDescription = ?
                 WHERE 
-                    ResultTypeID = ?";
+                    RoleID = ?";
 
         try {
             $query = $this->db->prepare($query);
@@ -88,11 +70,11 @@ class ResultType
         }
     }
 
-    public function delete(): bool
+    public function delete(): int
     {
         $this->validateIdSet();
 
-        $query = "DELETE FROM $this->table WHERE ResultTypeID = ?";
+        $query = "DELETE FROM " . self::TABLE . " WHERE RoleID=?";
 
         try {
             $query = $this->db->prepare($query);
@@ -141,7 +123,7 @@ class ResultType
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getDescription(): ?string
     {
