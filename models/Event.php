@@ -74,7 +74,7 @@ class Event
         }
     }
 
-    public function getAll()
+    public function getAll(): array
     {
         $query = "SELECT * FROM Events";
         try {
