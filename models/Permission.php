@@ -2,6 +2,7 @@
 
 namespace models;
 
+use InvalidArgumentException;
 use PDO;
 use PDOException;
 
@@ -33,7 +34,7 @@ class Permission
     {
         $this->setId($id);
 
-        $query = "SELECT * FROM " . self::TABLE . " WHERE PermissionID = ?";
+        $query = "SELECT * FROM Permissions WHERE PermissionID = ?";
 
         try {
             $query = $this->db->prepare($query);
@@ -55,7 +56,7 @@ class Permission
 
     public function getAll()
     {
-        $query = "SELECT * FROM " . self::TABLE;
+        $query = "SELECT * FROM Permissions";
         try {
             $query = $this->db->query($query);
 
@@ -72,9 +73,9 @@ class Permission
     {
         $this->validateData();
 
-        $query = "INSERT INTO " . self::TABLE . " 
-                (PermissionArea, PermissionType, PermissionDescription) 
-        VALUES (?, ?, ?);";
+        $query = "INSERT INTO Permissions
+                    (PermissionArea, PermissionType, PermissionDescription) 
+                    VALUES (?, ?, ?);";
 
         try {
             $query = $this->db->prepare($query);
@@ -91,7 +92,7 @@ class Permission
         $this->validateData();
         $this->validateIdSet();
 
-        $query = "UPDATE " . self::TABLE . " 
+        $query = "UPDATE Permissions
                     SET 
                         PermissionDescription = ?, 
                         PermissionArea = ?, 
@@ -113,7 +114,7 @@ class Permission
     {
         $this->validateIdSet();
 
-        $query = "DELETE FROM " . self::TABLE . " WHERE PermissionID = ?";
+        $query = "DELETE FROM Permissions WHERE PermissionID = ?";
 
         try {
             $query = $this->db->prepare($query);
