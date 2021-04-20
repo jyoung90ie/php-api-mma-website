@@ -1,15 +1,20 @@
 <?php
 
+namespace models;
+
+use InvalidArgumentException;
+use PDO;
+use PDOException;
 
 class APIAccess
 {
     const TABLE = "ApiAccess";
 
     private ?int $id = null;
-    private ?string $api_key = null;
-    private ?string $start_date = null;
-    private ?string $end_date = null;
-    private ?int $user_id = null;
+    private ?string $apiKey = null;
+    private ?string $startDate = null;
+    private ?string $endDate = null;
+    private ?int $userId = null;
     private bool $verified = false;
 
     private PDO $db;
@@ -20,11 +25,18 @@ class APIAccess
         $this->db = $db;
     }
 
-    public function verifyKey($api_key)
+    /**
+     * Determines whether the apiKey is valid or not. If it is valid, the object instance vars are set based on
+     * results from the database.
+     *
+     * @param string $apiKey - value to be verified
+     * @return mixed - true if valid, false if not, exception if db error
+     */
+    public function verifyKey(string $apiKey)
     {
         $now = date('Y-m-d');
 
-        $query = "SELECT * FROM " . self::TABLE . " 
+        $query = "SELECT * FROM ApiAccess
                     WHERE 
                         ApiKey=?
                     AND 
@@ -32,22 +44,27 @@ class APIAccess
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$api_key, $now, $now]);
+            $query->execute([$apiKey, $now, $now]);
 
-            $result = $query->fetch();
+            if ($query->rowCount() > 0) {
+                $result = $query->fetch();
 
-            $start_date = $result['StartDate'];
-            $end_date = $result['EndDate'];
-            $user_id = $result['UserID'];
 
-            $this->id = $result['ID'];
-            $this->api_key = $result['ApiKey'];
-            $this->start_date = (is_null($start_date)) ? "" : $start_date;
-            $this->end_date = (is_null($end_date)) ? "" : $end_date;
-            $this->user_id = (is_null($user_id)) ? -1 : $user_id;
-            $this->verified = true;
+                $start_date = $result['StartDate'];
+                $end_date = $result['EndDate'];
+                $user_id = $result['UserID'];
 
-            return $result;
+                $this->id = $result['ID'];
+                $this->apiKey = $result['ApiKey'];
+                $this->startDate = (is_null($start_date)) ? "" : $start_date;
+                $this->endDate = (is_null($end_date)) ? "" : $end_date;
+                $this->userId = (is_null($user_id)) ? -1 : $user_id;
+                $this->verified = true;
+
+                return $result;
+            }
+
+            return false;
         } catch (PDOException $exception) {
             die($exception->getMessage());
         }
@@ -57,12 +74,12 @@ class APIAccess
     {
         $this->validateData();
 
-        $query = "INSERT INTO " . self::TABLE . "(ApiKey, StartDate, EndDate, UserID)
+        $query = "INSERT INTO ApiAccess (ApiKey, StartDate, EndDate, UserID)
                     VALUES('?', '?', '?', ?);";
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->api_key, $this->start_date, $this->end_date, $this->user_id]);
+            $query->execute([$this->apiKey, $this->startDate, $this->endDate, $this->userId]);
 
             $this->id = $this->db->lastInsertId();
 
@@ -70,7 +87,6 @@ class APIAccess
         } catch (PDOException $exception) {
             die($exception->getMessage());
         }
-
     }
 
     public function update(): int
@@ -78,14 +94,16 @@ class APIAccess
         $this->validateData();
         $this->validateIdSet();
 
-        $query = "UPDATE " . self::TABLE . " 
+        $query = "UPDATE 
+                        ApiAccess
                     SET 
                         ApiKey = '?', StartDate = '?', EndDate = '?', UserID = ?
-                WHERE ID = ?";
+                    WHERE 
+                        ID = ?";
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->api_key, $this->start_date, $this->end_date, $this->user_id]);
+            $query->execute([$this->apiKey, $this->startDate, $this->endDate, $this->userId]);
             return $query->rowCount();
         } catch (PDOException $exception) {
             die($exception->getMessage());
@@ -97,7 +115,7 @@ class APIAccess
     {
         $this->validateIdSet();
 
-        $query = "DELETE FROM " . self::TABLE . " WHERE ID = ?";
+        $query = "DELETE FROM ApiAccess WHERE ID = ?";
 
         try {
             $query = $this->db->prepare($query);
@@ -116,15 +134,15 @@ class APIAccess
      */
     public function getApiKey(): ?string
     {
-        return $this->api_key;
+        return $this->apiKey;
     }
 
     /**
-     * @param string $api_key
+     * @param string $apiKey
      */
-    public function setApiKey(string $api_key): void
+    public function setApiKey(string $apiKey): void
     {
-        $this->api_key = $api_key;
+        $this->apiKey = $apiKey;
     }
 
     /**
@@ -132,23 +150,23 @@ class APIAccess
      */
     public function getStartDate(): ?string
     {
-        return $this->start_date;
+        return $this->startDate;
     }
 
     /**
-     * @param string $start_date
+     * @param string $startDate
      */
-    public function setStartDate(string $start_date): void
+    public function setStartDate(string $startDate): void
     {
-        if (!$this->isDate($start_date)) {
+        if (!$this->isDate($startDate)) {
             throw new InvalidArgumentException("Invalid format for start date");
         }
 
-        if (!is_null($this->end_date) && $start_date >= $this->end_date) {
+        if (!is_null($this->endDate) && $startDate >= $this->endDate) {
             throw new InvalidArgumentException("Start date must be before end date");
         }
 
-        $this->start_date = date('Y-m-d', strtotime($start_date));
+        $this->startDate = date('Y-m-d', strtotime($startDate));
     }
 
     /**
@@ -156,23 +174,23 @@ class APIAccess
      */
     public function getEndDate(): ?string
     {
-        return $this->end_date;
+        return $this->endDate;
     }
 
     /**
-     * @param string $end_date
+     * @param string $endDate
      */
-    public function setEndDate(string $end_date): void
+    public function setEndDate(string $endDate): void
     {
-        if (!$this->isDate($end_date)) {
+        if (!$this->isDate($endDate)) {
             throw new InvalidArgumentException("Invalid format for end date");
         }
 
-        if (!is_null($this->start_date) && $end_date <= $this->start_date) {
+        if (!is_null($this->startDate) && $endDate <= $this->startDate) {
             throw new InvalidArgumentException("End date must be after start date");
         }
 
-        $this->end_date = date('Y-m-d', strtotime($end_date));
+        $this->endDate = date('Y-m-d', strtotime($endDate));
     }
 
     /**
@@ -180,19 +198,19 @@ class APIAccess
      */
     public function getUserId(): ?int
     {
-        return $this->user_id;
+        return $this->userId;
     }
 
     /**
-     * @param int $user_id
+     * @param int $userId
      */
-    public function setUserId(int $user_id): void
+    public function setUserId(int $userId): void
     {
-        if ($user_id <= 0) {
+        if ($userId <= 0) {
             throw new InvalidArgumentException("Invalid input for user ID");
         }
 
-        $this->user_id = $user_id;
+        $this->userId = $userId;
     }
 
     /**
@@ -211,7 +229,7 @@ class APIAccess
 
     private function validateData(): void
     {
-        if (is_null($this->user_id) || is_null($this->api_key) || is_null($this->start_date) || is_null($this->end_date)) {
+        if (is_null($this->userId) || is_null($this->apiKey) || is_null($this->startDate) || is_null($this->endDate)) {
             throw new InvalidArgumentException("All object variables must have a value");
         }
     }

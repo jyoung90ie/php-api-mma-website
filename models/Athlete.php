@@ -1,5 +1,13 @@
 <?php
 
+namespace models;
+
+use Exception;
+use InvalidArgumentException;
+use PDO;
+use PDOException;
+use TypeError;
+
 class Athlete
 {
     // validation constants
@@ -9,17 +17,17 @@ class Athlete
     const HEIGHT_MAX = 250;
     const REACH_MIN = 100;
     const REACH_MAX = 250;
+    const PERMISSION_AREA = 'ATHLETES';
 
-    private ?int $id = null;
+    private ?int $athleteId = null;
     private ?string $name = null;
     private ?float $height = null;
     private ?float $reach = null;
-    private ?int $stance_id = null;
+    private ?int $stanceId = null;
     private ?string $dob = null;
     private $results = null;
 
     private PDO $db;
-    private string $table = "Athletes";
 
     public function __construct($db)
     {
@@ -28,34 +36,39 @@ class Athlete
 
     public function getOne(int $id)
     {
-        $this->setId($id);
+        $this->setAthleteId($id);
 
-        $query = "SELECT * FROM $this->table WHERE AthleteID = ?";
+        $query = "SELECT * FROM Athletes WHERE AthleteID = ?";
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->id]);
+            $query->execute([$this->athleteId]);
 
-            $result = $query->fetch();
+            if ($query->rowCount() > 0) {
+                $athlete = $query->fetch();
 
-            $this->id = $result['AthleteID'];
-            $this->name = $result['AthleteName'];
-            $this->height = $result['AthleteHeightInCM'];
-            $this->reach = $result['AthleteReachInCM'];
-            $this->stance_id = $result['AthleteStanceID'];
-            $this->dob = $result['AthleteDOB'];
+                $this->athleteId = $athlete['AthleteID'];
+                $this->name = $athlete['AthleteName'];
+                $this->height = $athlete['AthleteHeightInCM'];
+                $this->reach = $athlete['AthleteReachInCM'];
+                $this->stanceId = $athlete['AthleteStanceID'];
+                $this->dob = $athlete['AthleteDOB'];
 
-            $this->results = $result;
-            return $result;
+                $this->results = $athlete;
                 
-        } catch (PDOException $exception) {
+                return $athlete;
+            }
+            
+            return false;
+                
+        } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
     }
 
     public function getAll()
     {
-        $query = "SELECT * FROM $this->table";
+        $query = "SELECT * FROM Athletes";
         try {
             $query = $this->db->query($query);
 
@@ -63,37 +76,43 @@ class Athlete
             $this->results = $result;
 
             return $result;
-        } catch (PDOException $exception) {
+        } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
     }
 
-    public function create(): int
+    public function create(array $data): int
     {
-        $this->validateData();
+        if (!is_null($data)) {
+            $this->processData($data);
+        }
 
-        $query = "INSERT INTO $this->table 
+        $query = "INSERT INTO Athletes 
                     (AthleteName, AthleteHeightInCM, AthleteReachInCM, AthleteStanceID, AthleteDOB)
                     VALUES (?, ?, ?, ?, ?);";
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->name, $this->height, $this->reach, $this->stance_id, $this->dob]);
+            $query->execute([$this->name, $this->height, $this->reach, $this->stanceId, $this->dob]);
 
             return $query->rowCount();
-        } catch (PDOException $exception) {
+        } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
 
     }
 
-    public function update(): int
+    public function update(int $id, array $data = null): int
     {
+        $this->setAthleteId($id);
+
+        if (!is_null($data)) {
+            $this->processData($data);
+        }
         $this->validateData();
-        $this->validateIdSet();
 
         $query = "UPDATE 
-                        $this->table 
+                        Athletes 
                     SET 
                         AthleteName = ?, 
                         AthleteHeightInCM = ?, 
@@ -101,71 +120,74 @@ class Athlete
                         AthleteStanceID = ?, 
                         AthleteDOB = ?
                 WHERE 
-                        AthleteID=$this->id";
+                        AthleteID = ?";
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->name, $this->height, $this->reach, $this->stance_id, $this->dob, $this->id]);
+            $query->execute([$this->name, $this->height, $this->reach, $this->stanceId, $this->dob, $this->athleteId]);
 
             return $query->rowCount();
-        } catch (PDOException $exception) {
+        } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
     }
 
-    public function delete(): int
+    public function delete(int $id): int
     {
-        $this->validateIdSet();
+        $this->setAthleteId($id);
 
-        $query = "DELETE FROM $this->table WHERE AthleteID = ?";
+        $query = "DELETE FROM Athletes WHERE AthleteID = ?";
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->id]);
+            $query->execute([$this->athleteId]);
 
             return $query->rowCount();
-        } catch (PDOException $exception) {
+        } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
     }
 
     // utility functions
+    private function processData(array $data): void
+    {
+        try {
+            $this->setDob($data['AthleteDOB']);
+            $this->setName($data['AthleteName']);
+            $this->setStanceId($data['AthleteStanceID']);
+            $this->setReach($data['AthleteReachInCM']);
+            $this->setHeight($data['AthleteHeightInCM']);
+        } catch (Exception | TypeError $exception) {
+            exit($exception->getMessage());
+        }
+    }
+
     private function validateData(): void
     {
-        if (is_null($this->name) || is_null($this->height) || is_null($this->reach) || is_null($this->stance_id)
+        if (is_null($this->name) || is_null($this->height) || is_null($this->reach) || is_null($this->stanceId)
             || is_null($this->dob)) {
             throw new InvalidArgumentException("All object variables must have a value");
         }
     }
 
-    private function validateIdSet(): void
-    {
-        if (!isset($this->id)) {
-            throw new InvalidArgumentException("Object Id has no value");
-        }
-    }
-
-
-
     // getters and setters
-
     /**
      * @return int|null
      */
-    public function getId(): ?int
+    public function getAthleteId(): ?int
     {
-        return $this->id;
+        return $this->athleteId;
     }
 
     /**
-     * @param int|null $id
+     * @param int|null $athleteId
      */
-    public function setId(?int $id): void
+    public function setAthleteId(?int $athleteId): void
     {
-        if ($id <= 0) {
+        if ($athleteId <= 0) {
             throw new InvalidArgumentException("Invalid Athlete ID");
         }
-        $this->id = intval($id);
+        $this->athleteId = intval($athleteId);
     }
 
     /**
@@ -186,7 +208,7 @@ class Athlete
                 self::NAME_MAX_LENGTH . " characters");
         }
 
-        $this->name = $this->db->real_escape_string($name);
+        $this->name = $name;
     }
 
     /**
@@ -234,15 +256,15 @@ class Athlete
      */
     public function getStanceId(): ?int
     {
-        return $this->stance_id;
+        return $this->stanceId;
     }
 
     /**
-     * @param int|null $stance_id
+     * @param int|null $stanceId
      */
-    public function setStanceId(?int $stance_id): void
+    public function setStanceId(?int $stanceId): void
     {
-        $this->stance_id = intval($stance_id);
+        $this->stanceId = intval($stanceId);
     }
 
     /**
@@ -266,9 +288,9 @@ class Athlete
     }
 
     /**
-     * @return mysqli_result
+     * @return null
      */
-    public function getResults(): ?mysqli_result
+    public function getResults()
     {
         return $this->results;
     }

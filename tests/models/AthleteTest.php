@@ -4,7 +4,7 @@
 use PHPUnit\Framework\TestCase;
 
 
-include_once "../lib/Database.php";
+include_once "../helpers/Database.php";
 include_once "../models/Athlete.php";
 
 class AthleteTest extends TestCase

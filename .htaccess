@@ -3,8 +3,4 @@ php_flag display_errors on
 
 RewriteEngine On
 
-RewriteRule ^api/(.+)/fights$                       api/index.php?key=$1&fight&view-all [NC]                # list all
-RewriteRule ^api/(.+)/fight/([0-9]*)$               api/index.php?key=$1&fight=$2 [NC]              # view single
-RewriteRule ^api/(.+)/fight/create$                 api/index.php?key=$1&fight&create [NC]          # create new
-RewriteRule ^api/(.+)/fight/([0-9]*)/update$        api/index.php?key=$1&fight=$2&update [NC]       # update existing
-RewriteRule ^api/(.+)/fight/([0-9]*)/delete$        api/index.php?key=$1&fight=$2&delete [NC]       # delete existing
+RewriteRule ^api/(.+)$ api/index.php [NC]

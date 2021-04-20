@@ -3,7 +3,7 @@
 
 use PHPUnit\Framework\TestCase;
 
-include_once "../lib/Database.php";
+include_once "../helpers/Database.php";
 include_once "../models/Permission.php";
 
 class PermissionTest extends TestCase

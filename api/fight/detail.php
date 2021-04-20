@@ -13,15 +13,14 @@ if (!isset($db)) {
     exit("No database connection");
 }
 
-// fight database model file
-$base = dirname(__FILE__);
-include_once "$base/../../models/Fight.php";
-include_once "$base/../../models/Referee.php";
-include_once "$base/../../models/WeightClass.php";
-include_once "$base/../../models/FightAthlete.php";
-include_once "$base/../../models/FightResult.php";
-include_once "$base/../../models/Event.php";
-include_once "$base/../../models/Athlete.php";
+use models\Fight;
+use models\Referee;
+use models\WeightClass;
+use models\FightAthlete;
+use models\FightResult;
+use models\Event;
+use models\Athlete;
+
 
 $fight_id = intval($_GET['fight']);
 
@@ -35,10 +34,10 @@ if ($fight->getOne($fight_id)) {
     $weight_class->getOne($fight->getWeightClassId());
 
     $fight_athletes = new FightAthlete($db);
-    $fight_athletes->getAllByFight($fight->getId());
+    $fight_athletes->getAllByFight($fight->getFightId());
 
     $fight_result = new FightResult($db);
-    $fight_result->getByFight($fight->getId());
+    $fight_result->getByFight($fight->getFightId());
 
     $event = new Event($db);
     $event->getOne($fight->getEventId());
@@ -52,7 +51,7 @@ if ($fight->getOne($fight_id)) {
 
     foreach ($fight_athletes->getResults() as $result) {
         $athlete->getOne($result['AthleteID']);
-        $id = $athlete->getId();
+        $id = $athlete->getAthleteId();
         $name = $athlete->getName();
 
         if ($id == $fight_result->getWinnerId()) {
@@ -70,13 +69,13 @@ if ($fight->getOne($fight_id)) {
     }
 
     $fight_detail = [
-        "EventID" => $event->getId(),
+        "EventID" => $event->getEventId(),
         "Date" => $event->getDate(),
-        "FightID" => $fight->getId(),
+        "FightID" => $fight->getFightId(),
         "TitleBout" => $title_bout,
         "WeightClass" => $weight_class->getWeightClass(),
         "Referee" => $referee->getName(),
-        "Rounds" => $fight->getRounds(),
+        "Rounds" => $fight->getNumOfRounds(),
         "Outcome" => $fight_result->getResultId(),
         "Winner" => $winner
     ];

@@ -1,18 +1,16 @@
 <?php
 
-/*
+namespace models;
 
-
-
-
-
- */
+use InvalidArgumentException;
+use PDO;
+use PDOException;
 
 class FightAthlete
 {
-    private ?int $id = null;
-    private ?string $fight_id = null;
-    private ?string $athlete_id = null;
+    private ?int $fightAthleteId = null;
+    private ?string $fightId = null;
+    private ?string $athleteId = null;
     private $results = null;
 
     private PDO $db;
@@ -25,60 +23,59 @@ class FightAthlete
 
     public function getOne(int $id)
     {
-        $this->setId($id);
+        $this->setFightAthleteId($id);
 
-        $query = "SELECT * FROM $this->table WHERE FightAthleteID=?";
+        $query = "SELECT * FROM FightAthletes WHERE FightAthleteID=?";
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->id]);
+            $query->execute([$this->fightAthleteId]);
 
-            $result = $query->fetch();
+            if ($query->rowCount() > 0) {
+                $result = $query->fetch();
 
-            $this->fight_id = $result['FightID'];
-            $this->athlete_id = $result['AthleteID'];
+                $this->fightId = $result['FightID'];
+                $this->athleteId = $result['AthleteID'];
 
-            $this->results = $result;
+                $this->results = $result;
 
-            return $result;
-        } catch (PDOException $exception) {
+                return $result;
+            }
+            return false;
+        } catch (PDOException | \Exception $exception) {
             die($exception->getMessage());
         }
     }
 
-    public function getAllByFight(int $fight_id)
+    public function getAllByFight(int $fightId)
     {
-        if (!is_numeric($fight_id)) {
-            throw new InvalidArgumentException("Invalid Fight ID");
-        }
+        $this->setFightId($fightId);
 
-        $this->setFightId($fight_id);
-
-        $query = "SELECT * FROM $this->table WHERE FightID=?";
+        $query = "SELECT * FROM FightAthletes WHERE FightID=?";
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->fight_id]);
+            $query->execute([$this->fightId]);
 
             $result = $query->fetchAll();
             $this->results = $result;
 
             return $result;
-        } catch (PDOException $exception) {
+        } catch (PDOException | \Exception $exception) {
             die($exception->getMessage());
         }
     }
 
     public function getAll()
     {
-        $query = "SELECT * FROM $this->table";
+        $query = "SELECT * FROM FightAthletes";
         try {
             $query = $this->db->query($query);
-
+            
             $result = $query->fetchAll();
             $this->results = $result;
 
             return $result;
-        } catch (PDOException $exception) {
+        } catch (PDOException | \Exception $exception) {
             die($exception->getMessage());
         }
     }
@@ -88,14 +85,14 @@ class FightAthlete
     {
         $this->validateData();
 
-        $query = "INSERT INTO $this->table (FightID, AthleteID) VALUES (?, ?)";
+        $query = "INSERT INTO FightAthletes (FightID, AthleteID) VALUES (?, ?)";
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->fight_id, $this->athlete_id]);
+            $query->execute([$this->fightId, $this->athleteId]);
 
             return $query->rowCount();
-        } catch (PDOException $exception) {
+        } catch (PDOException | \Exception $exception) {
             die($exception->getMessage());
         }
     }
@@ -105,7 +102,8 @@ class FightAthlete
         $this->validateData();
         $this->validateIdSet();
 
-        $query = "UPDATE $this->table 
+        $query = "UPDATE 
+                        FightAthletes
                     SET 
                         FightID = ?, 
                         AthleteID = ?
@@ -114,10 +112,10 @@ class FightAthlete
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->fight_id, $this->athlete_id, $this->id]);
+            $query->execute([$this->fightId, $this->athleteId, $this->fightAthleteId]);
 
             return $query->rowCount();
-        } catch (PDOException $exception) {
+        } catch (PDOException | \Exception $exception) {
             die($exception->getMessage());
         }
     }
@@ -126,14 +124,14 @@ class FightAthlete
     {
         $this->validateIdSet();
 
-        $query = "DELETE FROM $this->table WHERE FightAthleteID=?";
+        $query = "DELETE FROM FightAthletes WHERE FightAthleteID=?";
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->id]);
+            $query->execute([$this->fightAthleteId]);
 
             return $query->rowCount();
-        } catch (PDOException $exception) {
+        } catch (PDOException | \Exception $exception) {
             die($exception->getMessage());
         }
     }
@@ -141,14 +139,14 @@ class FightAthlete
     // utility functions
     private function validateData(): void
     {
-        if (is_null($this->fight_id) || is_null($this->athlete_id)) {
+        if (is_null($this->fightId) || is_null($this->athleteId)) {
             throw new InvalidArgumentException("All object variables must have a value");
         }
     }
 
     private function validateIdSet(): void
     {
-        if (!isset($this->id)) {
+        if (!isset($this->fightAthleteId)) {
             throw new InvalidArgumentException("Object Id has no value");
         }
     }
@@ -158,20 +156,20 @@ class FightAthlete
     /**
      * @return int
      */
-    public function getId(): ?int
+    public function getFightAthleteId(): ?int
     {
-        return $this->id;
+        return $this->fightAthleteId;
     }
 
     /**
-     * @param int $id
+     * @param int $fightAthleteId
      */
-    public function setId(int $id): void
+    public function setFightAthleteId(int $fightAthleteId): void
     {
-        if ($id <= 0) {
+        if ($fightAthleteId <= 0) {
             throw new InvalidArgumentException("Invalid ID");
         }
-        $this->id = $id;
+        $this->fightAthleteId = $fightAthleteId;
     }
 
     /**
@@ -179,18 +177,18 @@ class FightAthlete
      */
     public function getFightId(): ?string
     {
-        return $this->fight_id;
+        return $this->fightId;
     }
 
     /**
-     * @param string $fight_id
+     * @param string $fightId
      */
-    public function setFightId(string $fight_id): void
+    public function setFightId(string $fightId): void
     {
-        if ($fight_id <= 0) {
+        if ($fightId <= 0) {
             throw new InvalidArgumentException("Invalid Fight ID");
         }
-        $this->fight_id = $fight_id;
+        $this->fightId = $fightId;
     }
 
     /**
@@ -198,18 +196,18 @@ class FightAthlete
      */
     public function getAthleteId(): ?string
     {
-        return $this->athlete_id;
+        return $this->athleteId;
     }
 
     /**
-     * @param string $athlete_id
+     * @param string $athleteId
      */
-    public function setAthleteId(string $athlete_id): void
+    public function setAthleteId(string $athleteId): void
     {
-        if ($athlete_id <= 0) {
+        if ($athleteId <= 0) {
             throw new InvalidArgumentException("Invalid Athlete ID");
         }
-        $this->athlete_id = $athlete_id;
+        $this->athleteId = $athleteId;
     }
 
     /**

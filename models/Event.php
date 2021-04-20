@@ -1,17 +1,24 @@
 <?php
 
+namespace models;
+
+use Exception;
+use InvalidArgumentException;
+use PDO;
+use PDOException;
+use TypeError;
 
 class Event
 {
     const DATE_MIN = '1993-11-12'; // date of first ever event
+    const PERMISSION_AREA = 'EVENTS';
 
-    private ?int $id = null;
+    private ?int $eventId = null;
     private ?string $location = null;
     private ?string $date = null;
     private $results = null;
 
     private PDO $db;
-    private string $table = "Events";
 
     public function __construct($db)
     {
@@ -21,30 +28,55 @@ class Event
     public function getOne(int $id)
     {
         // performs validation checks before setting
-        $this->setId($id);
+        $this->setEventId($id);
 
-        $query = "SELECT * FROM $this->table WHERE EventID = ?";
+        $query = "SELECT * FROM Events WHERE EventID = ?";
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->id]);
+            $query->execute([$this->eventId]);
 
-            $result = $query->fetch();
+            if ($query->rowCount() > 0) {
+                $event = $query->fetch();
 
-            $this->location = $result['EventLocation'];
-            $this->date = $result['EventDate'];
+                $this->location = $event['EventLocation'];
+                $this->date = $event['EventDate'];
 
-            $this->results = $result;
+                $this->results = $event;
 
-            return $result;
-        } catch (PDOException $exception) {
+                // get fights from event
+                $query = "SELECT * FROM Fights WHERE EventID = ?";
+                $query = $this->db->prepare($query);
+                $query->execute([$this->eventId]);
+
+                $event_data = $event;
+                $event_data['Fights'] = [];
+
+                if ($query->rowCount() > 0) {
+                    $fights = $query->fetchAll();
+                    foreach($fights as $fight) {
+                        $athlete = $this->db->prepare("SELECT AthleteID FROM FightAthletes WHERE FightID=?;");
+                        $athlete->execute([$fight['FightID']]);
+
+                        if ($athlete->rowCount() > 0) {
+                            $athletes = $athlete->fetchAll();
+                            $athlete_data['Athletes'] = $athletes;
+                            array_push($event_data['Fights'], array_merge($fight, $athlete_data));
+                        }
+                    }
+                }
+                return $event_data;
+            }
+
+            return false;
+        } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
     }
 
     public function getAll()
     {
-        $query = "SELECT * FROM $this->table";
+        $query = "SELECT * FROM Events";
         try {
             $query = $this->db->query($query);
 
@@ -52,34 +84,43 @@ class Event
             $this->results = $result;
 
             return $result;
-        } catch (PDOException $exception) {
+        } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
     }
 
 
-    public function create(): int
+    public function create(array $data): int
     {
+        if (!is_null($data)) {
+            $this->processData($data);
+        }
+
         $this->validateData();
 
-        $query = "INSERT INTO $this->table (EventLocation, EventDate) VALUES (?, ?);";
+        $query = "INSERT INTO Events (EventLocation, EventDate) VALUES (?, ?);";
 
         try {
             $query = $this->db->prepare($query);
             $query->execute([$this->location, $this->date]);
 
             return $query->rowCount();
-        } catch (PDOException $exception) {
+        } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
     }
 
-    public function update(): int
+    public function update(int $id, array $data = null): int
     {
-        $this->validateData();
-        $this->validateIdSet();
+        $this->setEventId($id);
 
-        $query = "UPDATE $this->table 
+        if (!is_null($data)) {
+            $this->processData($data);
+        }
+
+        $this->validateData();
+
+        $query = "UPDATE Events 
                     SET 
                         EventLocation = ?, 
                         EventDate = ?
@@ -88,31 +129,41 @@ class Event
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->location, $this->date, $this->id]);
+            $query->execute([$this->location, $this->date, $this->eventId]);
 
             return $query->rowCount();
-        } catch (PDOException $exception) {
+        } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
     }
 
-    public function delete(): int
+    public function delete(int $id): int
     {
-        $this->validateIdSet();
+        $this->setEventId($id);
 
-        $query = "DELETE FROM $this->table WHERE EventID = ?";
+        $query = "DELETE FROM Events WHERE EventID = ?";
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->id]);
+            $query->execute([$this->eventId]);
 
             return $query->rowCount();
-        } catch (PDOException $exception) {
+        } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
     }
 
     // utility functions
+    private function processData(array $data): void
+    {
+        try {
+            $this->setDate($data['EventDate']);
+            $this->setLocation($data['EventLocation']);
+        } catch (Exception | TypeError $exception) {
+            exit($exception->getMessage());
+        }
+    }
+
     private function validateData(): void
     {
         if (is_null($this->location) || is_null($this->date)) {
@@ -120,32 +171,24 @@ class Event
         }
     }
 
-    private function validateIdSet(): void
-    {
-        if (!isset($this->id)) {
-            throw new InvalidArgumentException("Object Id has no value");
-        }
-    }
-
     // getters and setters
-
     /**
      * @return int
      */
-    public function getId(): ?int
+    public function getEventId(): ?int
     {
-        return $this->id;
+        return $this->eventId;
     }
 
     /**
-     * @param int $id
+     * @param int $eventId
      */
-    public function setId(int $id): void
+    public function setEventId(int $eventId): void
     {
-        if ($id <= 0) {
+        if ($eventId <= 0) {
             throw new InvalidArgumentException("Invalid Event ID");
         }
-        $this->id = $id;
+        $this->eventId = $eventId;
     }
 
     /**
@@ -178,7 +221,7 @@ class Event
     public function setDate(string $date): void
     {
         if (!strtotime($date)) {
-            throw new InvalidArgumentException("Invalid date for DOB");
+            throw new InvalidArgumentException("Invalid event date");
         }
 
         if (strtotime(self::DATE_MIN) > strtotime($date)) {
@@ -189,7 +232,7 @@ class Event
     }
 
     /**
-     * @return
+     * @return null
      */
     public function getResults()
     {

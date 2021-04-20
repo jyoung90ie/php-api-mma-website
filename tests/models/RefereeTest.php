@@ -3,7 +3,7 @@
 
 use PHPUnit\Framework\TestCase;
 
-include_once "../lib/Database.php";
+include_once "../helpers/Database.php";
 include_once "../models/Referee.php";
 
 class RefereeTest extends TestCase

@@ -1,5 +1,7 @@
 <?php
 
+namespace helpers;
+
 /**
  * Checks that a variable exists and it has a value.
  *

@@ -1,7 +1,10 @@
 <?php
 
-require_once "APIAccess.php";
-require_once "Permission.php";
+namespace models;
+
+use InvalidArgumentException;
+use PDO;
+use PDOException;
 
 class User
 {
@@ -22,7 +25,7 @@ class User
     private ?string $first_name = null;
     private ?string $last_name = null;
     private ?string $dob = null;
-    private ?int $role_id = null;
+    private ?int $roleId = null;
 
     private $results = null;
 
@@ -42,7 +45,7 @@ class User
      */
     public function getByUsername(string $username)
     {
-        $query = "SELECT * FROM " . self::TABLE . " WHERE UserName=?";
+        $query = "SELECT * FROM Users WHERE UserName=?";
         try {
             $query = $this->db->prepare($query);
             $query->execute([$username]);
@@ -59,41 +62,55 @@ class User
                 $this->first_name = $result['UserFirstName'];
                 $this->last_name = $result['UserLastName'];
                 $this->dob = $result['UserDOB'];
-                $this->role_id = $result['RoleID'];
+                $this->roleId = $result['RoleID'];
 
                 $this->fetchPermissions();
 
                 return $result;
             }
 
+            return false;
+
         } catch (PDOException $exception) {
             die($exception->getMessage());
         }
     }
 
-
-    public function getByApiKey(string $api_key): bool
+    public function getByUserId(int $userId)
     {
-        $query = "SELECT UserID FROM " . APIAccess::TABLE . " WHERE ApiKey=?";
+        try {
+            $query = "SELECT UserName FROM Users WHERE UserID=?";
+            $query = $this->db->prepare($query);
+            $query->execute([$userId]);
+
+            if ($query->rowCount() == 1) {
+                $result = $query->fetch();
+
+                return $this->getByUsername($result['UserName']);
+            }
+
+            return false;
+        } catch (PDOException $exception) {
+            die($exception->getMessage());
+        }
+    }
+
+    public function getByApiKey(string $apiKey)
+    {
+        $query = "SELECT UserID FROM ApiAccess WHERE ApiKey=?";
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$api_key]);
+            $query->execute([$apiKey]);
 
             if ($query->rowCount() == 1) {
                 $result = $query->fetch();
 
                 $userId = intval($result['UserID']);
 
-                $query = "SELECT UserName FROM " . self::TABLE . " WHERE UserID=?";
-                $query = $this->db->prepare($query);
-                $query->execute($userId);
-
-                $result = $query->fetch();
-
-                return $this->getByUsername($result['UserName']);
+                return $this->getByUserId($userId);
             }
-
+            return false;
         } catch (PDOException $exception) {
             die($exception->getMessage());
         }
@@ -138,29 +155,31 @@ class User
      */
     private function fetchPermissions(): void
     {
-        $query = "SELECT * FROM " . self::ROLES_TABLE . " WHERE RoleID=?";
+        $query = "SELECT * FROM RolePermissions WHERE RoleID=?";
         try {
             $query = $this->db->prepare($query);
-            $query->execute($this->role_id);
+            $query->execute([$this->roleId]);
 
-            $result = $query->fetch();
+            if ($query->rowCount() > 0) {
+                // get and store all permissions in object
+                // this saves having to query the database for each permissionID
+                $permissions = new Permission($this->db);
+                // return all records as an associative and indexed array
+                $permissions_all = $permissions->getAll();
 
-            // get and store all permissions in object
-            // this saves having to query the database for each permissionID
-            $permissions = new Permission($this->db);
-            // return all records as an associative and indexed array
-            $permissions_all = $permissions->getAll();
+                // store user's permissions in instance array
+                $this->permissions = [];
 
-            $this->permissions = [];
+                while ($permission = $query->fetch()) {
+                    // array begins at 0, roleId's begin at 1
+                    $index = intval($permission['PermissionID']) - 1;
+                    $area = $permissions_all[$index]['PermissionArea'];
+                    $type = $permissions_all[$index]['PermissionType'];
 
-            while ($permission = $result->fetch_assoc()) {
-                // array begins at 0, roleId's begin at 1
-                $index = intval($permission['PermissionID']) - 1;
-                $area = $permissions_all[$index]['PermissionArea'];
-                $type = $permissions_all[$index]['PermissionType'];
-
-                array_push($this->permissions, ['Area' => $area, 'Type' => $type]);
+                    array_push($this->permissions, ['Area' => $area, 'Type' => $type]);
+                }
             }
+
 
         } catch (PDOException $exception) {
             die($exception->getMessage());
@@ -202,7 +221,7 @@ class User
         try {
             $query = $this->db->prepare($query);
             $query->execute([$this->username, $this->email, $this->password, $this->first_name,
-                $this->last_name, $this->dob, $this->role_id]);
+                $this->last_name, $this->dob, $this->roleId]);
 
             return $query->rowCount();
         } catch (PDOException $exception) {
@@ -232,7 +251,7 @@ class User
         try {
             $query = $this->db->prepare($query);
             $query->execute([$this->username, $this->email, $this->first_name, $this->last_name, $this->dob,
-                $this->role_id, $this->id]);
+                $this->roleId, $this->id]);
 
             return $query->rowCount();
         } catch (PDOException $exception) {
@@ -263,7 +282,7 @@ class User
     private function validateData(): void
     {
         if (is_null($this->username) || is_null($this->email) || is_null($this->password) || is_null($this->first_name)
-            || is_null($this->last_name) || is_null($this->dob) || is_null($this->role_id)) {
+            || is_null($this->last_name) || is_null($this->dob) || is_null($this->roleId)) {
             throw new InvalidArgumentException("All object variables must have a value");
         }
     }
@@ -433,15 +452,15 @@ class User
      */
     public function getRoleId(): ?int
     {
-        return $this->role_id;
+        return $this->roleId;
     }
 
     /**
-     * @param int|null $role_id
+     * @param int|null $roleId
      */
-    public function setRoleId(?int $role_id): void
+    public function setRoleId(?int $roleId): void
     {
-        $this->role_id = $role_id;
+        $this->roleId = $roleId;
         // update permissions
         $this->fetchPermissions();
     }

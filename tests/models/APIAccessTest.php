@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 // sets working directory to test folder - enables tests to be run all together
 chdir(__DIR__);
 
-include_once "../lib/Database.php";
+include_once "../helpers/Database.php";
 include_once "../models/APIAccess.php";
 
 class APIAccessTest extends TestCase

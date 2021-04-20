@@ -14,7 +14,7 @@ if (!isset($db)) {
 }
 // helpers
 $base = dirname(__FILE__);
-include_once "$base/../../lib/helper.php";
+include_once "$base/../../helpers/helper.php";
 
 // fight database model file
 include_once "$base/../../models/Fight.php";
