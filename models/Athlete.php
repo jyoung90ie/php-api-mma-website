@@ -55,8 +55,40 @@ class Athlete
                 $this->dob = $athlete['AthleteDOB'];
 
                 $this->results = $athlete;
+
+                // get athlete fights
+                $query = "SELECT 
+                                E.EventID,
+                                E.EventLocation,
+                                E.EventDate,
+                                FA.FightID,
+                                F.WeightClassID,
+                                F.TitleBout,
+                                F.NumOfRounds,
+                                (CASE 
+                                    WHEN FR.WinnerAthleteID=FA.AthleteID THEN 'Won'
+                                    WHEN NOT(ISNULL(FR.WinnerAthleteID)) THEN 'Lost'                                   
+                                    WHEN ISNULL(FR.WinnerAthleteID) THEN 'Draw'
+                                    ELSE 'Other' END
+                                ) AS Outcome
+                            FROM FightAthletes FA
+                            LEFT JOIN FightResults FR on FA.FightID = FR.FightID
+                            LEFT JOIN Fights F ON FA.FightID = F.FightID
+                            LEFT JOIN Events E ON F.EventID = E.EventID
+                            WHERE FA.AthleteID = ?
+                            ORDER BY E.EventDate DESC";
+                $query = $this->db->prepare($query);
+                $query->execute([$this->athleteId]);
+
+                $athlete_data = $athlete;
+                $athlete_data['Fights'] = [];
+
+                if ($query->rowCount() > 0) {
+                    $fights = $query->fetchAll();
+                    array_push($athlete_data['Fights'], $fights);
+                }
                 
-                return $athlete;
+                return $athlete_data;
             }
             
             return false;
