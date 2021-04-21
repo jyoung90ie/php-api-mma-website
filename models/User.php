@@ -40,6 +40,12 @@ class User
         $this->db = $db;
     }
 
+    /**
+     * Retrieves all fields for a specified user from the database.
+     *
+     * @param int $userId - to retrieve records for
+     * @return false|mixed - user data if userId exists, otherwise, return false
+     */
     public function getOne(int $userId)
     {
         $this->setUserId($userId);
@@ -78,6 +84,11 @@ class User
         }
     }
 
+    /**
+     * Retrieves all user records from the database and returns them.
+     *
+     * @return array containing all user records
+     */
     public function getAll(): array
     {
         $query = "SELECT 
@@ -103,8 +114,9 @@ class User
     }
 
     /**
-     * @param array $data
-     * @return int
+     * Create a new user account in the dabatase.
+     * @param array $data - form data with all required database fields.
+     * @return int number of rows impacted by the delete query: 1 if successful, 0 if not.
      */
     public function create(array $data): int
     {
@@ -144,13 +156,14 @@ class User
     }
 
     /**
-     * @param int $id
-     * @param array|null $data
-     * @return int
+     * Update user data in the database, except the password.
+     * @param int $userId - for the account to be updated
+     * @param array|null $data - form data with specified fields
+     * @return int number of rows impacted by the delete query: 1 if successful, 0 if not.
      */
-    public function update(int $id, array $data = null): int
+    public function update(int $userId, array $data = null): int
     {
-        $this->setUserId($id);
+        $this->setUserId($userId);
 
         $this->setUsername($data['UserName']);
         $this->setEmail($data['UserEmail']);
@@ -184,12 +197,14 @@ class User
     }
 
     /**
-     * @param int $id
-     * @return int
+     * Deletes the user account with the specified id.
+     *
+     * @param int $userId - for the user to be deleted
+     * @return int number of rows impacted by the delete query: 1 if successful, 0 if not.
      */
-    public function delete(int $id): int
+    public function delete(int $userId): int
     {
-        $this->setUserId($id);
+        $this->setUserId($userId);
 
         $query = "DELETE FROM Users WHERE UserID = ?";
 
@@ -205,6 +220,12 @@ class User
 
     // utility functions
 
+    /**
+     * Accepts an array of data, containing specified elements. This will process the data array by calling object
+     * setters for each value. This ensures data is validated prior to use.
+     *
+     * @param array $data
+     */
     private function processData(array $data): void
     {
         try {
@@ -222,26 +243,27 @@ class User
 
 
     /**
-     * Validates a user's password against the value in the database. This works by comparing hashes.
+     * Validates username and password against database records. This works by comparing hashes.
      *
-     * @param string $password
-     * @return bool true if passwords match
+     * @param string $username account username
+     * @param string $password account password
+     * @return false|mixed returns user data if credentials match, otherwise false
      */
-    public function checkPassword(string $password): bool
+    public function verifyLoginCredentials(string $username, string $password)
     {
-        $this->validateIdSet();
 
-        if (is_null($this->password)) {
-            throw new InvalidArgumentException("User password field is empty - try calling get_user(username)");
+        $query = "SELECT * FROM Users WHERE UserName=?;";
+        $query = $this->db->prepare($query);
+        $query->execute([$username]);
+
+        if ($query->rowCount() > 0) {
+            $result = $query->fetch();
+
+            if (password_verify($password, $result['UserPassword'])) {
+                return $result;
+            }
         }
-
-        if (password_verify($password, $this->password)) {
-            $this->authenticated = true;
-        } else {
-            $this->authenticated = false;
-        }
-
-        return $this->authenticated;
+        return false;
     }
 
 
@@ -308,7 +330,38 @@ class User
         }
     }
 
-    public function getByApiKey(string $apiKey)
+    /**
+     * Gets user data from the database.
+     *
+     * @param string $username - the username that will be used to retrieve data.
+     * @return false|mixed - user data for the specified username, if it exists, otherwise returns false.
+     */
+    public function getUserByUserName(string $username)
+    {
+        $query = "SELECT UserID FROM Users WHERE UserName=?";
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$username]);
+
+
+            if ($query->rowCount() > 0) {
+                $result = $query->fetch();
+                return $this->getOne($result['UserId']);
+            }
+
+            return false;
+        } catch (PDOException | Exception $exception) {
+            die($exception->getMessage());
+        }
+    }
+
+    /**
+     * Returns the user associated with the ApiKey.
+     *
+     * @param string $apiKey
+     * @return false|mixed - PDO results if user exists, otherwise, return false
+     */
+    public function getUserByApiKey(string $apiKey)
     {
         $query = "SELECT UserID FROM ApiAccess WHERE ApiKey=?";
 
@@ -329,19 +382,27 @@ class User
     }
 
     /**
-     * @param string $permission_area
-     * @param string $permission_type
+     * Determines whether a user has sufficient permission to access the specific functionality via API/front-end.
+     *
+     * @param string $permissionModule - the module being accessed, e.g. fight/event/user/etc.
+     * @param string $permissionType - the type of access required, e.g. create/read/update/delete
      * @return bool
      */
-    public function hasPermission(string $permission_area, string $permission_type): bool
+    public function hasPermission(string $permissionModule, string $permissionType): bool
     {
-        $permission = ['Area' => $permission_area, 'Type' => $permission_type];
+        $permission = ['Area' => $permissionModule, 'Type' => $permissionType];
 
         return in_array($permission, $this->permissions);
     }
 
     // utility functions
 
+    /**
+     * Checks the specified instance vars to ensure they have all been populated. An exception will be thrown if any of
+     * the vars have not been populated.
+     *
+     * Note: this does not check if password has been populated. This will need to be assessed in specific functions.
+     */
     private function validateData(): void
     {
         if (is_null($this->username) || is_null($this->email) || is_null($this->firstName)
@@ -350,14 +411,10 @@ class User
         }
     }
 
-    private function validateIdSet(): void
-    {
-        if (!isset($this->userId)) {
-            throw new InvalidArgumentException("Object Id has no value");
-        }
-    }
-
     /**
+     * Searches the database to see if the email has already been used. This is to prevent multiple accounts sharing the
+     * same email address.
+     *
      * @return bool true - if the email is already used in the users table; false - otherwise
      */
     public function checkEmail(): bool
