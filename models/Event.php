@@ -111,6 +111,17 @@ class Event
         }
     }
 
+    /**
+     * Retrieves the total records in the database - used for pagination, to calculate pages.
+     *
+     * @return int total number of records.
+     */
+    public function getTotal(): int
+    {
+        $query = $this->db->query("SELECT * FROM Events");
+        return $query->rowCount();
+    }
+
 
     public function create(array $data): int
     {

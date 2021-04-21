@@ -114,6 +114,17 @@ class User
     }
 
     /**
+     * Retrieves the total records in the database - used for pagination, to calculate pages.
+     *
+     * @return int total number of records.
+     */
+    public function getTotal(): int
+    {
+        $query = $this->db->query("SELECT * FROM Users");
+        return $query->rowCount();
+    }
+
+    /**
      * Create a new user account in the dabatase.
      * @param array $data - form data with all required database fields.
      * @return int number of rows impacted by the delete query: 1 if successful, 0 if not.

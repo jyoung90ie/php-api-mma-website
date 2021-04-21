@@ -108,11 +108,10 @@ class Fight
                     LEFT JOIN Referees R ON R.RefereeID = F.RefereeID
                     LEFT JOIN FightResults FR ON FR.FightID = F.FightID
                     LEFT JOIN FightAthletes FA ON FA.FightID = F.FightID
-                    LEFT JOIN Athletes A on FA.AthleteID = A.AthleteID
                     LEFT JOIN Athletes WA on FA.AthleteID = FR.WinnerAthleteID
                     LEFT JOIN ResultTypes RT on RT.ResultTypeID = FR.ResultTypeID
-                    LIMIT $start, $limit;
-                    ";
+                    LIMIT $start, $limit 
+                ";
 
         try {
             $query = $this->db->query($query);
@@ -123,6 +122,17 @@ class Fight
         } catch (PDOException | \Exception $exception) {
             die($exception->getMessage());
         }
+    }
+
+    /**
+     * Retrieves the total records in the database - used for pagination, to calculate pages.
+     *
+     * @return int total number of records.
+     */
+    public function getTotal(): int
+    {
+        $query = $this->db->query("SELECT * FROM Fights");
+        return $query->rowCount();
     }
 
     public function create(array $data = null): array
