@@ -86,7 +86,7 @@ class Fight
         }
     }
 
-    public function getAll(): array
+    public function getAll(int $limit, int $start): array
     {
         $query = "SELECT 
                         F.FightID,
@@ -111,7 +111,7 @@ class Fight
                     LEFT JOIN Athletes A on FA.AthleteID = A.AthleteID
                     LEFT JOIN Athletes WA on FA.AthleteID = FR.WinnerAthleteID
                     LEFT JOIN ResultTypes RT on RT.ResultTypeID = FR.ResultTypeID
-                    LIMIT 10;
+                    LIMIT $start, $limit;
                     ";
 
         try {

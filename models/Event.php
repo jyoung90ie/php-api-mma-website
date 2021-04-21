@@ -54,7 +54,7 @@ class Event
 
                 if ($query->rowCount() > 0) {
                     $fights = $query->fetchAll();
-                    foreach($fights as $fight) {
+                    foreach ($fights as $fight) {
                         $athlete = $this->db->prepare("SELECT AthleteID FROM FightAthletes WHERE FightID=?;");
                         $athlete->execute([$fight['FightID']]);
 
@@ -74,9 +74,31 @@ class Event
         }
     }
 
-    public function getAll(): array
+    /**
+     * Return list of events in descending order by event date.
+     *
+     * @param int $limit the number of events to return
+     * @param int $start the event to start from
+     * @param bool $upcoming
+     *  true - returns upcoming events only
+     *  false - returns only past events
+     *  null - does not filter
+     * @return array
+     */
+    public function getAll(int $limit, int $start, bool $upcoming = null): array
     {
-        $query = "SELECT * FROM Events";
+        $filter = "";
+        if (!is_null($upcoming)) {
+            $date = date('Y-m-d');
+            if ($upcoming) {
+                $filter = "WHERE EventDate >= $date";
+            } else {
+                $filter = "WHERE EventDate < $date";
+            }
+
+        }
+
+        $query = "SELECT * FROM Events $filter ORDER BY EventDate DESC LIMIT $start, $limit";
         try {
             $query = $this->db->query($query);
 
@@ -172,6 +194,7 @@ class Event
     }
 
     // getters and setters
+
     /**
      * @return int
      */

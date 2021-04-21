@@ -98,9 +98,9 @@ class Athlete
         }
     }
 
-    public function getAll()
+    public function getAll(int $limit, int $start): array
     {
-        $query = "SELECT * FROM Athletes";
+        $query = "SELECT * FROM Athletes ORDER BY AthleteID DESC LIMIT $start, $limit;";
         try {
             $query = $this->db->query($query);
 
