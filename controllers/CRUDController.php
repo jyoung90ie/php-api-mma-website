@@ -2,7 +2,6 @@
 
 namespace controllers;
 
-use PDO;
 use models\User;
 
 
@@ -23,6 +22,14 @@ class CRUDController
     private object $module;
     private ?array $queryStrings;
 
+    /**
+     * CRUDController constructor.
+     * @param object $module
+     * @param User $user
+     * @param string $request
+     * @param int|null $moduleId
+     * @param array|null $queryStrings
+     */
     public function __construct(object $module, User $user, string $request, ?int $moduleId, ?array $queryStrings)
     {
         $this->requestMethod = $request;
@@ -32,6 +39,9 @@ class CRUDController
         $this->queryStrings = $queryStrings;
     }
 
+    /**
+     * Routes all HTTP requests to the appropriate functions. This must be called after the object is created.
+     */
     public function process_request()
     {
         switch ($this->requestMethod) {
@@ -65,6 +75,14 @@ class CRUDController
         }
     }
 
+    /**
+     * Return a list of module data for displaying. Pagination is included, limiting the maximum results per request to
+     * that set in the constant MAX_RECORDS.
+     *
+     * The permissions for the user making the request will be checked prior to execution.
+     *
+     * @return array returns list of data related to the module
+     */
     private function getAll(): array
     {
         if (!$this->user->hasPermission($this->module::PERMISSION_AREA, 'READ')) {
@@ -95,6 +113,14 @@ class CRUDController
         return $response;
     }
 
+    /**
+     * Returns detailed data for one specific module item.
+     *
+     * The permissions for the user making the request will be checked prior to execution.
+     *
+     * @param int $id
+     * @return array
+     */
     private function getOne(int $id): array
     {
         if (!$this->user->hasPermission($this->module::PERMISSION_AREA, 'READ')) {
@@ -111,6 +137,14 @@ class CRUDController
         return $response;
     }
 
+    /**
+     * Handles the creation of a new module object. This works by fetching the POST data via php://input and hence no
+     * data parameter is required.
+     *
+     * The permissions for the user making the request will be checked prior to execution.
+     *
+     * @return array information on the newly created object
+     */
     private function create(): array
     {
         if (!$this->user->hasPermission($this->module::PERMISSION_AREA, 'CREATE')) {
@@ -125,6 +159,15 @@ class CRUDController
         return $response;
     }
 
+    /**
+     * Handles the updating of an existing module item. This works by fetching the POST data via php://input and hence no
+     * data parameter is required.
+     *
+     * The permissions for the user making the request will be checked prior to execution.
+     *
+     * @param int $id
+     * @return array
+     */
     private function update(int $id): array
     {
         if (!$this->user->hasPermission($this->module::PERMISSION_AREA, 'UPDATE')) {
@@ -145,6 +188,13 @@ class CRUDController
         return $response;
     }
 
+    /**
+     * Handles the deletion of a module item.
+     * The permissions for the user making the request will be checked prior to execution.
+     *
+     * @param int $id
+     * @return array
+     */
     private function delete(int $id): array
     {
         if (!$this->user->hasPermission($this->module::PERMISSION_AREA, 'DELETE')) {
@@ -161,7 +211,19 @@ class CRUDController
         return $response;
     }
 
-    private function createLinks(int $start, int $limit, int $resultSize): array {
+    /**
+     * Creates a list of links for paginated results which will output:
+     *  self - current request url
+     *  next - if there are more results, will display the url to view them
+     *  next - if there are any previous results, will display the url to view them
+     *
+     * @param int $start the record that browsing started at
+     * @param int $limit the maximum records that will be returned to the user as part of the request
+     * @param int $resultSize the total number of records retrieved and returned to the user
+     * @return array containing links [self, next, prev]
+     */
+    private function createLinks(int $start, int $limit, int $resultSize): array
+    {
         $urlPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
         $nextQuery['start'] = $start + $limit;
@@ -181,18 +243,33 @@ class CRUDController
         ];
     }
 
+    /**
+     * Used when a user requests an invalid item/endpoint.
+     *
+     * @return array containing the appropriate HTTP response header
+     */
     private function notFound(): array
     {
         $response['status_code_header'] = self::HTTP_NOT_FOUND;
         return $response;
     }
 
+    /**
+     * Used when a user requests tries to access an endpoint without having been authenticated.
+     *
+     * @return array containing the appropriate HTTP response header
+     */
     private function notAuthenticated(): array
     {
         $response['status_code_header'] = self::HTTP_FORBIDDEN;
         return $response;
     }
 
+    /**
+     * Used when a user requests tries to access an endpoint which they do not have permission to access.
+     *
+     * @return array containing the appropriate HTTP response header
+     */
     private function notAuthorized(): array
     {
         $response['status_code_header'] = self::HTTP_UNAUTHORIZED;
