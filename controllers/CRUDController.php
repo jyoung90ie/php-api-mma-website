@@ -107,7 +107,8 @@ class CRUDController
 
         $response['status_code_header'] = self::HTTP_SUCCESS;
 
-        $response['body']['results'] = sizeof($result);
+        $response['body']['totalResults'] = $this->module->getTotal();
+        $response['body']['currentResults'] = sizeof($result);
         $response['body']['links'] = $this->createLinks($start, $limit, sizeof($result));
         $response['body']['data'] = $result;
         return $response;
@@ -215,7 +216,7 @@ class CRUDController
      * Creates a list of links for paginated results which will output:
      *  self - current request url
      *  next - if there are more results, will display the url to view them
-     *  next - if there are any previous results, will display the url to view them
+     *  prev - if there are any previous results, will display the url to view them
      *
      * @param int $start the record that browsing started at
      * @param int $limit the maximum records that will be returned to the user as part of the request
@@ -228,18 +229,20 @@ class CRUDController
 
         $nextQuery['start'] = $start + $limit;
         $nextQuery['limit'] = $limit;
+        $nextQuery['apiKey'] = $this->queryStrings['apiKey'] ?? null;
         $next = $urlPath . "?" . http_build_query($nextQuery);
 
         $prevStart = $start - $limit;
 
         $prevQuery['start'] = ($prevStart < 0 ? 0 : $prevStart);
         $prevQuery['limit'] = $limit;
+        $prevQuery['apiKey'] = $this->queryStrings['apiKey'] ?? null;
         $prev = $urlPath . "?" . http_build_query($prevQuery);
 
         return [
             "self" => $_SERVER['REQUEST_URI'],
             "next" => ($resultSize < $limit ? "" : $next),
-            "previous" => ($start == 0 ? "" : $prev)
+            "prev" => ($start == 0 ? "" : $prev)
         ];
     }
 
