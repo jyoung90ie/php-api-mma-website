@@ -13,7 +13,6 @@ header("Access-Control-Allow-Methods: GET,POST,PUT,DELETE");
 
 include_once '../autoload.php';
 
-//use helpers\Database;
 use models\{APIAccess, Athlete, Event, Fight, User};
 use controllers\AuthController;
 use controllers\CRUDController;
@@ -28,7 +27,8 @@ const AUTHENTICATION_MODULE = 'auth';
 
 $db = (new Database())->getConnection();
 
-$urlPath = explode('/', parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+// remove trailing / and any query strings, then break up uri into associate array
+$urlPath = explode('/', parse_url(rtrim($_SERVER['REQUEST_URI'], '/'), PHP_URL_PATH));
 $urlQueryStrings = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);
 // create array from urlQueryStrings
 parse_str($urlQueryStrings, $queryStrings);
@@ -36,16 +36,22 @@ parse_str($urlQueryStrings, $queryStrings);
 $requestMethod = $_SERVER['REQUEST_METHOD'];
 $authPathPrefix = 'api';
 // get position of /api in the url path
-$api_pos = array_search($authPathPrefix, $urlPath);
+$apiUrlPosition = array_search($authPathPrefix, $urlPath);
 
 
-$apiRequest = $urlPath[$api_pos + 1];
+// if no modules have been called then return api information
+if (sizeof($urlPath) == $apiUrlPosition + 1) {
+    header(CRUDController::HTTP_SUCCESS);
+    echo json_encode(apiInformation());
+    exit();
+}
 
-if ($apiRequest != AUTHENTICATION_MODULE) {
-    // treat as normal api request - verify api key
-    $apiKey = $urlPath[$api_pos + 1];
-    $apiModule = $urlPath[$api_pos + 2];
-    $id = $urlPath[$api_pos + 3];
+$apiModule = $urlPath[$apiUrlPosition + 1] ?? null;
+$apiKey = ($queryStrings['apiKey'] ?? "");
+
+// if not authentication endpoint then require an api key
+if ($apiModule != AUTHENTICATION_MODULE) {
+    $id = $urlPath[$apiUrlPosition + 2] ?? null;
     $id = (!empty($id) ? intval($id) : null);
 
     ////////////////////////////////////////////////////////
@@ -56,7 +62,6 @@ if ($apiRequest != AUTHENTICATION_MODULE) {
     //$api_module = 'user';
     //$requestMethod = 'PUT';
     //$id = 94;
-
     ////////////////////////////////////////////////////////
 
     $apiAccess = new APIAccess($db);
@@ -76,11 +81,7 @@ if ($apiRequest != AUTHENTICATION_MODULE) {
     }
     // get user's access rights
     $user->fetchPermissions();
-} else {
-    // treat as authentication request - no apikey required
-    $apiModule = $apiRequest;
 }
-
 
 
 try {
@@ -113,4 +114,97 @@ try {
     exit($exception->getMessage());
 }
 
+
+function apiInformation(): array
+{
+    $response['paths'] = apiEndPoints();
+    return $response;
+}
+
+function apiEndPoints(): array
+{
+    return [
+        '/auth' => [
+            'post' => [
+                'description' => 'Validates user credentials and returns user data when successful.'
+            ]
+        ],
+        '/athlete' => [
+            'get' => [
+                'description' => 'Returns all athletes that the user has permission to view.'
+            ]
+        ],
+        '/athlete/{athleteId}' => [
+            'get' => [
+                'description' => 'Returns detailed information for the specified athlete if the user has permission.'
+            ],
+            'post' => [
+                'description' => 'Creates a new athlete subject to user permission. Requires that a json object is provided.'
+            ],
+            'put' => [
+                'description' => 'Updates the athlete if the user has permission. Requires that a json object is provided.'
+            ],
+            'delete' => [
+                'description' => 'The athlete will be deleted subject to requester permission.'
+            ]
+        ],
+        '/event' => [
+            'get' => [
+                'description' => 'Returns all events that the user has permission to view.'
+            ]
+        ],
+        '/event/{eventId}' => [
+            'get' => [
+                'description' => 'Returns detailed information for the specified event if the user has permission.'
+            ],
+            'post' => [
+                'description' => 'Creates a new event subject to user permission. Requires that a json object is provided.'
+            ],
+            'put' => [
+                'description' => 'Updates the event if the user has permission. Requires that a json object is provided.'
+            ],
+            'delete' => [
+                'description' => 'The event will be deleted subject to requester permission.'
+            ]
+        ],
+        '/fight' => [
+            'get' => [
+                'description' => 'Returns all events that the user has permission to view.'
+            ]
+        ],
+        '/fight/{fightId}' => [
+            'get' => [
+                'description' => 'Returns detailed information for the specified fight if the user has permission.'
+            ],
+            'post' => [
+                'description' => 'Creates a new fight subject to user permission. Requires that a json object is provided.'
+            ],
+            'put' => [
+                'description' => 'Updates the fight if the user has permission. Requires that a json object is provided.'
+            ],
+            'delete' => [
+                'description' => 'The fight will be deleted subject to requester permission.'
+            ]
+        ],
+        '/user' => [
+            'get' => [
+                'description' => 'Returns all users for which the requester has permission to view.'
+            ]
+        ],
+        '/user/{userId}' => [
+            'get' => [
+                'description' => 'Returns detailed information for the specified user if the user has permission.'
+            ],
+            'post' => [
+                'description' => 'Creates a new user subject to user permission. Requires that a json object is provided.'
+            ],
+            'put' => [
+                'description' => 'Updates the user if the user has permission. Requires that a json object is provided.'
+            ],
+            'delete' => [
+                'description' => 'The user will be deleted subject to requester permission.'
+            ]
+        ]
+    ];
+}
 // EOF
