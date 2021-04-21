@@ -24,15 +24,15 @@ class CRUDController
 
     /**
      * CRUDController constructor.
-     * @param object $module
-     * @param User $user
-     * @param string $request
-     * @param int|null $moduleId
-     * @param array|null $queryStrings
+     * @param object $module an instantiated object of a model class
+     * @param User $user an instantiated user object
+     * @param string $requestMethod the HTTP request type
+     * @param int|null $moduleId the unique identifier for the request (if applicable)
+     * @param array|null $queryStrings the url query strings (if applicable)
      */
-    public function __construct(object $module, User $user, string $request, ?int $moduleId, ?array $queryStrings)
+    public function __construct(object $module, User $user, string $requestMethod, ?int $moduleId, ?array $queryStrings)
     {
-        $this->requestMethod = $request;
+        $this->requestMethod = $requestMethod;
         $this->moduleId = $moduleId;
         $this->user = $user;
         $this->module = $module;
@@ -40,7 +40,7 @@ class CRUDController
     }
 
     /**
-     * Routes all HTTP requests to the appropriate functions. This must be called after the object is created.
+     * Routes all HTTP requests to the appropriate functions - this must be called after the object is created.
      */
     public function process_request()
     {

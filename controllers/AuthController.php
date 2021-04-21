@@ -19,12 +19,20 @@ class AuthController
     private User $user;
     private string $requestMethod;
 
-    public function __construct(User $user, string $request)
+    /**
+     * AuthController constructor.
+     * @param User $user instantiation of user object
+     * @param string $requestMethod the HTTP request type
+     */
+    public function __construct(User $user, string $requestMethod)
     {
-        $this->requestMethod = $request;
+        $this->requestMethod = $requestMethod;
         $this->user = $user;
     }
 
+    /**
+     * Routes all HTTP requests to the appropriate functions - this must be called after the object is created.
+     */
     public function process_request()
     {
         switch ($this->requestMethod) {
@@ -43,6 +51,12 @@ class AuthController
         }
     }
 
+    /**
+     * Handles the verification of user credentials (username and password) which are passed through using
+     * php://input.
+     *
+     * @return array containing user data
+     */
     private function login(): array
     {
         $data = json_decode(file_get_contents('php://input'), true);
@@ -70,19 +84,33 @@ class AuthController
     }
 
 
-
+    /**
+     * Used when a user requests an invalid item/endpoint.
+     *
+     * @return array containing the appropriate HTTP response header
+     */
     private function notFound(): array
     {
         $response['status_code_header'] = self::HTTP_NOT_FOUND;
         return $response;
     }
 
+    /**
+     * Used when a user requests tries to access an endpoint without having been authenticated.
+     *
+     * @return array containing the appropriate HTTP response header
+     */
     private function notAuthenticated(): array
     {
         $response['status_code_header'] = self::HTTP_FORBIDDEN;
         return $response;
     }
 
+    /**
+     * Used when a user requests tries to access an endpoint which they do not have permission to access.
+     *
+     * @return array containing the appropriate HTTP response header
+     */
     private function notAuthorized(): array
     {
         $response['status_code_header'] = self::HTTP_UNAUTHORIZED;
