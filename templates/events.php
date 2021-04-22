@@ -2,15 +2,22 @@
 
 use helpers\APIRequest;
 
-$apiAddress = "http://localhost:8888/promma/api";
-$apiModule = "/event";
+if (!constant("API_URL")) {
+    echo 'Api address not set';
+    return;
+}
 
-parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $queryString);
+$apiModule = "/event";
 $queryString['start'] = $queryString['start'] ?? 0;
 
 
-$apiRequest = new APIRequest($apiAddress, $apiModule, null, $queryString);
+$apiRequest = new APIRequest(constant("API_URL"), $apiModule, null, $queryString);
 $results = $apiRequest->fetchApiData();
+
+if (isset($results['Error']) || !$results) {
+    echo 'API request failed';
+    return;
+}
 
 $events = $results['data'];
 ?>
@@ -55,6 +62,3 @@ $events = $results['data'];
         </nav>
         <!-- ./Pagination -->
     </main>
-
-<?php
-require_once 'templates/footer.php';

@@ -1,9 +1,22 @@
 <?php
 require_once 'autoload.php';
 
-require_once 'templates/header.php';
+const TEMPLATES_FOLDER = 'templates/';
+const API_URL = 'http://localhost:8888/promma/api'; // no trailing backslash
 
-$templatesFolder = 'templates/';
+const NAVBAR_PAGES = [
+    ['link' => './?page=index', 'text' => 'Home'],
+    ['link' => './?page=events', 'text' => 'Events'],
+    ['link' => './?page=rankings', 'text' => 'Rankings'],
+    ['link' => './?page=athletes', 'text' => 'Athletes'],
+];
+
+parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $queryString);
+$activePage = '?page=' . $queryString['page'] ?? 'index';
+
+
+require_once TEMPLATES_FOLDER . 'header.php';
+
 
 if (!isset($_GET['page'])) {
     $page = '';
@@ -11,25 +24,28 @@ if (!isset($_GET['page'])) {
     $page = $_GET['page'];
 }
 
+
+$apiAddress = ""; // used within templates
+
 switch ($page) {
     case 'athletes':
-        include_once $templatesFolder . 'athletes.php';
+        include_once TEMPLATES_FOLDER . 'athletes.php';
         break;
     case 'events':
-        include_once $templatesFolder . 'events.php';
+        include_once TEMPLATES_FOLDER . 'events.php';
         break;
     case 'event':
-        include_once $templatesFolder . 'event.php';
+        include_once TEMPLATES_FOLDER . 'event.php';
         break;
     case 'rankings':
-        include_once $templatesFolder . 'rankings.php';
+        include_once TEMPLATES_FOLDER . 'rankings.php';
         break;
     default:
-        include_once $templatesFolder . 'index.php';
+        include_once TEMPLATES_FOLDER . 'index.php';
         break;
 
 }
 
 
-require_once 'templates/footer.php';
+require_once TEMPLATES_FOLDER . 'footer.php';
 ?>
