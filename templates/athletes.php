@@ -1,7 +1,7 @@
 <?php
 require_once 'header.php';
 ?>
-<main class="athletes-container container-fluid">
+<main class="athletes-container container">
 <table class="table">
     <thead>
     <tr>
