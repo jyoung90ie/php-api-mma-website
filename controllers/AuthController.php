@@ -2,7 +2,6 @@
 
 namespace controllers;
 
-use PDO;
 use models\User;
 
 
