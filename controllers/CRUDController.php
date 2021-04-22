@@ -10,11 +10,12 @@ class CRUDController
     const HTTP_SUCCESS = 'HTTP/1.1 200 OK';
     const HTTP_CREATED = 'HTTP/1.1 201 Created';
     const HTTP_SUCCESS_NO_CONTENT = 'HTTP/1.1 204 No Content'; // update and delete
+    const HTTP_BAD_REQUEST = 'HTTP/1.1 400 Bad Request';
     const HTTP_UNAUTHORIZED = 'HTTP/1.1 401 Unauthorized';
-    const HTTP_NOT_FOUND = 'HTTP/1.1 404 Not Found';
     const HTTP_FORBIDDEN = 'HTTP/1.1 403 Forbidden';
+    const HTTP_NOT_FOUND = 'HTTP/1.1 404 Not Found';
 
-    const MAX_RECORDS = 10; // maximum number of records that can be return per api request
+    const MAX_RECORDS = 5; // maximum number of records that can be return per api request
 
     private ?int $moduleId;
     private User $user;
@@ -108,6 +109,7 @@ class CRUDController
         $response['status_code_header'] = self::HTTP_SUCCESS;
 
         $response['body']['totalResults'] = $this->module->getTotal();
+        $response['body']['resultsPerPage'] = $limit;
         $response['body']['currentResults'] = sizeof($result);
         $response['body']['links'] = $this->createLinks($start, $limit, sizeof($result));
         $response['body']['data'] = $result;
@@ -155,6 +157,10 @@ class CRUDController
         $data = json_decode(file_get_contents('php://input'), true);
         $result = $this->module->create($data);
 
+        if (!$result) {
+            return $this->badRequest();
+        }
+
         $response['status_code_header'] = self::HTTP_CREATED;
         $response['body'] = $result;
         return $response;
@@ -176,7 +182,7 @@ class CRUDController
         }
 
         if (!$this->module->getOne($id)) {
-            // fight doesn't exist
+            // item doesn't exist
             return $this->notFound();
         }
 
@@ -239,8 +245,10 @@ class CRUDController
         $prevQuery['apiKey'] = $this->queryStrings['apiKey'] ?? null;
         $prev = $urlPath . "?" . http_build_query($prevQuery);
 
+        $self = $urlPath . "?" . http_build_query(['start' => $start, 'limit' => $limit]);
+
         return [
-            "self" => $_SERVER['REQUEST_URI'],
+            "self" => $self,
             "next" => ($resultSize < $limit ? "" : $next),
             "prev" => ($start == 0 ? "" : $prev)
         ];
@@ -276,6 +284,17 @@ class CRUDController
     private function notAuthorized(): array
     {
         $response['status_code_header'] = self::HTTP_UNAUTHORIZED;
+        return $response;
+    }
+
+    /**
+     * Used when a user tries to make a request that failed.
+     *
+     * @return array containing the appropriate HTTP response header
+     */
+    private function badRequest(): array
+    {
+        $response['status_code_header'] = self::HTTP_BAD_REQUEST;
         return $response;
     }
 
