@@ -28,7 +28,8 @@ class APIRequestTest extends TestCase
     public function testFetchResponseEventAllValid(): void
     {
         $apiModule = $this->eventEndpoint;
-        $apiRequest = new APIRequest($this->apiUrl, $apiModule);
+        $queryStrings = ['page' => 'events', 'start' => 10];
+        $apiRequest = new APIRequest($this->apiUrl, $apiModule, null, $queryStrings);
 
         $response = $apiRequest->fetchApiData();
 
@@ -81,7 +82,7 @@ class APIRequestTest extends TestCase
         $itemId = "invalid";
 
         // expect itemId to through typeError exception as it's not an int
-         $this->expectException(\TypeError::class);
+        $this->expectException(\TypeError::class);
         $apiRequest = new APIRequest($this->apiUrl, $apiModule, $itemId);
     }
 
@@ -138,7 +139,7 @@ class APIRequestTest extends TestCase
         $itemId = "invalid";
 
         // expect itemId to through typeError exception as it's not an int
-         $this->expectException(\TypeError::class);
+        $this->expectException(\TypeError::class);
         $apiRequest = new APIRequest($this->apiUrl, $apiModule, $itemId);
     }
 

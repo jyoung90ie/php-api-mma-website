@@ -102,6 +102,9 @@ class APIRequest
             return false;
         }
 
+        $existingQueryString = $this->queryStrings;
+        unset($existingQueryString['start']);
+
         $links = $this->apiResponse['links'];
         parse_str(parse_url($links['self'], PHP_URL_QUERY), $currentPageResults);
         $totalResults = $this->apiResponse['totalResults'] ?? null;
@@ -122,7 +125,7 @@ class APIRequest
 
         // previous button
         if ($activePage > 1) {
-            $prevLink = '?' . http_build_query(['start' => $startingResult - $resultsPerPage]);
+            $prevLink = '?' . http_build_query(array_merge($existingQueryString, ['start' => $startingResult - $resultsPerPage]));
             $prevLinkClass = '';
         }
 
@@ -141,7 +144,7 @@ class APIRequest
 
         for ($page = $firstPage; $page <= $lastPage; $page++) {
             $urlStartValue = $startingResult + $resultsPerPage * ($page - $activePage);
-            $pageUrl = '?' . http_build_query(['start' => $urlStartValue]);
+            $pageUrl = '?' . http_build_query(array_merge($existingQueryString, ['start' => $urlStartValue]));
 
             $activePageClass = '';
 
@@ -156,7 +159,7 @@ class APIRequest
 
         // next button
         if ($activePage < $totalPages) {
-            $nextLink = '?' . http_build_query(['start' => $startingResult + $resultsPerPage]);
+            $nextLink = '?' . http_build_query(array_merge($existingQueryString, ['start' => $startingResult + $resultsPerPage]));
             $nextLinkClass = '';
         }
 
