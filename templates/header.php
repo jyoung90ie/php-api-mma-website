@@ -1,3 +1,15 @@
+<?php
+$activePage = basename($_SERVER['PHP_SELF']);
+
+$navbarPages = [
+        ['link' => './index.php', 'text' => 'Home'],
+        ['link' => './events.php', 'text' => 'Events'],
+        ['link' => './rankings.php', 'text' => 'Rankings'],
+        ['link' => './athletes.php', 'text' => 'Athletes'],
+];
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -24,18 +36,7 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="./index.php">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="./events.php">Events</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="./rankings.php">Rankings</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="./athletes.php">Athletes</a>
-                </li>
+                <?=genNavbar($navbarPages, $activePage); ?>
             </ul>
         </div>
         <div class="my-navbar d-none d-lg-flex">
@@ -62,3 +63,22 @@
     </div>
 </nav>
 <header id="logo"></header>
+
+<?php
+
+function genNavbar(array $navbarPages, string $activePage) {
+                $outputHTML = '';
+    foreach($navbarPages as $page) {
+        if (ltrim($page['link'], './') == $activePage) {
+            $outputHTML .= '                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="' . $page['link'] . '">'.$page['text'].'</a>
+                </li>'."\n";
+        } else {
+            $outputHTML .= '                <li class="nav-item">
+                    <a class="nav-link" href="' . $page['link'] . '">'.$page['text'].'</a>
+                </li>';
+        }
+    }
+
+    return $outputHTML;
+}
