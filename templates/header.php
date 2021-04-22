@@ -1,15 +1,10 @@
 <?php
-$activePage = basename($_SERVER['PHP_SELF']);
 
-$navbarPages = [
-        ['link' => './?page=index', 'text' => 'Home'],
-        ['link' => './?page=events', 'text' => 'Events'],
-        ['link' => './?page=rankings', 'text' => 'Rankings'],
-        ['link' => './?page=athletes', 'text' => 'Athletes'],
-];
+include_once 'helpers/helper.php';
+use function helpers\genNavbar;
+
 
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -36,7 +31,7 @@ $navbarPages = [
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mb-2 mb-lg-0">
-                <?=genNavbar($navbarPages, $activePage); ?>
+                <?php echo genNavbar(constant("NAVBAR_PAGES"), $activePage); ?>
             </ul>
         </div>
         <div class="my-navbar d-none d-lg-flex">
@@ -63,22 +58,3 @@ $navbarPages = [
     </div>
 </nav>
 <header id="logo"></header>
-
-<?php
-
-function genNavbar(array $navbarPages, string $activePage) {
-                $outputHTML = '';
-    foreach($navbarPages as $page) {
-        if (ltrim($page['link'], './') == $activePage) {
-            $outputHTML .= '                <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="' . $page['link'] . '">'.$page['text'].'</a>
-                </li>'."\n";
-        } else {
-            $outputHTML .= '                <li class="nav-item">
-                    <a class="nav-link" href="' . $page['link'] . '">'.$page['text'].'</a>
-                </li>';
-        }
-    }
-
-    return $outputHTML;
-}
