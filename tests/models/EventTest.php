@@ -1,15 +1,19 @@
 <?php
 
+namespace models;
 
+require_once '../../autoload.php';
+
+use helpers\Database;
+use InvalidArgumentException;
+use PDO;
 use PHPUnit\Framework\TestCase;
 
-include_once "../helpers/Database.php";
-include_once "../models/Event.php";
 
 class EventTest extends TestCase
 {
     private Event $event;
-    private mysqli $db;
+    private ?PDO $db;
 
     // test data vars
     private int $idValid;
@@ -37,12 +41,13 @@ class EventTest extends TestCase
     // run after each test
     public function tearDown(): void
     {
-        $this->db->close();
+        // destroy connection
+        $this->db = null;
     }
 
     public function testDataStartsAsNull()
     {
-        self::assertNull($this->event->getId());
+        self::assertNull($this->event->getEventId());
         self::assertNull($this->event->getLocation());
         self::assertNull($this->event->getDate());
     }
@@ -54,37 +59,34 @@ class EventTest extends TestCase
         $this->event->setDate($this->dateValid);
 
         // create new record in db
-        $create_query = $this->event->create();
+        $data = null;
+        $create_query = $this->event->create($data);
         // check that query ran successfully
-        self::assertTrue($create_query);
+        self::assertEquals(1, $create_query);
         // check the object now has an id
-        $id = $this->event->getId();
+        $id = $this->event->getEventId();
         self::assertNotNull($id);
 
         // delete object
-        $delete_query = $this->event->delete();
-        self::assertTrue($delete_query);
+        $delete_query = $this->event->delete($id);
+        self::assertEquals(1, $delete_query);
     }
 
     public function testGetOneValid()
     {
         $result = $this->event->getOne($this->idValid);
 
-        self::assertTrue($result->num_rows == 1);
+        self::assertTrue(sizeof($result) > 0);
 
-        $data = $result->fetch_assoc();
-
-        self::assertEquals($data['EventID'], $this->event->getId());
-        self::assertEquals($data['EventLocation'], $this->event->getLocation());
-        self::assertEquals($data['EventDate'], $this->event->getDate());
+        self::assertEquals($result['EventID'], $this->event->getEventId());
+        self::assertEquals($result['EventLocation'], $this->event->getLocation());
+        self::assertEquals($result['EventDate'], $this->event->getDate());
     }
 
     public function testGetOneInvalid()
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("Invalid Event ID");
-
-        $this->event->getOne($this->idInvalid);
+        $result = $this->event->getOne($this->idInvalid);
+        self::assertFalse($result);
     }
 
     public function testGetAllAndGetResultsValid()
@@ -92,7 +94,7 @@ class EventTest extends TestCase
         $results = $this->event->getAll();
 
         self::assertEquals($this->event->getResults(), $results);
-        self::assertTrue($results->num_rows > 0);
+        self::assertTrue(sizeof($results) > 0);
     }
 
     public function testUpdate()
@@ -103,9 +105,10 @@ class EventTest extends TestCase
         $new_event->setLocation($this->locationValid);
         $new_event->setDate($this->dateValid);
 
-        $new_event->create();
+        $data = null;
+        $new_event->create($data);
 
-        $new_event_id = $new_event->getId();
+        $new_event_id = $new_event->getEventId();
 
         // use existing object to pero
 
@@ -117,18 +120,18 @@ class EventTest extends TestCase
         $new_event->setDate($new_date);
 
         // perform update
-        $update_query = $new_event->update();
-        self::assertTrue($update_query);
+        $update_query = $new_event->update($new_event_id);
+        self::assertEquals(1, $update_query);
 
         // set another object to retrieve data for new_athlete to compare
         $this->event->getOne($new_event_id);
 
-        self::assertEquals($new_event->getId(), $this->event->getId());
+        self::assertEquals($new_event->getEventId(), $this->event->getEventId());
         self::assertEquals($new_event->getLocation(), $this->event->getLocation());
         self::assertEquals($new_event->getDate(), $this->event->getDate());
 
         // delete from db
-        self::assertTrue($new_event->delete());
+        self::assertEquals(1, $new_event->delete($new_event_id));
     }
 
     public function testGetSetDate()
@@ -157,14 +160,17 @@ class EventTest extends TestCase
 
     public function testGetSetIdValid()
     {
-        $this->event->setId($this->idValid);
-        self::assertEquals($this->idValid, $this->event->getId());
+        $this->event->setEventId($this->idValid);
+        self::assertEquals($this->idValid, $this->event->getEventId());
     }
 
     public function testSetIdInvalid()
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->event->setId($this->idInvalid);
+        $this->event->setEventId($this->idInvalid);
+        $expected = -1;
+        $result = $this->event->getEventId();
+
+        self::assertEquals($expected, $result);
     }
 
 }

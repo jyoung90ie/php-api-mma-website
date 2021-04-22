@@ -1,16 +1,19 @@
 <?php
 
+namespace models;
 
+require_once '../../autoload.php';
+
+use \helpers\Database;
+use InvalidArgumentException;
+use PDO;
 use PHPUnit\Framework\TestCase;
 
-
-include_once "../helpers/Database.php";
-include_once "../models/Athlete.php";
 
 class AthleteTest extends TestCase
 {
     private Athlete $athlete;
-    private mysqli $db;
+    private ?PDO $db;
 
     // test data vars
     private int $idValid;
@@ -50,12 +53,13 @@ class AthleteTest extends TestCase
     // run after each test
     public function tearDown(): void
     {
-        $this->db->close();
+        // close connection
+        $this->db = null;
     }
 
     public function testDataStartsAsNull()
     {
-        self::assertNull($this->athlete->getId());
+        self::assertNull($this->athlete->getAthleteID());
         self::assertNull($this->athlete->getName());
         self::assertNull($this->athlete->getHeight());
         self::assertNull($this->athlete->getReach());
@@ -73,41 +77,41 @@ class AthleteTest extends TestCase
         $this->athlete->setStanceId($this->stanceIdValid);
         $this->athlete->setDob($this->dobValid);
 
+        // as the data points have been set above, don't need to pass in a data array
+        $data = null;
+
         // create new record in db
-        $create_query = $this->athlete->create();
+        $create_query = $this->athlete->create($data);
         // check that query ran successfully
-        self::assertTrue($create_query);
+        self::assertTrue($create_query == 1);
         // check the object now has an id
-        $id = $this->athlete->getId();
+        $id = $this->athlete->getAthleteID();
         self::assertNotNull($id);
 
         // delete object
-        $delete_query = $this->athlete->delete();
-        self::assertTrue($delete_query);
+        $delete_query = $this->athlete->delete($id);
+        self::assertTrue($delete_query == 1);
     }
 
     public function testGetOneValid()
     {
         $result = $this->athlete->getOne($this->idValid);
 
-        self::assertTrue($result->num_rows == 1);
+        self::assertTrue(sizeof($result) > 0 );
 
-        $data = $result->fetch_assoc();
-
-        self::assertEquals($data['AthleteID'], $this->athlete->getId());
-        self::assertEquals($data['AthleteName'], $this->athlete->getName());
-        self::assertEquals($data['AthleteHeightInCM'], $this->athlete->getHeight());
-        self::assertEquals($data['AthleteReachInCM'], $this->athlete->getReach());
-        self::assertEquals($data['AthleteStanceID'], $this->athlete->getStanceId());
-        self::assertEquals($data['AthleteDOB'], $this->athlete->getDob());
+        self::assertEquals($result['AthleteID'], $this->athlete->getAthleteID());
+        self::assertEquals($result['AthleteName'], $this->athlete->getName());
+        self::assertEquals($result['AthleteHeightInCM'], $this->athlete->getHeight());
+        self::assertEquals($result['AthleteReachInCM'], $this->athlete->getReach());
+        self::assertEquals($result['AthleteStanceID'], $this->athlete->getStanceId());
+        self::assertEquals($result['AthleteDOB'], $this->athlete->getDob());
     }
 
     public function testGetOneInvalid()
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("Invalid Athlete ID");
+        $result = $this->athlete->getOne($this->idInvalid);
 
-        $this->athlete->getOne($this->idInvalid);
+        self::assertFalse($result);
     }
 
     public function testGetAllAndGetResultsValid()
@@ -115,7 +119,7 @@ class AthleteTest extends TestCase
         $results = $this->athlete->getAll();
 
         self::assertEquals($this->athlete->getResults(), $results);
-        self::assertTrue($results->num_rows > 0);
+        self::assertTrue(sizeof($results) > 0);
     }
 
     public function testUpdate()
@@ -130,9 +134,11 @@ class AthleteTest extends TestCase
         $new_athlete->setStanceId($this->stanceIdValid);
         $new_athlete->setDob($this->dobValid);
 
-        $new_athlete->create();
+        $data = null;
 
-        $new_athlete_id = $new_athlete->getId();
+        $new_athlete->create($data);
+
+        $new_athlete_id = $new_athlete->getAthleteID();
 
         // use existing object to pero
 
@@ -140,7 +146,7 @@ class AthleteTest extends TestCase
         $new_height = 123;
         $new_reach = 249;
         $new_stance_id = 3;
-        $new_dob = DateTime::createFromFormat('d-m-Y', '14-12-1990')->format('Y-m-d');
+        $new_dob = \DateTime::createFromFormat('d-m-Y', '14-12-1990')->format('Y-m-d');
 
         // update object vars
         $new_athlete->setName($new_name);
@@ -150,13 +156,14 @@ class AthleteTest extends TestCase
         $new_athlete->setDob($new_dob);
 
         // perform update
-        $update_query = $new_athlete->update();
-        self::assertTrue($update_query);
+        $data = null;
+        $update_query = $new_athlete->update($new_athlete_id, $data);
+        self::assertTrue($update_query == 1);
 
         // set another object to retrieve data for new_athlete to compare
         $this->athlete->getOne($new_athlete_id);
 
-        self::assertEquals($new_athlete->getId(), $this->athlete->getId());
+        self::assertEquals($new_athlete->getAthleteID(), $this->athlete->getAthleteID());
         self::assertEquals($new_athlete->getName(), $this->athlete->getName());
         self::assertEquals($new_athlete->getHeight(), $this->athlete->getHeight());
         self::assertEquals($new_athlete->getReach(), $this->athlete->getReach());
@@ -164,7 +171,7 @@ class AthleteTest extends TestCase
         self::assertEquals($new_athlete->getDob(), $this->athlete->getDob());
 
         // delete from db
-        self::assertTrue($new_athlete->delete());
+        self::assertTrue($new_athlete->delete($new_athlete_id) == 1);
     }
 
     public function testSetGetHeightValid()
@@ -229,13 +236,17 @@ class AthleteTest extends TestCase
 
     public function testGetIdValid()
     {
-        $this->athlete->setId($this->idValid);
-        self::assertEquals($this->idValid, $this->athlete->getId());
+        $this->athlete->setAthleteId($this->idValid);
+        self::assertEquals($this->idValid, $this->athlete->getAthleteID());
     }
 
     public function testGetIdInvalid()
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->athlete->setId($this->idInvalid);
+        $this->athlete->setAthleteId($this->idInvalid);
+
+        $result = $this->athlete->getAthleteId();
+        $expected = -1;
+
+        self::assertEquals($expected, $result);
     }
 }
