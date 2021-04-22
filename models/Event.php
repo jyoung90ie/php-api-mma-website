@@ -45,27 +45,50 @@ class Event
                 $this->results = $event;
 
                 // get fights from event
-                $query = "SELECT * FROM Fights WHERE EventID = ?";
+                $query = "SELECT F.*,
+                                WC.WeightClass,
+                                R.RefereeName
+                            FROM Fights F 
+                            LEFT JOIN WeightClasses WC on F.WeightClassID = WC.WeightClassID
+                            LEFT JOIN Referees R on F.RefereeID = R.RefereeID
+                            WHERE F.EventID = ?";
                 $query = $this->db->prepare($query);
                 $query->execute([$this->eventId]);
 
-                $event_data = $event;
-                $event_data['Fights'] = [];
+                $eventData = $event;
+                $eventData['Fights'] = [];
+                $athleteData['Athletes'] = [];
 
                 if ($query->rowCount() > 0) {
                     $fights = $query->fetchAll();
                     foreach ($fights as $fight) {
-                        $athlete = $this->db->prepare("SELECT AthleteID FROM FightAthletes WHERE FightID=?;");
-                        $athlete->execute([$fight['FightID']]);
+                        $athleteId = $this->db->prepare("SELECT AthleteID FROM FightAthletes WHERE FightID=?;");
+                        $athleteId->execute([$fight['FightID']]);
 
-                        if ($athlete->rowCount() > 0) {
-                            $athletes = $athlete->fetchAll();
-                            $athlete_data['Athletes'] = $athletes;
-                            array_push($event_data['Fights'], array_merge($fight, $athlete_data));
+                        if ($athleteId->rowCount() > 0) {
+                            $athletes = $athleteId->fetchAll();
+
+                            $athleteIdList = [];
+                            foreach ($athletes as $athlete) {
+                                array_push($athleteIdList, $athlete['AthleteID']);
+                            }
+
+
+
+                            $placeholders = str_repeat('?,', sizeof($athleteIdList) - 1) . '?';
+                            $athleteQuery = "SELECT * FROM Athletes WHERE AthleteID IN ($placeholders);";
+                            $athleteQuery = $this->db->prepare($athleteQuery);
+
+                            $athleteQuery->execute($athleteIdList);
+
+                            if ($athleteQuery->rowCount() > 0) {
+                                $athleteData['Athletes'] = $athleteQuery->fetchAll();
+                                array_push($eventData['Fights'], array_merge($fight, $athleteData));
+                            }
                         }
                     }
                 }
-                return $event_data;
+                return $eventData;
             }
 
             return false;
