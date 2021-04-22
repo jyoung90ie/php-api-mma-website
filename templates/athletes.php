@@ -1,6 +1,3 @@
-<?php
-require_once 'header.php';
-?>
 <main class="athletes-container container">
 <table class="table">
     <thead>
@@ -33,6 +30,3 @@ require_once 'header.php';
     </tbody>
 </table>
 </main>
-<?php
-require_once 'footer.php';
-?>

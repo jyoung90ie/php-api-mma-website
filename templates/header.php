@@ -2,10 +2,10 @@
 $activePage = basename($_SERVER['PHP_SELF']);
 
 $navbarPages = [
-        ['link' => './index.php', 'text' => 'Home'],
-        ['link' => './events.php', 'text' => 'Events'],
-        ['link' => './rankings.php', 'text' => 'Rankings'],
-        ['link' => './athletes.php', 'text' => 'Athletes'],
+        ['link' => './?page=index', 'text' => 'Home'],
+        ['link' => './?page=events', 'text' => 'Events'],
+        ['link' => './?page=rankings', 'text' => 'Rankings'],
+        ['link' => './?page=athletes', 'text' => 'Athletes'],
 ];
 
 ?>
@@ -22,13 +22,13 @@ $navbarPages = [
           integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.2/css/all.css"
           integrity="sha384-vSIIfh2YWi9wW0r9iZe7RJPrKwp6bG+s9QZMoITbCckVJqGCCRhc+ccxNcdpHuYu" crossorigin="anonymous">
-    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="css/main.css">
 </head>
 
 <body>
 <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
     <div class="container-fluid">
-        <a class="navbar-brand d-lg-none header-font" href="./index.php">Pro MMA</a>
+        <a class="navbar-brand d-lg-none header-font" href="../index.php">Pro MMA</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                 data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
                 aria-label="Toggle navigation">

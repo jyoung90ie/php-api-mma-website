@@ -1,15 +1,13 @@
 <?php
 
-require_once '../autoload.php';
-
 use helpers\APIRequest;
-
-require_once 'header.php';
 
 $apiAddress = "http://localhost:8888/promma/api";
 $apiModule = "/event";
 
-$queryString['start'] = intval($_GET['start'] ?? 0);
+parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $queryString);
+$queryString['start'] = $queryString['start'] ?? 0;
+
 
 $apiRequest = new APIRequest($apiAddress, $apiModule, null, $queryString);
 $results = $apiRequest->fetchApiData();
@@ -27,14 +25,14 @@ $events = $results['data'];
 
             ?>
             <!-- Event -->
-            <div class="event row">
+            <div class="event row" onclick="window.location='?page=event&id=<?= $event['EventID'] ?>'">
                 <div class="col-md-2 text-md-center">
                     <span class="header-font">Pro MMA <br><?= $event['EventID'] ?></span>
                 </div>
                 <div class="col-md-10">
                     <div class="row">
                         <div class="col-4">
-                            <img src="../images/fight<?= rand(1, 2) ?>.jpg" alt="...">
+                            <img src="images/fight<?= rand(1, 2) ?>.jpg" alt="...">
                         </div>
                         <div class="offset-1 col">
                             <span class="h5 header-font mb-2">FIGHTER 1 vs FIGHTER 2</span>
@@ -59,4 +57,4 @@ $events = $results['data'];
     </main>
 
 <?php
-require_once 'footer.php';
+require_once 'templates/footer.php';

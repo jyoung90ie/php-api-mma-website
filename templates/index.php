@@ -1,7 +1,4 @@
-<?php
-require_once 'header.php';
-?>
-    <main class="content container-fluid">
+<main class="content container-fluid">
     <!-- NewsContainer -->
     <div class="news container">
         <h2>Latest News</h2>
@@ -10,7 +7,7 @@ require_once 'header.php';
             <div class="card mb-3 col-lg-5">
                 <div class="row no-gutters">
                     <div class="col-md-4 my-card-img">
-                        <img src="../images/news1.jpg" class="card-img" alt="...">
+                        <img src="images/news1.jpg" class="card-img" alt="...">
                     </div>
                     <div class="col-md-8">
                         <div class="card-body">
@@ -27,7 +24,7 @@ require_once 'header.php';
             <div class="card mb-3 offset-lg-1 col-lg-5">
                 <div class="row no-gutters">
                     <div class="col-md-4 my-card-img">
-                        <img src="../images/news2.jpg" class="card-img" alt="...">
+                        <img src="images/news2.jpg" class="card-img" alt="...">
                     </div>
                     <div class="col-md-8">
                         <div class="card-body">
@@ -62,7 +59,7 @@ require_once 'header.php';
                 <div class="col-md-10">
                     <div class="row">
                         <div class="col-4">
-                            <img src="../images/fight1.jpg" alt="...">
+                            <img src="images/fight1.jpg" alt="...">
                         </div>
                         <div class="offset-1 col">
                             <span class="h5 header-font mb-2">FIGHTER 1 vs FIGHTER 2</span>
@@ -82,7 +79,7 @@ require_once 'header.php';
                 <div class="col-md-10">
                     <div class="row">
                         <div class="col-4">
-                            <img src="../images/fight2.jpg" alt="...">
+                            <img src="images/fight2.jpg" alt="...">
                         </div>
                         <div class="offset-1 col">
                             <span class="h5 header-font mb-2">FIGHTER 3 vs FIGHTER 4</span>
@@ -100,9 +97,4 @@ require_once 'header.php';
         </div>
     </div>
     <!-- ./EventsContainer -->
-    </main>
-
-
-<?php
-require_once 'footer.php';
-?>
+</main>

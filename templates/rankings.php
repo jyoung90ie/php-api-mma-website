@@ -1,6 +1,3 @@
-<?php
-require_once 'header.php';
-?>
     <main class="rankings-container container">
     <h2>Top 15 athletes by weight division</h2>
     <ul class="nav nav-pills" id="athleteRankings" role="tablist">
@@ -226,8 +223,3 @@ require_once 'header.php';
         <!-- ./Feather -->
     </div>
     </main>
-
-
-<?php
-require_once 'footer.php';
-?>
