@@ -98,7 +98,7 @@ class Athlete
         }
     }
 
-    public function getAll(int $limit, int $start): array
+    public function getAll(int $limit = 5, int $start = 0): array
     {
         $query = "SELECT * FROM Athletes ORDER BY AthleteID DESC LIMIT $start, $limit;";
         try {
@@ -124,7 +124,7 @@ class Athlete
         return $query->rowCount();
     }
 
-    public function create(array $data): int
+    public function create(?array $data): int
     {
         if (!is_null($data)) {
             $this->processData($data);
@@ -138,14 +138,15 @@ class Athlete
             $query = $this->db->prepare($query);
             $query->execute([$this->name, $this->height, $this->reach, $this->stanceId, $this->dob]);
 
+            $this->setAthleteId($this->db->lastInsertId());
+
             return $query->rowCount();
         } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
-
     }
 
-    public function update(int $id, array $data = null): int
+    public function update(int $id, ?array $data = null): int
     {
         $this->setAthleteId($id);
 
@@ -223,14 +224,15 @@ class Athlete
     }
 
     /**
-     * @param int|null $athleteId
+     * @param int $athleteId
      */
-    public function setAthleteId(?int $athleteId): void
+    public function setAthleteId(int $athleteId): void
     {
         if ($athleteId <= 0) {
-            throw new InvalidArgumentException("Invalid Athlete ID");
+            $this->athleteId = -1;
+        } else {
+            $this->athleteId = $athleteId;
         }
-        $this->athleteId = intval($athleteId);
     }
 
     /**

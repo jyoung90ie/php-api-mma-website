@@ -85,7 +85,7 @@ class Event
      *  null - does not filter
      * @return array
      */
-    public function getAll(int $limit, int $start, bool $upcoming = null): array
+    public function getAll(int $limit = 5, int $start = 0, bool $upcoming = null): array
     {
         $filter = "";
         if (!is_null($upcoming)) {
@@ -123,7 +123,7 @@ class Event
     }
 
 
-    public function create(array $data): int
+    public function create(?array $data): int
     {
         if (!is_null($data)) {
             $this->processData($data);
@@ -137,13 +137,15 @@ class Event
             $query = $this->db->prepare($query);
             $query->execute([$this->location, $this->date]);
 
+            $this->eventId = $this->db->lastInsertId();
+
             return $query->rowCount();
         } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
     }
 
-    public function update(int $id, array $data = null): int
+    public function update(int $id, ?array $data = null): int
     {
         $this->setEventId($id);
 
@@ -220,9 +222,10 @@ class Event
     public function setEventId(int $eventId): void
     {
         if ($eventId <= 0) {
-            throw new InvalidArgumentException("Invalid Event ID");
+            $this->eventId = -1;
+        } else {
+            $this->eventId = $eventId;
         }
-        $this->eventId = $eventId;
     }
 
     /**
