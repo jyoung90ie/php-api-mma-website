@@ -1,23 +1,22 @@
 <?php
+
+require_once '../autoload.php';
+
+use helpers\APIRequest;
+
 require_once 'header.php';
 
 $apiAddress = "http://localhost:8888/promma/api";
+$apiModule = "/event";
 
-$apiEndPoint = "/event";
-$queryString['apiKey'] = "test123";
-$queryString['start'] = intval($_GET['start']) ?? 0;
-$queryString['limit'] = intval($_GET['limit']) ?? 5;
+$queryString['start'] = intval($_GET['start'] ?? 0);
 
-$apiDataUrl = $apiAddress . $apiEndPoint . '?' . http_build_query($queryString);
+$apiRequest = new APIRequest($apiAddress, $apiModule, null, $queryString);
+$results = $apiRequest->fetchApiData();
 
-$apiData = json_decode(file_get_contents($apiDataUrl), true);
-$events = $apiData['data'];
-
-// pagination data
-$links = $apiData['links'];
-
+$events = $results['data'];
 ?>
-    <main class="events-container container-fluid">
+    <main class="events-container container">
         <ul class="h2 text-center list-inline header-font">
             <li class="list-inline-item active">Upcoming</li>
             <li class="list-inline-item">Past</li>
@@ -51,9 +50,9 @@ $links = $apiData['links'];
         ?>
 
         <!-- Pagination -->
-        <nav aria-label="Events page naviation">
+        <nav aria-label="Events page navigation">
             <ul class="pagination justify-content-center">
-                <?php displayPagination($links) ?>>
+                <?= $apiRequest->displayPagination(); ?>
             </ul>
         </nav>
         <!-- ./Pagination -->
@@ -61,39 +60,3 @@ $links = $apiData['links'];
 
 <?php
 require_once 'footer.php';
-
-
-function displayPagination(array $apiLinks)
-{
-    $next = ($apiLinks['next'] !== "");
-    $prev = ($apiLinks['prev'] !== "");
-
-    parse_str(parse_url($apiLinks['next'], PHP_URL_QUERY), $nextQueryStrings);
-    parse_str(parse_url($apiLinks['prev'], PHP_URL_QUERY), $prevQueryStrings);
-
-    unset($nextQueryStrings['apiKey']);
-    unset($prevQueryStrings['apiKey']);
-
-    $nextLink = "?" . http_build_query($nextQueryStrings);
-    $prevLink = "?" . http_build_query($prevQueryStrings);
-
-    $nextUrl = ($next ? $nextLink : "");
-    $prevUrl = ($prev ? $prevLink : "");
-    $nextClasses = ($next ? "" : " disabled");
-    $prevClasses = ($prev ? "" : " disabled");
-
-
-    echo '              <li class="page-item' . $prevClasses . '">
-                        <a class="page-link" href="' . $prevUrl . '">Previous</a>
-                    </li>';
-
-    echo '        <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                <li class="page-item disabled"><a class="page-link" href="#">2</a></li>
-                <li class="page-item disabled"><a class="page-link" href="#">3</a></li>';
-
-    echo '              <li class="page-item' . $nextClasses . '">
-                        <a class="page-link" href="' . $nextUrl . '">Next</a>
-                    </li>';
-
-
-}
