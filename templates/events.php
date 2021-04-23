@@ -43,7 +43,7 @@ $events = $results['data'];
                         </div>
                         <div class="offset-1 col">
                             <span class="h5 header-font mb-2">FIGHTER 1 vs FIGHTER 2</span>
-                            <span><?= $event['EventDate'] ?></span>
+                            <span><?= DateTime::createFromFormat('Y-m-d', $event['EventDate'])->format('d F Y, h:i A T') ?></span>
                             <span><?= $event['EventLocation'] ?></span>
                         </div>
                     </div>
