@@ -92,7 +92,7 @@
             </div>
             <!-- ./Event2 -->
             <div class="text-center">
-                <a href="events.php" class="btn btn-more">See More</a>
+                <a href="?page=events" class="btn btn-more">See More</a>
             </div>
         </div>
     </div>
