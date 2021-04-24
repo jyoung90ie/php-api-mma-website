@@ -106,13 +106,22 @@ class CRUDController
 
         $result = $this->module->getAll($limit, $start);
 
+        $currentResults = 0;
+        $data = [];
+
+        // make sure there are results first
+        if ($result) {
+            $currentResults = sizeof($result);
+            $data = $result;
+        }
+
         $response['status_code_header'] = self::HTTP_SUCCESS;
 
         $response['body']['totalResults'] = $this->module->getTotal();
         $response['body']['resultsPerPage'] = $limit;
-        $response['body']['currentResults'] = sizeof($result);
+        $response['body']['currentResults'] = $currentResults;
         $response['body']['links'] = $this->createLinks($start, $limit, sizeof($result));
-        $response['body']['data'] = $result;
+        $response['body']['data'] = $data;
         return $response;
     }
 
