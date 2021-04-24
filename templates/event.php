@@ -2,8 +2,6 @@
 
 use helpers\APIRequest;
 
-include 'helpers/athleteImages.php';
-
 // no/invalid id - redirect
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     header("Location: ?page=events");
@@ -54,11 +52,6 @@ $pastEvent = (date('Y-m-d') > $results['EventDate']);
 
             // get random images for athletes - images will never be the same
             unset($athleteOneImage, $athleteTwoImage);
-            $athleteOneImage = (!$femaleFight ? $maleHeadshots[rand(0, sizeof($maleHeadshots) - 1)] : $femaleHeadshots[rand(0, sizeof($femaleHeadshots) - 1)]);
-
-            while (!isset($athleteTwoImage) || $athleteOneImage == $athleteTwoImage) {
-                $athleteTwoImage = (!$femaleFight ? $maleHeadshots[rand(0, sizeof($maleHeadshots) - 1)] : $femaleHeadshots[rand(0, sizeof($femaleHeadshots) - 1)]);
-            }
 
             $athleteOne = $fight['Athletes'][0];
             $athleteTwo = $fight['Athletes'][1];
@@ -84,7 +77,7 @@ $pastEvent = (date('Y-m-d') > $results['EventDate']);
                 <div class="col-4">
                     <div class="row">
                         <div class="athlete-img col-6">
-                            <img src="<?= $athleteOneImage ?>"/>
+                            <img src="<?= $athleteOne['AthleteImage'] ?>"/>
                         </div>
                         <div class="col-6 text-uppercase">
 
@@ -122,7 +115,7 @@ $pastEvent = (date('Y-m-d') > $results['EventDate']);
                             <span class="athlete-name"><?= $athleteTwoName ?></span>
                         </div>
                         <div class="athlete-img col-6">
-                            <img src="<?= $athleteTwoImage ?>"/>
+                            <img src="<?= $athleteTwo['AthleteImage'] ?>"/>
                         </div>
                     </div>
                 </div>
@@ -140,10 +133,10 @@ $pastEvent = (date('Y-m-d') > $results['EventDate']);
  * Creates HTML for indicating the winner of a fight
  *
  * @param $athlete array of athlete data
- * @param int $winnerId athleteId for the winner
+ * @param int|null $winnerId athleteId for the winner
  * @return string of HTML
  */
-function outcomeBadge(array $athlete, int $winnerId): string
+function outcomeBadge(array $athlete, ?int $winnerId): string
 {
     if (is_null($winnerId)) {
         $outputHTML = '<span class="fight-outcome draw">draw</span>';

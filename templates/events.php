@@ -2,8 +2,6 @@
 
 use helpers\APIRequest;
 
-include 'helpers/athleteImages.php';
-
 if (!constant("API_URL")) {
     echo 'Api address not set';
     return;
@@ -34,21 +32,15 @@ $events = $results['data'];
         // generate athlete images
         $athletes = $event['Headliners'];
         unset($athleteOneImage, $athleteTwoImage);
-        $femaleFight = intval($athletes[0]['FemaleFight']) == 1;
 
-        $athleteOneImage = (!$femaleFight ? $maleHeadshots[rand(0, sizeof($maleHeadshots) - 1)] : $femaleHeadshots[rand(0, sizeof($femaleHeadshots) - 1)]);
-
-        while (!isset($athleteTwoImage) || $athleteOneImage == $athleteTwoImage) {
-            $athleteTwoImage = (!$femaleFight ? $maleHeadshots[rand(0, sizeof($maleHeadshots) - 1)] : $femaleHeadshots[rand(0, sizeof($femaleHeadshots) - 1)]);
-        }
         // variables for rendering in template
-        $athleteOneName = $athletes[0]['AthleteName'];
-        $athleteTwoName = $athletes[1]['AthleteName'];
+        $athleteOne = $athletes[0];
+        $athleteTwo = $athletes[1];
 
-        $athleteOneSurname = explode(" ", $athleteOneName);
+        $athleteOneSurname = explode(" ", $athleteOne['AthleteName']);
         $athleteOneSurname = $athleteOneSurname[sizeof($athleteOneSurname) - 1];
 
-        $athleteTwoSurname = explode(" ", $athleteTwoName);
+        $athleteTwoSurname = explode(" ", $athleteTwo['AthleteName']);
         $athleteTwoSurname = $athleteTwoSurname[sizeof($athleteTwoSurname) - 1];
 
         $eventHeadliner = $athleteOneSurname . ' vs ' . $athleteTwoSurname;
@@ -64,10 +56,10 @@ $events = $results['data'];
             </div>
             <div class="col-12 col-md-4 athlete-images">
                 <div class="athlete-left">
-                    <img src="<?= $athleteOneImage ?>" alt="<?= $athleteOneName ?>"/>
+                    <img src="<?= $athleteOne['AthleteImage'] ?>" alt="<?= $athleteOne['AthleteName'] ?>"/>
                 </div>
                 <div class="athlete-right">
-                    <img src="<?= $athleteTwoImage ?>" alt="<?= $athleteTwoName ?>"/>
+                    <img src="<?= $athleteTwo['AthleteImage'] ?>" alt="<?= $athleteTwo['AthleteName'] ?>"/>
                 </div>
             </div>
             <div class="col-12 col-md-6">
