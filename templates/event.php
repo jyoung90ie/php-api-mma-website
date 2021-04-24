@@ -62,11 +62,6 @@ $pastEvent = (date('Y-m-d') > $results['EventDate']);
             // indicate whether a fight is a title bout or not
             $boutType = $fight['WeightClass'] . ($fight['TitleBout'] == 1 ? ' Title' : '');
 
-            // generate a round time for end of fight
-            $timeMins = rand(0, 5);
-            $timeSecs = ($timeMins == 5 ? 0 : rand(0, 59));
-            $fightTime = ($pastEvent ? sprintf('%02d:%02d', $timeMins, $timeSecs) : 'TBC');
-
             // was the outcome a draw?
             $winner = ($fight['WinnerAthleteID'])
 
@@ -92,16 +87,16 @@ $pastEvent = (date('Y-m-d') > $results['EventDate']);
                     <span class="versus">vs</span>
                     <div class="row">
                         <div class="col-4">
-                            <span class="item">Rounds</span>
-                            <span class="value"><?= $fight['NumOfRounds'] ?></span>
+                            <span class="item">Round</span>
+                            <span class="value"><?= $fight['WinRound'] ?></span>
                         </div>
                         <div class="col-4">
                             <span class="item">Time</span>
-                            <span class="value"><?= $fightTime ?></span>
+                            <span class="value"><?= $fight['WinRoundTime'] ?></span>
                         </div>
                         <div class="col-4">
                             <span class="item">Method</span>
-                            <span class="value"><?= ($pastEvent ? 'DECISION UNANIMOUS' : 'TBC') ?></span>
+                            <span class="value"><?= ($pastEvent ? $fight['ResultDescription'] : 'TBC') ?></span>
                         </div>
 
                     </div>
