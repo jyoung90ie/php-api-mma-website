@@ -30,6 +30,11 @@ h3 {
     font-family: 'Acme', sans-serif;
 }
 
+/* pagination links */
+.page-link, .page-link:hover {
+    color: #000000;
+}
+
 /* homepage */
 .my-navbar {
     display: inline-flex;
@@ -178,12 +183,16 @@ h3 {
     color: inherit;
 }
 
+
 .event .headliner a:hover {
     color: var(--color1);
 }
 
 .event .name {
     margin: auto 0;
+    font-weight: bold;
+    letter-spacing: .1em;
+    font-size: .8em;
 }
 
 .event .date {
@@ -195,28 +204,31 @@ h3 {
 }
 
 .athlete-images img {
-    min-width: 100%;
+    width: 100%;
+    min-width: 190px;
     max-height: 120px;
     height: 100%;
+    object-position: top;
+    object-fit: cover;
+    overflow: hidden;
 }
 
 .athlete-images {
     margin: 0 auto;
     position: relative;
     display: block;
-    overflow: hidden;
+
 }
 
 .athlete-left, .athlete-right {
     position: absolute;
     height: 100%;
-    object-position: top;
-    object-fit: cover;
+
 }
 
 
 .athlete-left {
-    left: -10%;
+    left: 0%;
     z-index: 100;
 }
 
@@ -319,19 +331,28 @@ footer {
     margin-bottom: 10vh;
 }
 
-.events-container ul {
-    margin-bottom: 5vh;
-    color: #ccc;
+
+.events-overview {
+    text-align: center;
+    font-size: 2.2em;
+    font-weight: bold;
 }
 
-.events-container ul.header-font .active {
-    color: var(--color2);
+.events-overview span {
+    display: block;
 }
 
-.events-container ul.header-font li:hover {
+.events-overview .description {
+    letter-spacing: .25em;
+    text-transform: uppercase;
+}
+
+.events-overview .total {
+    font-size: .70em;
     color: var(--color1);
-    cursor: pointer;
 }
+
+
 
 .events-container .event:first-of-type {
     border-top: 1px solid var(--border);
@@ -379,7 +400,6 @@ Event Fight Listing
 .event-date {
     text-transform: uppercase;
     font-size: .85em;
-
 }
 
 .event-location {
@@ -417,11 +437,11 @@ span.fight-outcome {
     letter-spacing: .1em;
 }
 
-.fight-outcome .win {
+.win {
     background-color: rgb(25, 135, 84);
 }
 
-.fight-outcome .draw {
+.draw {
     background-color: rgb(108, 117, 125);
 }
 

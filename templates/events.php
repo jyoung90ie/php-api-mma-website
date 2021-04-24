@@ -24,19 +24,38 @@ if (isset($results['Error']) || !$results) {
 $events = $results['data'];
 ?>
 <main class="events-container container">
-    <ul class="h2 text-center list-inline header-font">
-        <li class="list-inline-item active">Upcoming</li>
-        <li class="list-inline-item">Past</li>
-    </ul>
-
-    <div class="text-center">
-        <span><?= $results['totalResults'] ?> events</span>
+    <div class="events-overview text-center">
+        <span class="description">All events</span>
+        <span class="total"><?= $results['totalResults'] ?> events</span>
     </div>
     <hr>
     <?php
     foreach ($events as $event) {
+        // generate athlete images
+        $athletes = $event['Headliners'];
+        unset($athleteOneImage, $athleteTwoImage);
+        $femaleFight = intval($athletes[0]['FemaleFight']) == 1;
+
+        $athleteOneImage = (!$femaleFight ? $maleHeadshots[rand(0, sizeof($maleHeadshots) - 1)] : $femaleHeadshots[rand(0, sizeof($femaleHeadshots) - 1)]);
+
+        while (!isset($athleteTwoImage) || $athleteOneImage == $athleteTwoImage) {
+            $athleteTwoImage = (!$femaleFight ? $maleHeadshots[rand(0, sizeof($maleHeadshots) - 1)] : $femaleHeadshots[rand(0, sizeof($femaleHeadshots) - 1)]);
+        }
+        // variables for rendering in template
+        $athleteOneName = $athletes[0]['AthleteName'];
+        $athleteTwoName = $athletes[1]['AthleteName'];
+
+        $athleteOneSurname = explode(" ", $athleteOneName);
+        $athleteOneSurname = $athleteOneSurname[sizeof($athleteOneSurname) - 1];
+
+        $athleteTwoSurname = explode(" ", $athleteTwoName);
+        $athleteTwoSurname = $athleteTwoSurname[sizeof($athleteTwoSurname) - 1];
+
+        $eventHeadliner = $athleteOneSurname . ' vs ' . $athleteTwoSurname;
+        $eventHeadliner = strtoupper($eventHeadliner);
 
         $eventUrl = '?page=event&id=' . $event['EventID'];
+
         ?>
         <!-- Event -->
         <div class="event row" onclick="window.location='<?= $eventUrl ?>'">
@@ -45,15 +64,15 @@ $events = $results['data'];
             </div>
             <div class="col-12 col-md-4 athlete-images">
                 <div class="athlete-left">
-                    <img src="https://dmxg5wxfqgb4u.cloudfront.net/styles/event_results_athlete_headshot/s3/%5Bdate%3Acustom%3AY%5D-%5Bdate%3Acustom%3Am%5D/67275_profile-galery_profile-picture_STERLING_ALJAMAIN_BELT.png" alt=""/>
+                    <img src="<?= $athleteOneImage ?>" alt="<?= $athleteOneName ?>"/>
                 </div>
                 <div class="athlete-right">
-                    <img src="https://dmxg5wxfqgb4u.cloudfront.net/styles/event_results_athlete_headshot/s3/2020-07/YAN_PETR_07-11.png" alt=""/>
+                    <img src="<?= $athleteTwoImage ?>" alt="<?= $athleteTwoName ?>"/>
                 </div>
             </div>
             <div class="col-12 col-md-6">
                 <span class="headliner">
-                    <a href="<?= $eventUrl ?>">FIGHTER1 VS FIGHTER2</a>
+                    <a href="<?= $eventUrl ?>"><?= $eventHeadliner ?></a>
                 </span>
                 <span class="date"><?= DateTime::createFromFormat('Y-m-d', $event['EventDate'])->format('D, d F Y, h:i A T') ?></span>
                 <span class="location"><?= $event['EventLocation'] ?></span>
