@@ -48,11 +48,15 @@ class Event
                 $query = "SELECT F.*,
                                 WC.WeightClass,
                                 R.RefereeName,
-                                FR.WinnerAthleteID
+                                FR.WinnerAthleteID,
+                                RT.ResultDescription,
+                                FR.WinRound,
+                                FR.WinRoundTime
                             FROM Fights F 
                             LEFT JOIN WeightClasses WC on F.WeightClassID = WC.WeightClassID
                             LEFT JOIN Referees R on F.RefereeID = R.RefereeID
                             LEFT JOIN FightResults FR on F.FightID = FR.FightID
+                            LEFT JOIN ResultTypes RT on FR.ResultTypeID = RT.ResultTypeID
                             WHERE F.EventID = ?";
                 $query = $this->db->prepare($query);
                 $query->execute([$this->eventId]);
