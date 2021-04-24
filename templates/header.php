@@ -1,7 +1,6 @@
 <?php
 
-include_once 'helpers/helper.php';
-use function helpers\genNavbar;
+use helpers\TemplatesHelper;
 
 
 ?>
@@ -31,7 +30,7 @@ use function helpers\genNavbar;
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mb-2 mb-lg-0">
-                <?php echo genNavbar(constant("NAVBAR_PAGES"), $activePage); ?>
+                <?= TemplatesHelper::genNavbar(constant("NAVBAR_PAGES"), $activePage); ?>
             </ul>
         </div>
         <div class="my-navbar d-none d-lg-flex">
