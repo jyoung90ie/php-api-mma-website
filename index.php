@@ -37,6 +37,9 @@ switch ($page) {
     case 'event':
         include_once TEMPLATES_FOLDER . 'event.php';
         break;
+    case 'fight':
+        include_once TEMPLATES_FOLDER . 'fight.php';
+        break;
     case 'rankings':
         include_once TEMPLATES_FOLDER . 'rankings.php';
         break;
