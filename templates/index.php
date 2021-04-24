@@ -31,7 +31,7 @@ $events = $results['data'];
 <main class="content container-fluid">
     <!-- NewsContainer -->
     <div class="news container">
-        <h2>Latest News</h2>
+        <h2><i class="far fa-newspaper"></i> Latest News</h2>
         <div class="row">
             <!-- News1 -->
             <div class="card mb-3 col-lg-5">
@@ -79,7 +79,7 @@ $events = $results['data'];
 
     <!-- EventsContainer -->
     <div class="home-events-container">
-        <h2>Upcoming Events</h2>
+        <h2><i class="fas fa-calendar-alt"></i> Upcoming Events</h2>
         <div class="container">
             <!-- Events -->
             <?php

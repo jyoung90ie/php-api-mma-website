@@ -41,7 +41,7 @@ $pastEvent = (date('Y-m-d') > $results['EventDate']);
         }
         ?>
 
-        <h2><?= ($pastEvent ? 'Results' : 'Upcoming') ?> </h2>
+        <h2><i class="fas fa-list"></i> <?= ($pastEvent ? 'Results' : 'Upcoming') ?> </h2>
         <hr/>
         <?php
         //    foreach ($results['Fights'] as $fight) {

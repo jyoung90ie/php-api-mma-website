@@ -26,7 +26,7 @@ if (isset($results['Error']) || !$results) {
 $events = $results['data'];
 ?>
 <main class="events-container container">
-    <h2>All events</h2>
+    <h2><i class="far fa-calendar-alt"></i> All events</h2>
     <div class="events-overview">
         <span class="total"><?= $results['totalResults'] ?> events</span>
     </div>
