@@ -2,6 +2,8 @@
 
 use helpers\APIRequest;
 
+include 'helpers/athleteImages.php';
+
 if (!constant("API_URL")) {
     echo 'Api address not set';
     return;
@@ -21,44 +23,52 @@ if (isset($results['Error']) || !$results) {
 
 $events = $results['data'];
 ?>
-    <main class="events-container container">
-        <ul class="h2 text-center list-inline header-font">
-            <li class="list-inline-item active">Upcoming</li>
-            <li class="list-inline-item">Past</li>
-        </ul>
+<main class="events-container container">
+    <ul class="h2 text-center list-inline header-font">
+        <li class="list-inline-item active">Upcoming</li>
+        <li class="list-inline-item">Past</li>
+    </ul>
 
-        <?php
-        foreach ($events as $event) {
+    <div class="text-center">
+        <span><?= $results['totalResults'] ?> events</span>
+    </div>
+    <hr>
+    <?php
+    foreach ($events as $event) {
 
-            ?>
-            <!-- Event -->
-            <div class="event row" onclick="window.location='?page=event&id=<?= $event['EventID'] ?>'">
-                <div class="col-md-2 text-md-center">
-                    <span class="header-font">Pro MMA <br><?= $event['EventID'] ?></span>
+        $eventUrl = '?page=event&id=' . $event['EventID'];
+        ?>
+        <!-- Event -->
+        <div class="event row" onclick="window.location='<?= $eventUrl ?>'">
+            <div class="col-12 col-md-2 name">
+                Pro MMA <?= sprintf('%03d', $event['EventID']) ?>
+            </div>
+            <div class="col-12 col-md-4 athlete-images">
+                <div class="athlete-left">
+                    <img src="https://dmxg5wxfqgb4u.cloudfront.net/styles/event_results_athlete_headshot/s3/%5Bdate%3Acustom%3AY%5D-%5Bdate%3Acustom%3Am%5D/67275_profile-galery_profile-picture_STERLING_ALJAMAIN_BELT.png" alt=""/>
                 </div>
-                <div class="col-md-10">
-                    <div class="row">
-                        <div class="col-4">
-                            <img src="images/fight<?= rand(1, 2) ?>.jpg" alt="...">
-                        </div>
-                        <div class="offset-1 col">
-                            <span class="h5 header-font mb-2">FIGHTER 1 vs FIGHTER 2</span>
-                            <span><?= DateTime::createFromFormat('Y-m-d', $event['EventDate'])->format('d F Y, h:i A T') ?></span>
-                            <span><?= $event['EventLocation'] ?></span>
-                        </div>
-                    </div>
+                <div class="athlete-right">
+                    <img src="https://dmxg5wxfqgb4u.cloudfront.net/styles/event_results_athlete_headshot/s3/2020-07/YAN_PETR_07-11.png" alt=""/>
                 </div>
             </div>
-            <!-- ./Event -->
-            <?php
-        }
-        ?>
+            <div class="col-12 col-md-6">
+                <span class="headliner">
+                    <a href="<?= $eventUrl ?>">FIGHTER1 VS FIGHTER2</a>
+                </span>
+                <span class="date"><?= DateTime::createFromFormat('Y-m-d', $event['EventDate'])->format('D, d F Y, h:i A T') ?></span>
+                <span class="location"><?= $event['EventLocation'] ?></span>
+            </div>
+        </div>
+        <!-- ./Event -->
+        <?php
+    }
+    ?>
 
-        <!-- Pagination -->
-        <nav aria-label="Events page navigation">
-            <ul class="pagination justify-content-center">
-                <?= $apiRequest->displayPagination(); ?>
-            </ul>
-        </nav>
-        <!-- ./Pagination -->
-    </main>
+    <!-- Pagination -->
+    <nav aria-label="Events page navigation">
+        <ul class="pagination justify-content-center">
+            <?= $apiRequest->displayPagination(); ?>
+        </ul>
+    </nav>
+    <!-- ./Pagination -->
+</main>

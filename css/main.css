@@ -1,8 +1,13 @@
 /* custom font */
 @import url('https://fonts.googleapis.com/css2?family=Acme&family=Montserrat:wght@400;700&display=swap');
+
 @font-face {
     font-family: 'Sternbach';
     src: url('../fonts/Sternbach.ttf');
+}
+
+html {
+    font-size: 100%;
 }
 
 /* colors */
@@ -58,7 +63,7 @@ h3 {
 }
 
 /* slide up hover effect for navbar on large devices */
-@media(min-width: 992px) {
+@media (min-width: 992px) {
     .navbar-collapse > .navbar-nav a.nav-link {
         background: linear-gradient(to bottom, var(--color1) 0%, var(--color1) 100%);
         background-position: 0 100%;
@@ -75,9 +80,9 @@ h3 {
 }
 
 /* override bootstrap hover colours for social media */
-.my-navbar > .navbar-nav a.nav-link:focus, 
+.my-navbar > .navbar-nav a.nav-link:focus,
 .my-navbar > .navbar-nav a.nav-link:hover {
-    color: rgba(0,0,0,.55);
+    color: rgba(0, 0, 0, .55);
 }
 
 .navbar-light .navbar-nav .nav-link.active {
@@ -121,7 +126,7 @@ h3 {
 }
 
 .news .card {
-    box-shadow: 0 4px 8px rgba(0,0,0, 0.6);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
 }
 
 
@@ -140,7 +145,7 @@ h3 {
     background-color: var(--color1);
     margin: 0 -12px; /* -ve margin to account for bootstrap default margin */
     padding: 40px 0;
-    
+
 }
 
 .home-events-container h2 {
@@ -148,7 +153,7 @@ h3 {
     margin-top: 0;
 }
 
-.event {
+.event, .fight {
     background-color: #fff;
     padding: 30px 10px;
     margin-bottom: 20px;
@@ -157,19 +162,89 @@ h3 {
     overflow: hidden;
 }
 
-.event:hover {
-    box-shadow: 0 0 20px rgba(0,0,0, 0.6);
+.event:hover, .fight:hover {
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
     cursor: pointer;
 }
 
-.event img {
-    margin: auto;
-    width: 100%;
-    height: 120px;
-    object-fit: contain;
+.event .headliner {
+    font-size: 1.4em;
+    font-weight: bold;
+    margin: 15px 0;
 }
 
-.event span {
+.event .headliner a {
+    text-decoration: inherit;
+    color: inherit;
+}
+
+.event .headliner a:hover {
+    color: var(--color1);
+}
+
+.event .name {
+    margin: auto 0;
+}
+
+.event .date {
+    font-size: 1em;
+}
+
+.event .location {
+    font-size: .8em;
+}
+
+.athlete-images img {
+    min-width: 100%;
+    max-height: 120px;
+    height: 100%;
+}
+
+.athlete-images {
+    margin: 0 auto;
+    position: relative;
+    display: block;
+    overflow: hidden;
+}
+
+.athlete-left, .athlete-right {
+    position: absolute;
+    height: 100%;
+    object-position: top;
+    object-fit: cover;
+}
+
+
+.athlete-left {
+    left: -10%;
+    z-index: 100;
+}
+
+.athlete-right {
+    left: 50%;
+}
+
+@media (max-width: 767px) {
+    .athlete-images {
+        height: 100px;
+    }
+
+    .athlete-images img {
+        max-width: 150px;
+    }
+
+    .athlete-left {
+        left: 10%;
+        z-index: 100;
+    }
+
+    .athlete-right {
+        left: 50%;
+    }
+}
+
+
+.event span, .fight span {
     display: block;
 }
 
@@ -236,7 +311,6 @@ footer {
 }
 
 
-
 /******************************
 *           Events
 *******************************/
@@ -277,8 +351,112 @@ footer {
 }
 
 /* hide line break on small devices */
-@media(max-width: 767px) {
+@media (max-width: 767px) {
     .event span.header-font br {
         display: none;
     }
 }
+
+
+/*
+Event Fight Listing
+*/
+.event-overview {
+    text-align: center;
+    font-size: 2.2em;
+    font-weight: bold;
+}
+
+.event-overview span {
+    display: block;
+}
+
+.event-name {
+    letter-spacing: .15em;
+    color: var(--color1);
+}
+
+.event-date {
+    text-transform: uppercase;
+    font-size: .85em;
+
+}
+
+.event-location {
+    font-size: .55em;
+}
+
+.event-detail-container h2 {
+    margin: 80px 0 30px 0;
+    text-align: center;
+    font-size: 3em;
+}
+
+div.fight {
+    border-bottom: 1px dotted #dcdcdc;
+}
+
+.fight img {
+    display: block;
+    width: 100%;
+    max-height: 140px;
+    object-fit: cover;
+    object-position: top;
+    overflow: hidden;
+}
+
+
+span.fight-outcome {
+    display: inline-block;
+    margin-bottom: 18px;
+    border-radius: .25rem;
+    padding: 3px 5px;
+    font-size: .7em;
+    color: #fff;
+    font-weight: bold;
+    letter-spacing: .1em;
+}
+
+.fight-outcome .win {
+    background-color: rgb(25, 135, 84);
+}
+
+.fight-outcome .draw {
+    background-color: rgb(108, 117, 125);
+}
+
+.fight .athlete-img {
+    overflow: hidden;
+}
+
+.fight .athlete-name {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.fight-detail {
+    text-align: center;
+    font-size: .7em;
+    text-transform: uppercase;
+    font-weight: bold;
+    color: #b4b4b4;
+}
+
+.fight-detail .weight-class {
+    letter-spacing: .15em;
+}
+
+.fight-detail .item {
+    letter-spacing: .15em;
+}
+
+.fight-detail .value {
+    font-size: 1.15em;
+    letter-spacing: normal;
+    color: #585b63;
+}
+
+.fight-detail .versus {
+    margin: 15px 0;
+}
+
