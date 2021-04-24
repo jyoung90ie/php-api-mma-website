@@ -28,20 +28,19 @@ $pastEvent = (date('Y-m-d') > $results['EventDate']);
 ?>
 
     <main class="event-detail-container container">
-        <?php
-        if (isset($_SERVER['HTTP_REFERER'])) {
-            ?>
-            <div>
-                <a class="btn btn-more" href="<?= $_SERVER['HTTP_REFERER'] ?>">Back to previous page</a>
-            </div>
-            <?php
-        }
-        ?>
         <div class="event-overview">
             <span class="event-name">ProMMA <?= $results['EventID'] ?></span>
             <span class="event-date"><?= DateTime::createFromFormat('Y-m-d', $results['EventDate'])->format('d F Y, h:i A T') ?></span>
             <span class="event-location"><?= $results['EventLocation'] ?></span>
         </div>
+        <?php
+        if (isset($_SERVER['HTTP_REFERER'])) {
+            ?>
+            <a class="btn btn-more" href="<?= $_SERVER['HTTP_REFERER'] ?>">Back to previous page</a>
+            <?php
+        }
+        ?>
+
         <h2><?= ($pastEvent ? 'Results' : 'Upcoming') ?> </h2>
         <hr/>
         <?php
