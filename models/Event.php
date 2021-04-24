@@ -135,9 +135,10 @@ class Event
                                         F.FightID,
                                         F.TitleBout,
                                         A.AthleteID,
-                                        A.AthleteName,
+                                        A.AthleteName,       
+                                        A.AthleteImage,
                                         WC.WeightClass,
-                                        IF(WC.WeightClass LIKE 'Women*', 1, 0) AS FemaleFight
+                                        IF(WC.WeightClass LIKE 'Women%', 1, 0) AS FemaleFight
                                     FROM 
                                         Fights F
                                     LEFT JOIN FightAthletes FA ON F.FightID = FA.FightID
