@@ -27,20 +27,41 @@ if (isset($results['Error']) || !$results) {
 
 ?>
 
-    <main class="fight-detail-container container">
-        <?php
-        if (isset($_SERVER['HTTP_REFERER'])) {
-            ?>
-            <div>
-                <a class="btn btn-more" href="<?= $_SERVER['HTTP_REFERER'] ?>">Back to previous page</a>
-            </div>
-            <?php
-        }
+<main class="fight-detail-container container">
+    <?php
+    if (isset($_SERVER['HTTP_REFERER'])) {
         ?>
-        <div class="fight-overview">
-            <span class="description">Results</span>
+        <div>
+            <a class="btn btn-more" href="<?= $_SERVER['HTTP_REFERER'] ?>">Back to previous page</a>
         </div>
-        <div class="fight-breakdown">
+        <?php
+    }
+    ?>
+    <h2>Fight Breakdown</h2>
+    <div class="fight-athletes row">
+        <div class="col-6">Fighter 1</div>
+        <div class="col-6">Fighter 2</div>
+    </div>
+    <div class="fight-outcome row">
+        <div class="col-4">
+            <span>Round</span>
+            <span>5</span>
+        </div>
+        <div class="col-4">
+            <span>Time</span>
+            <span>5:00</span>
+        </div>
+        <div class="col-4">
+            <span>Method</span>
+            <span>DECISION - UNANIMOUS</span>
+        </div>
+    </div>
+    <div class="fight-breakdown row">
+        <div class="col-12 col-md-6">
 
         </div>
-    </main>
+        <div class="col-12 col-md-6">
+
+        </div>
+    </div>
+</main>

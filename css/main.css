@@ -22,8 +22,16 @@ body {
     font-family: 'Montserrat', sans-serif;
 }
 
-h1, h2, .header-font {
+h1, .header-font {
     font-family: 'Sternbach', sans-serif;
+}
+
+h2 {
+    text-align: center;
+    font-size: 2.2em;
+    font-weight: bold;
+    letter-spacing: .25em;
+    text-transform: uppercase;
 }
 
 h3 {
@@ -158,6 +166,74 @@ h3 {
     margin-top: 0;
 }
 
+
+.btn-more {
+    margin-top: 20px;
+    color: #000;
+    background-color: #fff;
+    border-color: #000;
+    text-transform: uppercase;
+    font-weight: bold;
+
+    transition: all 0.3s ease-in;
+    padding: .75rem 1rem;
+}
+
+.btn-more:hover {
+    color: #fff;
+    background-color: #000;
+    border-color: #fff;
+}
+
+
+footer {
+    padding: 30px 40px 20px 40px;
+    color: #fff;
+    background-color: #000;
+    text-align: center;
+    font-size: 1em;
+}
+
+/*
+Rankings Page
+ */
+.rankings-container {
+    margin-bottom: 50px;
+}
+
+.rankings-container h2 {
+    color: var(--color2);
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.rankings-container .nav-pills .nav-link.active {
+    background-color: var(--color1);
+    color: #fff;
+}
+
+.rankings-container .nav-pills .nav-link {
+    color: var(--color1);
+}
+
+.rankings-container .nav-pills .nav-link.disabled {
+    color: #6c757d;
+}
+
+.rankings-container table {
+    margin: 20px 0;
+}
+
+.rankings-container .table-dark {
+    --bs-table-bg: var(--color1);
+}
+
+
+/*
+Event Listing Page
+ */
+
+
 .event, .fight {
     background-color: #fff;
     padding: 30px 10px;
@@ -217,18 +293,16 @@ h3 {
     margin: 0 auto;
     position: relative;
     display: block;
-
 }
 
 .athlete-left, .athlete-right {
     position: absolute;
     height: 100%;
-
 }
 
 
 .athlete-left {
-    left: 0%;
+    left: 0;
     z-index: 100;
 }
 
@@ -255,82 +329,14 @@ h3 {
     }
 }
 
-
 .event span, .fight span {
     display: block;
 }
 
-.btn-more {
-    margin-top: 20px;
-    color: #000;
-    background-color: #fff;
-    border-color: #000;
-    text-transform: uppercase;
-    font-weight: bold;
-
-    transition: all 0.3s ease-in;
-    padding: .75rem 1rem;
-}
-
-.btn-more:hover {
-    color: #fff;
-    background-color: #000;
-    border-color: #fff;
-}
-
-
-/* footer */
-footer {
-    padding: 30px 40px 20px 40px;
-    color: #fff;
-    background-color: #000;
-    text-align: center;
-    font-size: 1em;
-}
-
-/******************************
-*           Rankings
-*******************************/
-.rankings-container {
-    margin-bottom: 50px;
-}
-
-.rankings-container h2 {
-    color: var(--color2);
-    text-align: center;
-    margin-bottom: 50px;
-}
-
-.rankings-container .nav-pills .nav-link.active {
-    background-color: var(--color1);
-    color: #fff;
-}
-
-.rankings-container .nav-pills .nav-link {
-    color: var(--color1);
-}
-
-.rankings-container .nav-pills .nav-link.disabled {
-    color: #6c757d;
-}
-
-.rankings-container table {
-    margin: 20px 0;
-}
-
-.rankings-container .table-dark {
-    --bs-table-bg: var(--color1);
-}
-
-
-/******************************
-*           Events
-*******************************/
 
 .events-container {
     margin-bottom: 10vh;
 }
-
 
 .events-overview {
     text-align: center;
@@ -341,17 +347,10 @@ footer {
 .events-overview span {
     display: block;
 }
-
-.events-overview .description {
-    letter-spacing: .25em;
-    text-transform: uppercase;
-}
-
 .events-overview .total {
     font-size: .70em;
     color: var(--color1);
 }
-
 
 
 .events-container .event:first-of-type {
@@ -380,7 +379,7 @@ footer {
 
 
 /*
-Event Fight Listing
+Event Detail Page (List of fights)
 */
 .event-overview {
     text-align: center;
@@ -407,9 +406,7 @@ Event Fight Listing
 }
 
 .event-detail-container h2 {
-    margin: 80px 0 30px 0;
-    text-align: center;
-    font-size: 3em;
+    margin: 50px 0 30px 0;
 }
 
 div.fight {
@@ -480,3 +477,52 @@ span.fight-outcome {
     margin: 15px 0;
 }
 
+/*
+    Fight Detail Page
+ */
+
+.fight-outcome {
+    font-size: 1em;
+    padding-bottom: 15px;
+    margin: 20px 0;
+    text-align: center;
+    text-transform: uppercase;
+    border-bottom: 1px dotted #dcdcdc;
+}
+
+.fight-outcome span {
+    display: block;
+    font-weight: bold;
+}
+
+.fight-outcome span:first-child {
+    color: #bfbfbf;
+}
+
+.fight-outcome span:last-child {
+    font-size: 1.4em;
+}
+
+.fight-breakdown {
+    margin: 50px 0;
+}
+
+.fight-athletes {
+    margin-top: 70px;
+    font-size: 1.2em;
+    font-weight: bold;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.fight-athletes div {
+    padding-bottom: 15px;
+}
+
+.fight-athletes div:first-child {
+    border-bottom: 4px solid #bf0d0d;
+}
+
+.fight-athletes div:last-child {
+    border-bottom: 4px solid #144a8e;
+}
