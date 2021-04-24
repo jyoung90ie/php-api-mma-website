@@ -47,10 +47,12 @@ class Event
                 // get fights from event
                 $query = "SELECT F.*,
                                 WC.WeightClass,
-                                R.RefereeName
+                                R.RefereeName,
+                                FR.WinnerAthleteID
                             FROM Fights F 
                             LEFT JOIN WeightClasses WC on F.WeightClassID = WC.WeightClassID
                             LEFT JOIN Referees R on F.RefereeID = R.RefereeID
+                            LEFT JOIN FightResults FR on F.FightID = FR.FightID
                             WHERE F.EventID = ?";
                 $query = $this->db->prepare($query);
                 $query->execute([$this->eventId]);
@@ -68,12 +70,11 @@ class Event
                         if ($athleteId->rowCount() > 0) {
                             $athletes = $athleteId->fetchAll();
 
+                            // create list of athlete id's so 1 query can retrieve them all
                             $athleteIdList = [];
                             foreach ($athletes as $athlete) {
                                 array_push($athleteIdList, $athlete['AthleteID']);
                             }
-
-
 
                             $placeholders = str_repeat('?,', sizeof($athleteIdList) - 1) . '?';
                             $athleteQuery = "SELECT * FROM Athletes WHERE AthleteID IN ($placeholders);";
@@ -82,7 +83,13 @@ class Event
                             $athleteQuery->execute($athleteIdList);
 
                             if ($athleteQuery->rowCount() > 0) {
-                                $athleteData['Athletes'] = $athleteQuery->fetchAll();
+                                $athletes = $athleteQuery->fetchAll();
+                                $athleteData['Athletes'] = [];
+                                // loop through athletes and add winner flag
+                                foreach ($athletes as $athlete) {
+                                    $athlete['Winner'] = ($fight['WinnerAthleteID'] == $athlete['AthleteID'] ? 1 : 0);
+                                    array_push($athleteData['Athletes'], $athlete);
+                                }
                                 array_push($eventData['Fights'], array_merge($fight, $athleteData));
                             }
                         }
@@ -102,33 +109,61 @@ class Event
      *
      * @param int $limit the number of events to return
      * @param int $start the event to start from
-     * @param bool $upcoming
-     *  true - returns upcoming events only
-     *  false - returns only past events
-     *  null - does not filter
-     * @return array
+     * @return array|false
      */
-    public function getAll(int $limit = 5, int $start = 0, bool $upcoming = null): array
+    public function getAll(int $limit = 5, int $start = 0)
     {
-        $filter = "";
-        if (!is_null($upcoming)) {
-            $date = date('Y-m-d');
-            if ($upcoming) {
-                $filter = "WHERE EventDate >= $date";
-            } else {
-                $filter = "WHERE EventDate < $date";
-            }
 
-        }
-
-        $query = "SELECT * FROM Events $filter ORDER BY EventDate DESC LIMIT $start, $limit";
+        $query = "SELECT 
+                        E.* 
+                    FROM 
+                        Events E
+                    ORDER BY 
+                         EventDate DESC 
+                    LIMIT $start, $limit";
         try {
             $query = $this->db->query($query);
 
-            $result = $query->fetchAll();
-            $this->results = $result;
+            if ($query->rowCount() > 0) {
+                $results = $query->fetchAll();
+                $this->results = $results;
 
-            return $result;
+                $eventData = [];
+
+                foreach ($results as $event) {
+                    $athletesQuery = "SELECT 
+                                        F.FightID,
+                                        F.TitleBout,
+                                        A.AthleteID,
+                                        A.AthleteName,
+                                        WC.WeightClass,
+                                        IF(WC.WeightClass LIKE 'Women*', 1, 0) AS FemaleFight
+                                    FROM 
+                                        Fights F
+                                    LEFT JOIN FightAthletes FA ON F.FightID = FA.FightID
+                                    LEFT JOIN Athletes A ON FA.AthleteID = A.AthleteID
+                                    LEFT JOIN WeightClasses WC ON F.WeightClassID = WC.WeightClassID
+                                    INNER JOIN (SELECT FightID, COUNT(FightID) AS numAthletes FROM FightAthletes GROUP BY FightID) C ON F.FightID = C.FightID AND numAthletes = 2
+                                    WHERE 
+                                        F.EventID = ?
+                                    ORDER BY F.FightID DESC
+                                    LIMIT 2; ";
+
+                    $athletesQuery = $this->db->prepare($athletesQuery);
+                    $athletesQuery->execute([$event['EventID']]);
+
+                    if ($athletesQuery->rowCount() > 0) {
+                        $event['Headliners'] = $athletesQuery->fetchAll();
+                    }
+
+                    array_push($eventData, $event);
+                }
+
+                return $eventData;
+            }
+
+            return false;
+
         } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
