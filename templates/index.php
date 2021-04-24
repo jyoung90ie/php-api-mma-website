@@ -1,3 +1,33 @@
+<?php
+
+namespace templates;
+
+use helpers\APIRequest;
+use helpers\TemplatesHelper;
+
+if (!constant("API_URL")) {
+    echo 'Api address not set';
+    return;
+}
+
+// get 2 most recent events
+$apiModule = "/event";
+$queryString['start'] = 0;
+$queryString['limit'] = 2;
+
+
+$apiRequest = new APIRequest(constant("API_URL"), $apiModule, null, $queryString);
+$results = $apiRequest->fetchApiData();
+
+if (isset($results['Error']) || !$results) {
+    echo 'API request failed';
+    return;
+}
+
+$events = $results['data'];
+
+?>
+
 <main class="content container-fluid">
     <!-- NewsContainer -->
     <div class="news container">
@@ -51,46 +81,13 @@
     <div class="home-events-container">
         <h2>Upcoming Events</h2>
         <div class="container">
-            <!-- Event1 -->
-            <div class="event row">
-                <div class="col-md-2 text-md-center">
-                    <span class="header-font">Pro MMA <br>123</span>
-                </div>
-                <div class="col-md-10">
-                    <div class="row">
-                        <div class="col-4">
-                            <img src="images/fight1.jpg" alt="...">
-                        </div>
-                        <div class="offset-1 col">
-                            <span class="h5 header-font mb-2">FIGHTER 1 vs FIGHTER 2</span>
-                            <span>3 April 2021, 9.00pm GMT</span>
-                            <span>O2 Arena</span>
-                            <span>London, England</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- ./Event1 -->
-            <!-- Event2 -->
-            <div class="event row">
-                <div class="col-md-2 text-md-center">
-                    <span class="header-font">Pro MMA <br>124</span>
-                </div>
-                <div class="col-md-10">
-                    <div class="row">
-                        <div class="col-4">
-                            <img src="images/fight2.jpg" alt="...">
-                        </div>
-                        <div class="offset-1 col">
-                            <span class="h5 header-font mb-2">FIGHTER 3 vs FIGHTER 4</span>
-                            <span>15 May 2021, 9.30pm GMT</span>
-                            <span>3 Arena</span>
-                            <span>Dublin, Ireland</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- ./Event2 -->
+            <!-- Events -->
+            <?php
+            foreach ($events as $event) {
+                TemplatesHelper::displayEvent($event);
+            }
+            ?>
+            <!-- ./Events -->
             <div class="text-center">
                 <a href="?page=events" class="btn btn-more">See More</a>
             </div>
