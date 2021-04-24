@@ -3,15 +3,20 @@ require_once '../autoload.php';
 
 use helpers\Database;
 
+// create db connection
 $db = (new Database())->getConnection();
 
-// run update query
-//addAthleteImages($db);
+// uncomment to run DB update operations
+
+// addAthleteImages($db);
+// addResultType($db);
+
 
 /**
  * Adds a random imageUrl to each athlete dependent on whether they are male or female.
  *
  * If an athlete's gender cannot be determined (due to no fight history), a placeholder image is used.
+ * @param PDO $db DB connection
  */
 function addAthleteImages(PDO $db)
 {
@@ -113,4 +118,89 @@ function addAthleteImages(PDO $db)
     }
 
     echo "\naddAthleteImages operation completed";
+}
+
+/**
+ * Where the fight outcome is unknown (ResultTypeID is null), this will update the outcome to be one of those in the DB.
+ *
+ * @param PDO $db
+ */
+function addResultType(PDO $db)
+{
+    $query = "SELECT * FROM ResultTypes";
+    $query = $db->query($query);
+
+    // store values as array - outcome types will be equally weighted
+    $resultTypes = $query->fetchAll();
+
+    // get fights without a result
+    $query = "SELECT * FROM FightResults";
+    $query = $db->query($query);
+
+    if ($query->rowCount() > 0) {
+        // there are records without a result
+        $fights = $query->fetchAll();
+
+        foreach ($fights as $fight) {
+            // check if there was a winner
+            $winner = isset($fight['WinnerAthleteID']);
+
+
+            // generate random end of fight time
+            $timeMins = rand(0, 4);
+            $timeSecs = rand(0, 59);
+            $fightTime = sprintf('%01d:%02d', $timeMins, $timeSecs);
+
+            // round fight was stopped
+            $random = rand(0, 100);
+            $round = $random <= 70 ? rand(0, 3) : rand(0, 5); // 70% of fights will have stopped by round 3 - 30% by 5
+
+
+            // loop is used to make sure result aligns with whether there was a winner or not,
+            //  if a winnerAtheleteID is set, outcome should be a win, if not, outcome should be a draw
+            do {
+                // get a random fight result
+                $random = rand(0, sizeof($resultTypes) - 1);
+                $fightResult = $resultTypes[$random];
+            } while (($winner && $fightResult['ResultDescription'] == 'Draw') ||
+                (!$winner && $fightResult['ResultDescription'] != 'Draw'));
+
+            // check if result was a decision or draw - means the fight went the distance
+            if (stripos($fightResult['ResultDescription'], 'decision') !== false ||
+                stripos($fightResult['ResultDescription'], 'draw') !== false) {
+                $fightTime = "5:00";
+                $round = ($random <= 70 ? 3 : 5); // 70% chance of 3 rounds - 30% chance of 5 rounds
+            }
+
+            // update query
+            $updateQuery = "UPDATE FightResults 
+                        SET 
+                            ResultTypeID=?,
+                            WinRound=?,
+                            WinRoundTime=?
+                        WHERE FightResultID=?";
+
+             $updateQuery = $db->prepare($updateQuery);
+            $updateQuery->execute([
+                $fightResult['ResultTypeID'],
+                $round,
+                $fightTime,
+                $fight['FightResultID']]);
+
+        }
+    }
+
+    // check that all records now have an outcome
+    $query = "SELECT * FROM FightResults WHERE ResultTypeID IS NULL";
+    $query = $db->query($query);
+
+    $remaining = $query->rowCount();
+
+    if ($remaining == 0) {
+        echo 'Successful';
+    } else {
+        echo 'There was a problem - ' . $remaining . ' fights do not have a result.';
+    }
+
+    echo "\naddResultType operation completed";
 }
