@@ -1,20 +1,21 @@
 <?php
 
 
+namespace models;
+
+require_once '../../autoload.php';
+
+use helpers\Database;
+use InvalidArgumentException;
+use PDO;
 use PHPUnit\Framework\TestCase;
 
-include_once "../helpers/Database.php";
-include_once "../models/User.php";
-include_once "../models/APIAccess.php";
-include_once "../models/Role.php";
-include_once "../models/RolePermission.php";
-include_once "../models/Permission.php";
 
 class UserTest extends TestCase
 {
     private User $user;
-    private User $persistent_user;
-    private mysqli $db;
+    private User $persistentUser;
+    private ?PDO $db;
 
     // test data vars
     private int $idValid;
@@ -37,7 +38,6 @@ class UserTest extends TestCase
     private string $userLastNameInvalid;
     private string $userDobInvalid;
     private int $userRoleIdInvalid;
-    private int $userPermissionIdInvalid;
 
 
     public function setUp(): void
@@ -67,7 +67,7 @@ class UserTest extends TestCase
         $this->userRoleIdInvalid = 99;
 
         // setup a test user that can be used in each test
-        $this->persistent_user = new User($this->db);
+        $this->persistentUser = new User($this->db);
         $this->persistentPasswordValid = 'persistentUserPassword';
 
         $areaUsers = 'USERS';
@@ -83,29 +83,29 @@ class UserTest extends TestCase
             ['Area' => $areaFights, 'Type' => 'UPDATE'],
         ];
 
-        $this->persistent_user->setUsername("persistentUser1");
-        $this->persistent_user->setEmail("persistentUser@test.com");
-        $this->persistent_user->setPassword($this->persistentPasswordValid);
-        $this->persistent_user->setFirstName("firstName");
-        $this->persistent_user->setLastName("lastName");
-        $this->persistent_user->setDob('1960-12-30');
-        $this->persistent_user->setRoleId($this->userRoleIdValid);
-        $this->persistent_user->setPermissions($this->permissionsValid);
+        $this->persistentUser->setUsername("persistentUser1");
+        $this->persistentUser->setEmail("persistentUser@test.com");
+        $this->persistentUser->setPassword($this->persistentPasswordValid);
+        $this->persistentUser->setFirstName("firstName");
+        $this->persistentUser->setLastName("lastName");
+        $this->persistentUser->setDob('1960-12-30');
+        $this->persistentUser->setRoleId($this->userRoleIdValid);
+        $this->persistentUser->setPermissions($this->permissionsValid);
 
         // create object in database
-        $this->persistent_user->createUser();
+        $this->persistentUser->create(null);
     }
 
     public function tearDown(): void
     {
         // delete user from db
-        $this->persistent_user->delete();
-        $this->db->close();
+        $userId = $this->persistentUser->getUserId();
+        $this->persistentUser->delete($userId);
     }
 
     public function testDataStartsAsNull()
     {
-        self::assertNull($this->user->getId());
+        self::assertNull($this->user->getUserId());
         self::assertNull($this->user->getUsername());
         self::assertNull($this->user->getEmail());
         self::assertNull($this->user->getPassword());
@@ -113,7 +113,6 @@ class UserTest extends TestCase
         self::assertNull($this->user->getLastName());
         self::assertNull($this->user->getDob());
         self::assertNull($this->user->getRoleId());
-        self::assertFalse($this->user->isAuthenticated());
     }
 
     public function testCreateAndDeleteValid()
@@ -128,55 +127,51 @@ class UserTest extends TestCase
         $this->user->setRoleId($this->userRoleIdValid);
 
         // create new record in db
-        $create_query = $this->user->createUser();
+        $create_query = $this->user->create(null);
         // check that query ran successfully
-        self::assertTrue($create_query);
+        self::assertTrue($create_query > 0);
         // check the object now has an id
-        $id = $this->user->getId();
+        $id = $this->user->getUserId();
 
         self::assertNotNull($id);
-        self::assertFalse($this->user->isAuthenticated());
 
         // delete object
-        $delete_query = $this->user->delete();
-        self::assertTrue($delete_query);
+        $delete_query = $this->user->delete($this->user->getUserId());
+        self::assertTrue($delete_query > 0);
     }
 
     public function testGetUser()
     {
-        $this->user->getByUsername($this->persistent_user->getUsername());
+        $this->user->getUserByUsername($this->persistentUser->getUsername());
 
-        self::assertEquals($this->persistent_user->getId(), $this->user->getId());
-        self::assertEquals($this->persistent_user->getUsername(), $this->user->getUsername());
-        self::assertEquals($this->persistent_user->getEmail(), $this->user->getEmail());
-        self::assertEquals($this->persistent_user->getPassword(), $this->user->getPassword());
-        self::assertEquals($this->persistent_user->getFirstName(), $this->user->getFirstName());
-        self::assertEquals($this->persistent_user->getLastName(), $this->user->getLastName());
-        self::assertEquals($this->persistent_user->getDob(), $this->user->getDob());
-        self::assertEquals($this->persistent_user->getRoleId(), $this->user->getRoleId());
+        self::assertEquals($this->persistentUser->getUserId(), $this->user->getUserId());
+        self::assertEquals($this->persistentUser->getUsername(), $this->user->getUsername());
+        self::assertEquals($this->persistentUser->getEmail(), $this->user->getEmail());
+        self::assertEquals($this->persistentUser->getFirstName(), $this->user->getFirstName());
+        self::assertEquals($this->persistentUser->getLastName(), $this->user->getLastName());
+        self::assertEquals($this->persistentUser->getDob(), $this->user->getDob());
+        self::assertEquals($this->persistentUser->getRoleId(), $this->user->getRoleId());
     }
 
     public function testCheckPassword()
     {
         // get data from one test object
-        $this->user->getByUsername($this->persistent_user->getUsername());
+        $this->user->getUserByUsername($this->persistentUser->getUsername());
 
         // test 1 - using wrong password
-        self::assertFalse($this->user->checkPassword($this->userPasswordInvalid));
-        self::assertFalse($this->user->isAuthenticated());
+
+        self::assertFalse($this->user->verifyLoginCredentials($this->persistentUser->getUsername(), $this->userPasswordInvalid));
 
         // test 2 - using the correct password
-        self::assertTrue($this->user->checkPassword($this->persistentPasswordValid));
-        self::assertTrue($this->user->isAuthenticated());
+        self::assertTrue(sizeof($this->user->verifyLoginCredentials($this->persistentUser->getUsername(), $this->persistentPasswordValid)) > 0);
 
         // test 3 - repeating test one to check that authenticated is reset to false
-        self::assertFalse($this->user->checkPassword($this->userPasswordInvalid));
-        self::assertFalse($this->user->isAuthenticated());
+        self::assertFalse($this->user->verifyLoginCredentials($this->persistentUser->getUsername(), $this->userPasswordInvalid));
     }
 
     public function testCheckEmail()
     {
-        $this->user->setEmail($this->persistent_user->getEmail());
+        $this->user->setEmail($this->persistentUser->getEmail());
         self::assertTrue($this->user->checkEmail());
 
         $this->user->setEmail($this->userEmailValid);
@@ -187,15 +182,15 @@ class UserTest extends TestCase
     public function testUpdate()
     {
         // make sure user does not exist
-        self::assertFalse($this->user->getByUsername($this->userNameValid));
+        self::assertFalse($this->user->getUserByUsername($this->userNameValid));
 
         // update persistent user
-        $this->persistent_user->setUsername($this->userNameValid);
-        $this->persistent_user->setEmail($this->userEmailValid);
-        $this->persistent_user->update();
+        $this->persistentUser->setUsername($this->userNameValid);
+        $this->persistentUser->setEmail($this->userEmailValid);
+        $this->persistentUser->update($this->persistentUser->getUserId());
 
         // check that update took place
-        self::assertTrue($this->user->getByUsername($this->userNameValid));
+        self::assertTrue(sizeof($this->user->getUserByUsername($this->userNameValid)) > 0);
 
         // setEmail changes email to lowercase
         self::assertEqualsIgnoringCase($this->userNameValid, $this->user->getUsername());
@@ -229,7 +224,7 @@ class UserTest extends TestCase
 
     public function testGetId()
     {
-        self::assertNull($this->user->getId());
+        self::assertNull($this->user->getUserId());
     }
 
     public function testSetUsername()
@@ -293,35 +288,35 @@ class UserTest extends TestCase
         $role->create();
 
         // create the permissions for the new role
-        $role_permissions = new RolePermission($this->db);
-        $role_permissions->setRoleId($role->getId());
+        $rolePermissions = new RolePermission($this->db);
+        $rolePermissions->setRoleId($role->getRoleId());
 
 
-        $role_permissions->setPermissions($permissions);
-        $role_permissions->create();
+        $rolePermissions->setPermissions($permissions);
+        $rolePermissions->create();
 
         // update user permissions
-        $this->user->getByUsername($this->persistent_user->getUsername());
-        $this->user->setRoleId($role->getId());
+        $this->user->getUserByUsername($this->persistentUser->getUsername());
+        $this->user->setRoleId($role->getRoleId());
+        $this->user->fetchPermissions();
 
         $permission = new Permission($this->db);
 
         // check user has permission
-        foreach ($permissions as $permission_id) {
-            $permission->getOne($permission_id);
+        foreach ($permissions as $permissionId) {
+            $permission->getOne($permissionId);
             self::assertTrue($this->user->hasPermission($permission->getArea(), $permission->getType()));
         }
 
         self::assertEquals(sizeof($permissions), sizeof($this->user->getPermissions()));
 
-        $role_permissions->delete();
+        $rolePermissions->delete();
         $role->delete();
     }
 
 
     public function testGetUserByAPI()
     {
-
         $api_key = 'A1b2C3_';
 
         // create new api
@@ -329,17 +324,17 @@ class UserTest extends TestCase
         $api->setApiKey($api_key);
         $api->setStartDate('2021-01-01');
         $api->setEndDate('2022-12-01');
-        $api->setUserId($this->persistent_user->getId());
+        $api->setUserId($this->persistentUser->getUserId());
         $api->create();
 
         // get the user_id by supplying the apiKey
-        $valid_api_key = $this->user->getByApiKey($api_key);
+        $valid_api_key = $this->user->getUserByApiKey($api_key);
 
-        self::assertTrue($valid_api_key);
-        self::assertEquals($this->user->getId(), $this->persistent_user->getId());
+        self::assertTrue($valid_api_key > 0);
+        self::assertEquals($this->user->getUserId(), $this->persistentUser->getUserId());
 
         // remove api from db and check it happened
-        self::assertTrue($api->delete());
+        self::assertTrue($api->delete() > 0);
     }
 
     public function testFetchPermissions()
@@ -352,13 +347,16 @@ class UserTest extends TestCase
 
         // create the permissions for the new role
         $role_permissions = new RolePermission($this->db);
-        $role_permissions->setRoleId($role->getId());
+        $role_permissions->setRoleId($role->getRoleId());
         $role_permissions->setPermissions([1, 2, 3, 4, 5, 9, 10]);
         $role_permissions->create();
 
         // set the role and update db
-        $this->persistent_user->setRoleId($role->getId());
-        $this->persistent_user->update();
+        $this->persistentUser->setRoleId($role->getRoleId());
+        $this->persistentUser->update($this->persistentUser->getUserId());
+
+        // update object permissions
+        $this->persistentUser->fetchPermissions();
 
         $expected_permissions = [
             ['Area' => 'FIGHTS', 'Type' => 'CREATE'],
@@ -371,13 +369,13 @@ class UserTest extends TestCase
         ];
 
 
-        self::assertEquals($expected_permissions, $this->persistent_user->getPermissions());
+        self::assertEquals($expected_permissions, $this->persistentUser->getPermissions());
 
         // delete role and permissions
         $role_permissions->delete();
         // change role id so that the role can be deleted
-        $this->persistent_user->setRoleId($this->userRoleIdValid);
-        $this->persistent_user->update();
+        $this->persistentUser->setRoleId($this->userRoleIdValid);
+        $this->persistentUser->update($this->persistentUser->getUserId());
 
         $role->delete();
     }
