@@ -187,6 +187,7 @@ h3 {
 
 
 footer {
+    margin-top: 70px;
     padding: 30px 40px 20px 40px;
     color: #fff;
     background-color: #000;
@@ -423,7 +424,7 @@ div.fight {
 }
 
 
-span.fight-outcome {
+span.fight-outcome-badge {
     display: inline-block;
     margin-bottom: 18px;
     border-radius: .25rem;
@@ -483,11 +484,12 @@ span.fight-outcome {
 
 .fight-outcome {
     font-size: 1em;
-    padding-bottom: 15px;
+    padding: 15px 0;
     margin: 20px 0;
     text-align: center;
     text-transform: uppercase;
-    border-bottom: 1px dotted #dcdcdc;
+    background-color: #f8f8f8;
+    border-radius: 10px;
 }
 
 .fight-outcome span {
@@ -515,14 +517,58 @@ span.fight-outcome {
     text-transform: uppercase;
 }
 
+
 .fight-athletes div {
     padding-bottom: 15px;
 }
 
+/*red athlete stats*/
 .fight-athletes div:first-child {
     border-bottom: 4px solid #bf0d0d;
 }
 
+/*blue athlete stats*/
 .fight-athletes div:last-child {
     border-bottom: 4px solid #144a8e;
 }
+
+.fight-stats {
+    text-align: center;
+    font-weight: bold;
+    text-transform: uppercase;
+    padding: 20px 0;
+    border-bottom: 1px dotted #dcdcdc;
+}
+
+
+.fight-stats span {
+    display: block;
+}
+
+
+/* athlete colors */
+.red {
+    color: #bf0d0d;
+}
+
+.blue {
+    color: #144a8e;
+}
+
+.total-landed {
+    font-size: 2em;
+}
+
+.total-thrown {
+    color: #b4b4b4;
+}
+
+.total-thrown, .chart-text {
+    font-size: .9em;
+}
+
+
+.charts {
+    margin: auto 0;
+}
+
