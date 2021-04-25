@@ -126,10 +126,10 @@ class User
 
     /**
      * Create a new user account in the dabatase.
-     * @param array $data - form data with all required database fields.
+     * @param array|null $data - form data with all required database fields.
      * @return int number of rows impacted by the delete query: 1 if successful, 0 if not.
      */
-    public function create(array $data): int
+    public function create(?array $data): int
     {
         if (!is_null($data)) {
             $this->processData($data);
@@ -160,6 +160,8 @@ class User
             $query->execute([$this->username, $this->email, $this->password, $this->firstName,
                 $this->lastName, $this->dob, $this->roleId]);
 
+            $this->userId = $this->db->lastInsertId();
+
             return $query->rowCount();
         } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
@@ -176,13 +178,16 @@ class User
     {
         $this->setUserId($userId);
 
-        $this->setUsername($data['UserName']);
-        $this->setEmail($data['UserEmail']);
-        $this->setFirstName($data['UserFirstName']);
-        $this->setLastName($data['UserLastName']);
-        $this->setDob($data['UserDOB']);
-        $this->setRoleId($data['RoleID']);
+        if (!is_null($data)) {
 
+            $this->setUsername($data['UserName']);
+            $this->setEmail($data['UserEmail']);
+            $this->setFirstName($data['UserFirstName']);
+            $this->setLastName($data['UserLastName']);
+            $this->setDob($data['UserDOB']);
+            $this->setRoleId($data['RoleID']);
+
+        }
         $this->validateData();
 
         $query = "UPDATE Users 
@@ -357,7 +362,7 @@ class User
 
             if ($query->rowCount() > 0) {
                 $result = $query->fetch();
-                return $this->getOne($result['UserId']);
+                return $this->getOne($result['UserID']);
             }
 
             return false;
@@ -435,7 +440,7 @@ class User
             $query = $this->db->prepare($query);
             $query->execute([$this->email]);
 
-            return $query->rowCount();
+            return ($query->rowCount() > 0);
         } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
@@ -611,11 +616,4 @@ class User
         $this->roleId = $roleId;
     }
 
-    /**
-     * @return bool
-     */
-    public function isAuthenticated(): bool
-    {
-        return $this->authenticated;
-    }
 }
