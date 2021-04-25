@@ -31,6 +31,7 @@ use helpers\TemplatesHelper;
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mb-2 mb-lg-0">
                 <?= TemplatesHelper::displayNavBar(constant("NAVBAR_PAGES"), $activePage); ?>
+                <?= TemplatesHelper::displayUserMenu(true); ?>
             </ul>
         </div>
         <div class="my-navbar d-none d-lg-flex">
@@ -39,6 +40,7 @@ use helpers\TemplatesHelper;
             </div>
             <div class="flex-row-reverse">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <?= TemplatesHelper::displayUserMenu(false); ?>
                     <li class="nav-item">
                         <a class="nav-link" href="https://twitter.com/" target="_blank"><i
                                     class="fab fa-twitter fa-2x"></i></a>

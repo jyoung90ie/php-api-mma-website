@@ -1,5 +1,7 @@
 <?php
+session_start();
 require_once 'autoload.php';
+
 
 const TEMPLATES_FOLDER = 'templates/';
 const API_URL = 'http://localhost:8888/promma/api'; // no trailing backslash
@@ -42,6 +44,9 @@ switch ($page) {
         break;
     case 'rankings':
         include_once TEMPLATES_FOLDER . 'rankings.php';
+        break;
+    case 'login':
+        include_once TEMPLATES_FOLDER . 'login.php';
         break;
     default:
         include_once TEMPLATES_FOLDER . 'index.php';

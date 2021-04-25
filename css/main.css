@@ -38,6 +38,10 @@ h3 {
     font-family: 'Acme', sans-serif;
 }
 
+.error {
+    color: red;
+}
+
 /* pagination links */
 .page-link, .page-link:hover {
     color: #000000;
@@ -572,3 +576,7 @@ span.fight-outcome-badge {
     margin: auto 0;
 }
 
+
+/*
+login
+*/
