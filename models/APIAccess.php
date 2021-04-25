@@ -75,7 +75,7 @@ class APIAccess
         $this->validateData();
 
         $query = "INSERT INTO ApiAccess (ApiKey, StartDate, EndDate, UserID)
-                    VALUES('?', '?', '?', ?);";
+                    VALUES(?, ?, ?, ?);";
 
         try {
             $query = $this->db->prepare($query);
@@ -97,7 +97,10 @@ class APIAccess
         $query = "UPDATE 
                         ApiAccess
                     SET 
-                        ApiKey = '?', StartDate = '?', EndDate = '?', UserID = ?
+                        ApiKey = ?, 
+                        StartDate = ?, 
+                        EndDate = ?, 
+                        UserID = ?
                     WHERE 
                         ID = ?";
 
