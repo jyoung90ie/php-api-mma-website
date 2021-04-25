@@ -48,6 +48,9 @@ switch ($page) {
     case 'login':
         include_once TEMPLATES_FOLDER . 'login.php';
         break;
+    case 'logout':
+        include_once TEMPLATES_FOLDER . 'logout.php';
+        break;
     default:
         include_once TEMPLATES_FOLDER . 'index.php';
         break;

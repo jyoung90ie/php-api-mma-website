@@ -1,5 +1,10 @@
 <?php
 
+
+if (isset($_SESSION['User'])) {
+    header("Location: ?page=index");
+}
+
 if (!constant("API_URL")) {
     echo 'Api address not set';
     return;
@@ -32,11 +37,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $authResponse = json_decode(curl_exec($authRequest), true);
         $metaResponse = curl_getinfo($authRequest);
 
-        $httpCode = $metaResponse['http_code'];
-
         // check for errors
-        if (!isset($authResponse['Error'])) {
+        if (isset($authResponse['UserID'])) {
+            unset($_SESSION['UserID'], $_SESSION['User']);
+            $_SESSION['User'] = $authResponse;
 
+            header("Location: ?page=index");
         }
     }
 }
