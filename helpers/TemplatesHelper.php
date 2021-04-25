@@ -177,8 +177,8 @@ class TemplatesHelper
         $outputHTML = '';
         foreach ($navbarPages as $page) {
 
-            if ((isset($_SESSION['UserID']) && $page['showLoggedIn']) ||
-                (!isset($_SESSION['UserID']) && !$page['showLoggedIn'])) {
+            if ((isset($_SESSION['User']) && $page['showLoggedIn']) ||
+                (!isset($_SESSION['User']) && !$page['showLoggedIn'])) {
                 // IF LOGGED IN -> only show logged in pages; OTHERWISE -> only show logged out pages
                 $outputHTML .= '                <li class="nav-item' . ($mainMenu ? ' d-lg-none' : '') . '">
                     <a class="nav-link" href="' . $page['link'] . '">' . $page['text'] . '</a>
