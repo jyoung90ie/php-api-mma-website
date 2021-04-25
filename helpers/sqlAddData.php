@@ -6,11 +6,13 @@ use helpers\Database;
 // create db connection
 $db = (new Database())->getConnection();
 
-// uncomment to run DB update operations
+$run = false;   // change to true to re-run functions
 
-// addAthleteImages($db);
-// addResultType($db);
-
+if ($run) {
+    addAthleteImages($db);
+    addResultType($db);
+    addFightAthleteData($db);
+}
 
 /**
  * Adds a random imageUrl to each athlete dependent on whether they are male or female.
@@ -163,7 +165,7 @@ function addResultType(PDO $db)
                 $random = rand(0, sizeof($resultTypes) - 1);
                 $fightResult = $resultTypes[$random];
             } while (($winner && $fightResult['ResultDescription'] == 'Draw') ||
-                (!$winner && $fightResult['ResultDescription'] != 'Draw'));
+            (!$winner && $fightResult['ResultDescription'] != 'Draw'));
 
             // check if result was a decision or draw - means the fight went the distance
             if (stripos($fightResult['ResultDescription'], 'decision') !== false ||
@@ -180,7 +182,7 @@ function addResultType(PDO $db)
                             WinRoundTime=?
                         WHERE FightResultID=?";
 
-             $updateQuery = $db->prepare($updateQuery);
+            $updateQuery = $db->prepare($updateQuery);
             $updateQuery->execute([
                 $fightResult['ResultTypeID'],
                 $round,
@@ -203,4 +205,85 @@ function addResultType(PDO $db)
     }
 
     echo "\naddResultType operation completed";
+}
+
+/**
+ * Creates a number of data points for fight athletes so that they can compared head-to-head after a fight.
+ *
+ * This is necessary because the default fight data is cumulated from all fights and cannot be disaggregated, it is also
+ * very patchy and doesn't have the data I wanted to display.
+ *
+ * @param PDO $db
+ */
+function addFightAthleteData(PDO $db)
+{
+    $successCounter = 0;
+    $columnPrefix = 'stats_'; // prefix to identify data added by this
+    $statsToGenerate = [
+        ['name' => 'strikesThrown', 'min' => 0, 'max' => 400],
+        ['name' => 'strikesLanded', 'min' => 0, 'max' => 400],
+        ['name' => 'significantStrikesThrown', 'min' => 0, 'max' => 300],
+        ['name' => 'significantStrikesLanded', 'min' => 0, 'max' => 300],
+        ['name' => 'takeDownsThrown', 'min' => 0, 'max' => 20],
+        ['name' => 'takeDownsLanded', 'min' => 0, 'max' => 15],
+        ['name' => 'submissionAttempts', 'min' => 0, 'max' => 14],
+        ['name' => 'knockDowns', 'min' => 0, 'max' => 10],
+        ['name' => 'positionReversals', 'min' => 0, 'max' => 8]
+    ];
+
+
+    $query = "SELECT * FROM FightAthletes;";
+    $query = $db->query($query);
+
+    $query->execute();
+    if ($query->rowCount() > 0) {
+
+        $fightAthletes = $query->fetchAll();
+
+        // create array for storing thrown values
+        $amounts = [];
+
+        foreach ($fightAthletes as $fightAthlete) {
+            $updateQuery = 'UPDATE FightAthletes SET ';
+
+            foreach ($statsToGenerate as $stat) {
+                $min = $stat['min'];
+                $max = $stat['max'];
+                $name = $stat['name'];
+
+                // landed value should not exceed thrown amount
+                if (stripos($name,'landed') !== false) {
+                    $max = $amounts[str_replace('Landed', 'Thrown', $name)];
+                }
+
+                $amount = rand($min, $max);
+                $amounts[$name] = $amount;
+
+                $updateQuery .= $columnPrefix . $name . '=' . $amount . ', ';
+
+            }
+
+            // remove trailing ,
+            $updateQuery = rtrim($updateQuery, ', ');
+            $updateQuery .= ' WHERE FightAthleteID = ?';
+
+            $updateQuery = $db->prepare($updateQuery);
+            $updateQuery->execute([$fightAthlete['FightAthleteID']]);
+
+            if ($updateQuery->rowCount() > 0) {
+                $successCounter++;
+            }
+        }
+    }
+
+    $remaining = sizeof($fightAthletes) - $successCounter;
+
+    // check that all records now have an outcome
+    if ($remaining == 0) {
+        echo 'Successful';
+    } else {
+        echo 'There was a problem - ' . $remaining . ' fight athletes could not be updated.';
+    }
+
+    echo "\naddFightAthleteData operation completed";
 }
