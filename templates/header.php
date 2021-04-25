@@ -30,7 +30,7 @@ use helpers\TemplatesHelper;
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mb-2 mb-lg-0">
-                <?= TemplatesHelper::genNavbar(constant("NAVBAR_PAGES"), $activePage); ?>
+                <?= TemplatesHelper::displayNavBar(constant("NAVBAR_PAGES"), $activePage); ?>
             </ul>
         </div>
         <div class="my-navbar d-none d-lg-flex">
