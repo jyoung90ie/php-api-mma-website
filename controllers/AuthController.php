@@ -60,14 +60,19 @@ class AuthController
     {
         $data = json_decode(file_get_contents('php://input'), true);
 
-        if (!isset($data['Username']) || !isset($data['Password'])) {
+        $usernameField = 'username';
+        $passwordField = 'password';
+
+        if (!isset($data[$usernameField]) || !isset($data[$passwordField])) {
             $response['status_code_header'] = self::HTTP_BAD_REQUEST;
-            $response['body'] = ['Error' => 'Username and/or password missing'];
+            $response['body'] = [
+                'Error' => 'Username and/or password missing',
+                'Data' => $data ];
             return $response;
         }
 
-        $username = $data['Username'];
-        $password = $data['Password'];
+        $username = $data[$usernameField];
+        $password = $data[$passwordField];
 
         $result = $this->user->verifyLoginCredentials($username, $password);
 
