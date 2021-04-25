@@ -13,6 +13,10 @@ class TemplatesHelper
      */
     static function displayEvent(array $event)
     {
+        if (!isset($event['Headliners'])) {
+            // do not display events until a fight has been added (which contains headliners)
+            return;
+        }
         // generate athlete images
         $athletes = $event['Headliners'];
         unset($athleteOneImage, $athleteTwoImage);
@@ -105,7 +109,6 @@ class TemplatesHelper
                 }
 
 
-
                 ?>
                 <div class="fight-stats row">
                     <div class="col-4">
@@ -155,6 +158,38 @@ class TemplatesHelper
         return $outputHTML;
     }
 
+
+    /**
+     * Generates links for user account management (e.g. login/register)
+     *
+     * @param bool $mainMenu set to true when this is called as part of the main menu
+     *  this will add class to hide links when menu is not collapsed
+     * @return string generated HTML for navbar
+     */
+    static function displayUserMenu(bool $mainMenu = false): string
+    {
+        $navbarPages = [
+            ['text' => 'Login', 'link' => '?page=login', 'showLoggedIn' => false],
+            ['text' => 'Logout', 'link' => '?page=logout', 'showLoggedIn' => true],
+            ['text' => 'Register', 'link' => '?page=register', 'showLoggedIn' => false],
+        ];
+
+        $outputHTML = '';
+        foreach ($navbarPages as $page) {
+
+            if ((isset($_SESSION['UserID']) && $page['showLoggedIn']) ||
+                (!isset($_SESSION['UserID']) && !$page['showLoggedIn'])) {
+                // IF LOGGED IN -> only show logged in pages; OTHERWISE -> only show logged out pages
+                $outputHTML .= '                <li class="nav-item' . ($mainMenu ? ' d-lg-none' : '') . '">
+                    <a class="nav-link" href="' . $page['link'] . '">' . $page['text'] . '</a>
+                </li>' . "\n";
+
+            }
+        }
+
+        return $outputHTML;
+    }
+
     /**
      * Creates HTML for indicating the winner of a fight
      *
@@ -175,7 +210,6 @@ class TemplatesHelper
         return $outputHTML;
     }
 }
-
 
 
 ?>

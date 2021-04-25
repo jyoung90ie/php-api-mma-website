@@ -2,6 +2,7 @@
 
 namespace models;
 
+use InvalidArgumentException;
 use PDO;
 use PDOException;
 
@@ -9,8 +10,8 @@ class RolePermission
 {
     const TABLE = "RolePermissions";
 
-    private ?int $permission_id = null;
-    private ?int $role_id = null;
+    private ?int $permissionId = null;
+    private ?int $roleId = null;
     private ?array $permissions = null;
 
     private $results;
@@ -44,7 +45,7 @@ class RolePermission
 
         // build insert values
         foreach ($this->permissions as $permission) {
-            $insert_values .= "($this->role_id, $permission), ";
+            $insert_values .= "($this->roleId, $permission), ";
         }
 
         // remove the last comma
@@ -75,7 +76,7 @@ class RolePermission
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->role_id, $this->permissions, $this->role_id, $this->permission_id]);
+            $query->execute([$this->roleId, $this->permissions, $this->roleId, $this->permissionId]);
 
             return $query->rowCount();
         } catch (PDOException $exception) {
@@ -89,11 +90,11 @@ class RolePermission
 
         $query_counter = 0;
 
-        $query = "DELETE FROM " . self::TABLE . " WHERE RoleID=? AND PermissionID=?";
 
         foreach ($this->permissions as $permission) {
+            $query = "DELETE FROM " . self::TABLE . " WHERE RoleID=? AND PermissionID=?";
             $query = $this->db->prepare($query);
-            $query->execute([$this->role_id, $permission]);
+            $query->execute([$this->roleId, $permission]);
 
             if ($query->rowCount() > 0) {
                 $query_counter++;
@@ -110,14 +111,14 @@ class RolePermission
     // utility functions
     private function validateData(): void
     {
-        if (is_null($this->role_id) || is_null($this->permissions)) {
+        if (is_null($this->roleId) || is_null($this->permissions)) {
             throw new InvalidArgumentException("All object variables must have a value");
         }
     }
 
     private function validateIdSet(): void
     {
-        if (!isset($this->role_id) || !isset($this->permissions)) {
+        if (!isset($this->roleId) || !isset($this->permissions)) {
             throw new InvalidArgumentException("Missing value for Role ID and/or Permission ID");
         }
     }
@@ -129,18 +130,18 @@ class RolePermission
      */
     public function getRoleId(): ?int
     {
-        return $this->role_id;
+        return $this->roleId;
     }
 
     /**
-     * @param int $role_id
+     * @param int $roleId
      */
-    public function setRoleId(int $role_id): void
+    public function setRoleId(int $roleId): void
     {
-        if (!is_int($role_id) || $role_id <= 0) {
+        if (!is_int($roleId) || $roleId <= 0) {
             throw new InvalidArgumentException("Invalid Role ID");
         }
-        $this->role_id = $role_id;
+        $this->roleId = $roleId;
     }
 
     /**
@@ -177,17 +178,17 @@ class RolePermission
      */
     public function getPermissionId(): ?int
     {
-        return $this->permission_id;
+        return $this->permissionId;
     }
 
     /**
-     * @param int|null $permission_id
+     * @param int|null $permissionId
      */
-    public function setPermissionId(?int $permission_id): void
+    public function setPermissionId(?int $permissionId): void
     {
-        if (!is_int($permission_id) || $permission_id <= 0) {
+        if (!is_int($permissionId) || $permissionId <= 0) {
             throw new InvalidArgumentException("Invalid Permission ID");
         }
-        $this->permission_id = $permission_id;
+        $this->permissionId = $permissionId;
     }
 }

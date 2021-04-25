@@ -17,7 +17,7 @@ class Permission
 
     const TABLE = "Permissions";
 
-    private ?int $id = null;
+    private ?int $permissionId = null;
     private ?string $area = null;
     private ?string $type = null;
     private ?string $description = null;
@@ -32,7 +32,7 @@ class Permission
 
     public function getOne(int $id)
     {
-        $this->setId($id);
+        $this->setPermissionId($id);
 
         $query = "SELECT * FROM Permissions WHERE PermissionID = ?";
 
@@ -79,6 +79,8 @@ class Permission
 
         try {
             $query = $this->db->prepare($query);
+            $this->permissionId = $this->db->lastInsertId();
+
             $query->execute([$this->area, $this->type, $this->description]);
 
             return $query->rowCount();
@@ -102,7 +104,7 @@ class Permission
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->description, $this->area, $this->type, $this->id]);
+            $query->execute([$this->description, $this->area, $this->type, $this->permissionId]);
 
             return $query->rowCount();
         } catch (PDOException $exception) {
@@ -118,7 +120,7 @@ class Permission
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->id]);
+            $query->execute([$this->permissionId]);
 
             return $query->rowCount();
         } catch (PDOException $exception) {
@@ -136,7 +138,7 @@ class Permission
 
     private function validateIdSet(): void
     {
-        if (!isset($this->id)) {
+        if (!isset($this->permissionId)) {
             throw new InvalidArgumentException("Object Id has no value");
         }
     }
@@ -146,20 +148,20 @@ class Permission
     /**
      * @return int
      */
-    public function getId(): ?int
+    public function getPermissionId(): ?int
     {
-        return $this->id;
+        return $this->permissionId;
     }
 
     /**
-     * @param int $id
+     * @param int $permissionId
      */
-    public function setId(int $id): void
+    public function setPermissionId(int $permissionId): void
     {
-        if ($id <= 0) {
+        if ($permissionId <= 0) {
             throw new InvalidArgumentException("Invalid ID");
         }
-        $this->id = $id;
+        $this->permissionId = $permissionId;
     }
 
     /**
