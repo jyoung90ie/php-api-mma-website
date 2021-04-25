@@ -2,6 +2,7 @@
 
 namespace models;
 
+use InvalidArgumentException;
 use PDO;
 use PDOException;
 
@@ -9,7 +10,7 @@ class Role
 {
     const TABLE = "Roles";
 
-    private ?int $id = null;
+    private ?int $roleId = null;
     private ?string $description = null;
 
     private $results;
@@ -47,6 +48,8 @@ class Role
             $query = $this->db->prepare($query);
             $query->execute([$this->description]);
 
+            $this->roleId = $this->db->lastInsertId();
+
             return $query->rowCount();
         } catch (PDOException $exception) {
             die($exception->getMessage());
@@ -66,7 +69,7 @@ class Role
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->description, $this->id]);
+            $query->execute([$this->description, $this->roleId]);
 
             return $query->rowCount();
         } catch (PDOException $exception) {
@@ -82,7 +85,7 @@ class Role
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->id]);
+            $query->execute([$this->roleId]);
 
             return $query->rowCount();
         } catch (PDOException $exception) {
@@ -100,7 +103,7 @@ class Role
 
     private function validateIdSet(): void
     {
-        if (!isset($this->id)) {
+        if (!isset($this->roleId)) {
             throw new InvalidArgumentException("Object Id has no value");
         }
     }
@@ -110,20 +113,20 @@ class Role
     /**
      * @return int
      */
-    public function getId(): ?int
+    public function getRoleId(): ?int
     {
-        return $this->id;
+        return $this->roleId;
     }
 
     /**
-     * @param int $id
+     * @param int $roleId
      */
-    public function setId(int $id): void
+    public function setRoleId(int $roleId): void
     {
-        if ($id <= 0) {
+        if ($roleId <= 0) {
             throw new InvalidArgumentException("Invalid ID");
         }
-        $this->id = $id;
+        $this->roleId = $roleId;
     }
 
     /**
