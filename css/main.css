@@ -542,6 +542,11 @@ span.fight-outcome-badge {
     text-transform: uppercase;
     padding: 20px 0;
     border-bottom: 1px dotted #dcdcdc;
+    transition: all 0.3s ease-in-out;
+}
+
+.fight-stats:hover {
+    background-color: #f5f5f5;
 }
 
 
