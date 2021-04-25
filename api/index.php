@@ -54,16 +54,6 @@ if ($apiModule != AUTHENTICATION_MODULE) {
     $id = $urlPath[$apiUrlPosition + 2] ?? null;
     $id = (!empty($id) ? intval($id) : null);
 
-    ////////////////////////////////////////////////////////
-    ///         manual overrides
-    ////////////////////////////////////////////////////////
-    ///
-    //$api_key = 'test123';
-    //$api_module = 'user';
-    //$requestMethod = 'PUT';
-    //$id = 94;
-    ////////////////////////////////////////////////////////
-
     $apiAccess = new APIAccess($db);
 
     if (!$apiAccess->verifyKey($apiKey)) {
