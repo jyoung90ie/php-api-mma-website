@@ -10,7 +10,7 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 }
 
 if (!constant("API_URL")) {
-    echo 'Api address not set';
+    echo '<p>Api address not set</p>';
     return;
 }
 
@@ -21,14 +21,15 @@ $apiRequest = new APIRequest(constant("API_URL"), $apiModule, $id, $queryString)
 $results = $apiRequest->fetchApiData();
 
 if (isset($results['Error']) || !$results) {
-    echo 'API request failed';
+    echo '<p>API request failed</p>';
     return;
 }
 
 $athletes = $results['Athletes'];
 
-if (sizeof($athletes) == 0) {
-    echo '<p>No fight data</p>';
+if (sizeof($athletes) < 2) {
+    echo '<p>Athletes have not yet been added</p>';
+    return;
 }
 
 $statsData = processApiResult($athletes);
