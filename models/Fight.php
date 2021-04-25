@@ -39,16 +39,16 @@ class Fight
         $query = "SELECT 
                         F.FightID,
                         F.EventID,
-                        E.EventDate, 
-                        E.EventLocation,
                         F.TitleBout,
+                        F.NumOfRounds,
                         WC.WeightClassID,
                         WC.WeightClass,
-                        F.NumOfRounds,
                         R.RefereeID,
-                        R.RefereeName,
                         RT.ResultDescription AS 'Outcome', 
-                        WA.AthleteName As 'Winner'
+                        WA.AthleteName As 'Winner',
+                        FR.WinnerAthleteID,
+                        FR.WinRound,
+                        FR.WinRoundTime
                     FROM 
                         Fights F
                     LEFT JOIN Events E ON E.EventID = F.EventID
@@ -75,8 +75,38 @@ class Fight
                 $this->titleBout = $result['TitleBout'];
                 $this->weightClassId = $result['WeightClassID'];
                 $this->numOfRounds = $result['NumOfRounds'];
+                $result['Athletes'] = [];
 
                 $this->results = $result;
+
+                // add athlete data
+                $query = "SELECT 
+                            FightAthleteID,
+                            FightID,
+                            A.AthleteName,
+                            A.AthleteID, 
+                            stats_strikesLanded,
+                            stats_strikesThrown,
+                            stats_significantStrikesLanded,
+                            stats_significantStrikesThrown,
+                            stats_takedownsLanded,
+                            stats_takedownsThrown,
+                            stats_positionReversals,
+                            stats_knockDowns,
+                            stats_submissionAttempts
+                        FROM 
+                            FightAthletes
+                        LEFT JOIN 
+                            Athletes A on FightAthletes.AthleteID = A.AthleteID
+                        WHERE FightID=?
+                        ";
+                $query = $this->db->prepare($query);
+                $query->execute([$this->fightId]);
+
+                if ($query->rowCount() > 0) {
+                    $athleteData = $query->fetchAll();
+                    $result['Athletes'] = $athleteData;
+                }
 
                 return $result;
             }
@@ -100,7 +130,7 @@ class Fight
                         R.RefereeID,
                         R.RefereeName,
                         RT.ResultDescription AS 'Outcome', 
-                        WA.AthleteName As 'Winner'
+                        WA.AthleteName As 'Winner',
                     FROM 
                         Fights F
                     LEFT JOIN Events E ON E.EventID = F.EventID
