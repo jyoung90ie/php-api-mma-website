@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             unset($apiResponse); // api will return number of records created when successfully
 
-            $userNotification = 'Event Created';
+            $userNotification = 'Event created';
             \helpers\HelperFunctions::addNotification($userNotification);
 
             header("Location: ?page=events");
@@ -62,7 +62,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         <?= \helpers\HelperFunctions::displayApiError($apiResponse ?? []); ?>
         <form action="" method="post">
-
             <div class="row g-3 align-items-center mb-3">
                 <div class="col-2">
                     <label for="EventLocation" class="col-form-label">Event Location</label>
