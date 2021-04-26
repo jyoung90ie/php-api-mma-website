@@ -241,12 +241,12 @@ class HelperFunctions
     {
         $outputHTML = '';
         if (isset($_SESSION['Notifications'])) {
-            $outputHTML .= '            <div class="alert alert-primary alert-dismissible fade show" role="alert">';
             foreach ($_SESSION['Notifications'] as $notification) {
+                $outputHTML .= '            <div class="alert alert-primary alert-dismissible fade show" role="alert">';
                 $outputHTML .= $notification . '<br />';
+                $outputHTML .= '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+                $outputHTML .= '</div>';
             }
-            $outputHTML .= '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
-            $outputHTML .= '</div>';
 
             unset($_SESSION['Notifications']);
         }
