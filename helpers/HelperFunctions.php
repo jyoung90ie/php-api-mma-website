@@ -257,7 +257,7 @@ class HelperFunctions
         $outputHTML = '';
         if (isset($_SESSION['Notifications'])) {
             foreach ($_SESSION['Notifications'] as $notification) {
-                $outputHTML .= '            <div class="alert alert-primary alert-dismissible fade show" role="alert">';
+                $outputHTML .= '            <div class="alert alert-primary alert-dismissible fade show text-center mb-5" role="alert">';
                 $outputHTML .= $notification . '<br />';
                 $outputHTML .= '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
                 $outputHTML .= '</div>';
