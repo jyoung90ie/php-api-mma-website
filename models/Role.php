@@ -2,6 +2,7 @@
 
 namespace models;
 
+use Exception;
 use InvalidArgumentException;
 use PDOException;
 
@@ -20,9 +21,30 @@ class Role
         $this->db = $db;
     }
 
+    public function getOne(int $id)
+    {
+        // performs validation checks before setting
+        $this->setRoleId($id);
+
+        $query = "SELECT * FROM Roles WHERE RoleID = ?";
+
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->roleId]);
+
+            if ($query->rowCount() > 0) {
+                return $query->fetch();
+            }
+
+            return false;
+        } catch (PDOException | Exception $exception) {
+            die($exception->getMessage());
+        }
+    }
+
     public function getAll()
     {
-        $query = "SELECT * FROM " . self::TABLE;
+        $query = "SELECT * FROM Roles";
 
         try {
             $query = $this->db->query($query);
@@ -41,7 +63,7 @@ class Role
     {
         $this->validateData();
 
-        $query = "INSERT INTO " . self::TABLE . " (RoleDescription) VALUES (?)";
+        $query = "INSERT INTO Roles (RoleDescription) VALUES (?)";
 
         try {
             $query = $this->db->prepare($query);
@@ -60,7 +82,8 @@ class Role
         $this->validateData();
         $this->validateIdSet();
 
-        $query = "UPDATE " . self::TABLE . " 
+        $query = "UPDATE 
+                    Roles
                 SET 
                     RoleDescription = ?
                 WHERE 
@@ -80,7 +103,7 @@ class Role
     {
         $this->validateIdSet();
 
-        $query = "DELETE FROM " . self::TABLE . " WHERE RoleID=?";
+        $query = "DELETE FROM Roles WHERE RoleID=?";
 
         try {
             $query = $this->db->prepare($query);

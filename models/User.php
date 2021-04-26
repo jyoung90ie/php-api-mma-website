@@ -243,17 +243,13 @@ class User
      */
     private function processData(array $data): void
     {
-        try {
-            $this->setUsername($data['UserName']);
-            $this->setEmail($data['UserEmail']);
-            $this->setPassword($data['UserPassword']);
-            $this->setFirstName($data['UserFirstName']);
-            $this->setLastName($data['UserLastName']);
-            $this->setDob($data['UserDOB']);
-            $this->setRoleId($data['RoleID']);
-        } catch (Exception | TypeError $exception) {
-            exit($exception->getMessage());
-        }
+        $this->setUsername($data['UserName'] ?? '');
+        $this->setEmail($data['UserEmail'] ?? '');
+        $this->setPassword($data['UserPassword'] ?? '');
+        $this->setFirstName($data['UserFirstName'] ?? '');
+        $this->setLastName($data['UserLastName'] ?? '');
+        $this->setDob($data['UserDOB'] ?? '');
+        $this->setRoleId($data['RoleID'] ?? '');
     }
 
 
@@ -275,6 +271,12 @@ class User
             $result = $query->fetch();
 
             if (password_verify($password, $result['UserPassword'])) {
+                // get user permissions and return as result
+                $this->roleId = $result['RoleID'];
+                $this->fetchPermissions();
+
+                $result['Permissions'] = $this->permissions;
+
                 return $result;
             }
         }
@@ -314,7 +316,6 @@ class User
                     }
                 }
             }
-
 
         } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
@@ -422,7 +423,7 @@ class User
     {
         if (is_null($this->username) || is_null($this->email) || is_null($this->firstName)
             || is_null($this->lastName) || is_null($this->dob) || is_null($this->roleId)) {
-            throw new InvalidArgumentException("All object variables must have a value");
+            throw new InvalidArgumentException("User operation could not be executed due to invalid fields");
         }
     }
 
@@ -612,6 +613,11 @@ class User
      */
     public function setRoleId(?int $roleId): void
     {
+        // check roleId is valid
+        $role = new Role($this->db);
+        if ($role->getOne($roleId) === false) {
+            throw new InvalidArgumentException('Invalid Role ID');
+        }
         $this->roleId = $roleId;
     }
 
