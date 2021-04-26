@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'autoload.php';
+include_once 'autoload.php';
 include_once 'helpers/config.php';
 
 const TEMPLATES_FOLDER = 'templates/';
@@ -15,47 +15,21 @@ const NAVBAR_PAGES = [
 parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $queryString);
 $activePage = '?page=' . $queryString['page'] ?? 'index';
 
-
-require_once TEMPLATES_FOLDER . 'header.php';
-
+include_once TEMPLATES_FOLDER . 'header.php';
 
 if (!isset($_GET['page'])) {
     $page = '';
 } else {
-    $page = $_GET['page'];
+    $page = TEMPLATES_FOLDER . htmlspecialchars($_GET['page']) . '.php';
+}
+
+// include pages as needed
+if (file_exists($page)) {
+    include_once $page;
+} else {
+    include_once TEMPLATES_FOLDER . 'index.php';
 }
 
 
-$apiAddress = ""; // used within templates
-
-switch ($page) {
-    case 'athletes':
-        include_once TEMPLATES_FOLDER . 'athletes.php';
-        break;
-    case 'events':
-        include_once TEMPLATES_FOLDER . 'events.php';
-        break;
-    case 'event':
-        include_once TEMPLATES_FOLDER . 'event.php';
-        break;
-    case 'fight':
-        include_once TEMPLATES_FOLDER . 'fight.php';
-        break;
-    case 'rankings':
-        include_once TEMPLATES_FOLDER . 'rankings.php';
-        break;
-    case 'login':
-        include_once TEMPLATES_FOLDER . 'login.php';
-        break;
-    case 'logout':
-        include_once TEMPLATES_FOLDER . 'logout.php';
-        break;
-    default:
-        include_once TEMPLATES_FOLDER . 'index.php';
-        break;
-
-}
-
-
-require_once TEMPLATES_FOLDER . 'footer.php';
+include_once TEMPLATES_FOLDER . 'footer.php';
 ?>
