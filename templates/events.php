@@ -4,6 +4,7 @@ namespace templates;
 
 use helpers\APIRequest;
 use helpers\HelperFunctions;
+use models\Event;
 
 
 if (!constant("API_URL")) {
@@ -14,6 +15,7 @@ if (!constant("API_URL")) {
 $apiModule = "/event";
 $queryString['start'] = $queryString['start'] ?? 0;
 
+$permissionModule = Event::PERMISSION_AREA;
 
 $apiRequest = new APIRequest(constant("API_URL"), $apiModule, null, $queryString);
 $results = $apiRequest->fetchApiData();
@@ -27,13 +29,24 @@ $events = $results['data'];
 ?>
 <main class="events-container container">
     <h2><i class="far fa-calendar-alt"></i> All events</h2>
+
+
     <div class="events-overview">
         <span class="total"><?= $results['totalResults'] ?> events</span>
+        <?php
+        if (HelperFunctions::hasPermission($permissionModule, 'CREATE')) {
+            ?>
+            <div class="mt-2 d-flex justify-content-center justify-content-md-end">
+                <a href="?page=event&action=create" class="btn btn-success btn-lg">Create</a>
+            </div>
+            <?php
+        }
+        ?>
     </div>
     <hr>
     <?php
     foreach ($events as $event) {
-        HelperFunctions::displayEvent($event);
+        HelperFunctions::displayEvent($event, $permissionModule);
     }
     ?>
 

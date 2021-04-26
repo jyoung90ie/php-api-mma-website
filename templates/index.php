@@ -2,6 +2,7 @@
 
 namespace templates;
 
+use models\Event;
 use helpers\APIRequest;
 use helpers\HelperFunctions;
 
@@ -85,7 +86,7 @@ $events = $results['data'];
             <!-- Events -->
             <?php
             foreach ($events as $event) {
-                HelperFunctions::displayEvent($event);
+                HelperFunctions::displayEvent($event, Event::PERMISSION_AREA);
             }
             ?>
             <!-- ./Events -->
