@@ -35,7 +35,7 @@ class APIAccess
      */
     public function verifyKey(string $apiKey)
     {
-        $now = date('Y-m-d');
+        $now = date('Y-m-d H:i:s');
 
         $query = "SELECT * FROM ApiAccess
                     WHERE 
