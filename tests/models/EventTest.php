@@ -2,7 +2,7 @@
 
 namespace models;
 
-require_once '../../autoload.php';
+include_once '../../autoload.php';
 
 use helpers\Database;
 use InvalidArgumentException;
@@ -12,16 +12,16 @@ use PHPUnit\Framework\TestCase;
 
 class EventTest extends TestCase
 {
-    private Event $event;
-    private ?PDO $db;
+    private $event;
+    private $db;
 
     // test data vars
-    private int $idValid;
-    private string $locationValid;
-    private string $dateValid;
-    private int $idInvalid;
-    private string $dateInvalid;
-    private string $dateInvalidBelowMin;
+    private $idValid;
+    private $locationValid;
+    private $dateValid;
+    private $idInvalid;
+    private $dateInvalid;
+    private $dateInvalidBelowMin;
 
     public function setUp(): void
     {

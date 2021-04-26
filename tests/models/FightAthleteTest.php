@@ -8,16 +8,16 @@ include_once "../models/FightAthlete.php";
 
 class FightAthleteTest extends TestCase
 {
-    private FightAthlete $fight_athlete;
-    private mysqli $db;
+    private $fight_athlete;
+    private $db;
 
     // test data vars
-    private int $idValid;
-    private int $fightIdValid;
-    private int $athleteIdValid;
-    private int $idInvalid;
-    private int $fightIdInvalid;
-    private int $athleteIdInvalid;
+    private $idValid;
+    private $fightIdValid;
+    private $athleteIdValid;
+    private $idInvalid;
+    private $fightIdInvalid;
+    private $athleteIdInvalid;
 
     public function setUp(): void
     {

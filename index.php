@@ -15,6 +15,7 @@ const NAVBAR_PAGES = [
 parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $queryString);
 $activePage = '?page=' . $queryString['page'] ?? 'index';
 
+// html header
 include_once TEMPLATES_FOLDER . 'header.php';
 
 if (!isset($_GET['page'])) {
@@ -30,6 +31,5 @@ if (file_exists($page)) {
     include_once TEMPLATES_FOLDER . 'index.php';
 }
 
-
+// html footer
 include_once TEMPLATES_FOLDER . 'footer.php';
-?>

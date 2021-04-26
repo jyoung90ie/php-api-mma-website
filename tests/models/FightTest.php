@@ -8,22 +8,22 @@ include_once "../models/Fight.php";
 
 class FightTest extends TestCase
 {
-    private Fight $fight;
-    private mysqli $db;
+    private $fight;
+    private $db;
 
-    private int $idValid;
-    private int $eventIdValid;
-    private int $refereeIdValid;
-    private bool $titleBoutValid;
-    private int $weightClassIdValid;
-    private int $roundsValid;
-    private int $idInvalid;
-    private int $eventIdInvalid;
-    private int $refereeIdInvalid;
-    private bool $titleBoutInvalid;
-    private int $weightClassIdInvalid;
-    private int $roundsInvalidBelow;
-    private int $roundsInvalidAbove;
+    private $idValid;
+    private $eventIdValid;
+    private $refereeIdValid;
+    private $titleBoutValid;
+    private $weightClassIdValid;
+    private $roundsValid;
+    private $idInvalid;
+    private $eventIdInvalid;
+    private $refereeIdInvalid;
+    private $titleBoutInvalid;
+    private $weightClassIdInvalid;
+    private $roundsInvalidBelow;
+    private $roundsInvalidAbove;
 
     public function setUp(): void
     {

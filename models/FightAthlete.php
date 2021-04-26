@@ -8,7 +8,7 @@ use PDOException;
 
 class FightAthlete
 {
-    private  $fightAthleteId = null;
+    private $fightAthleteId = null;
     private $fightId = null;
     private $athleteId = null;
     private $results = null;

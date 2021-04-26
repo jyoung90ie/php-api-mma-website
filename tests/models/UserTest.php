@@ -3,41 +3,41 @@
 
 namespace models;
 
-require_once '../../autoload.php';
+include_once '../../autoload.php';
+include_once '../../helpers/config.php';
 
 use helpers\Database;
 use InvalidArgumentException;
-use PDO;
 use PHPUnit\Framework\TestCase;
 
 
 class UserTest extends TestCase
 {
-    private User $user;
-    private User $persistentUser;
-    private ?PDO $db;
+    private $user;
+    private $persistentUser;
+    private $db;
 
     // test data vars
-    private int $idValid;
-    private string $userNameValid;
-    private string $userEmailValid;
-    private string $userPasswordValid;
-    private string $persistentPasswordValid;
-    private string $userFirstNameValid;
-    private string $userLastNameValid;
-    private string $userDobValid;
-    private array $permissionsValid;
+    private $idValid;
+    private $userNameValid;
+    private $userEmailValid;
+    private $userPasswordValid;
+    private $persistentPasswordValid;
+    private $userFirstNameValid;
+    private $userLastNameValid;
+    private $userDobValid;
+    private $permissionsValid;
 
-    private int $userRoleIdValid;
-    private int $userPermissionIdValid;
-    private int $idInvalid;
-    private string $userNameInvalid;
-    private string $userEmailInvalid;
-    private string $userPasswordInvalid;
-    private string $userFirstNameInvalid;
-    private string $userLastNameInvalid;
-    private string $userDobInvalid;
-    private int $userRoleIdInvalid;
+    private $userRoleIdValid;
+    private $userPermissionIdValid;
+    private $idInvalid;
+    private $userNameInvalid;
+    private $userEmailInvalid;
+    private $userPasswordInvalid;
+    private $userFirstNameInvalid;
+    private $userLastNameInvalid;
+    private $userDobInvalid;
+    private $userRoleIdInvalid;
 
 
     public function setUp(): void
@@ -326,6 +326,8 @@ class UserTest extends TestCase
         $api->setEndDate('2022-12-01');
         $api->setUserId($this->persistentUser->getUserId());
         $api->create();
+        $apiId = $api->getApiId();
+
 
         // get the user_id by supplying the apiKey
         $valid_api_key = $this->user->getUserByApiKey($api_key);
@@ -334,7 +336,7 @@ class UserTest extends TestCase
         self::assertEquals($this->user->getUserId(), $this->persistentUser->getUserId());
 
         // remove api from db and check it happened
-        self::assertTrue($api->delete() > 0);
+        self::assertTrue($api->delete($apiId) > 0);
     }
 
     public function testFetchPermissions()

@@ -8,13 +8,13 @@ include_once "../models/Referee.php";
 
 class RefereeTest extends TestCase
 {
-    private Referee $referee;
-    private mysqli $db;
+    private $referee;
+    private $db;
 
     // test data vars
-    private int $idValid;
-    private string $nameValid;
-    private int $idInvalid;
+    private $idValid;
+    private $nameValid;
+    private $idInvalid;
 
     public function setUp(): void
     {

@@ -1,20 +1,24 @@
 <?php
 
+namespace models;
 
+include_once '../../autoload.php';
+include_once '../../helpers/config.php';
+
+use helpers\Database;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
-include_once "../helpers/Database.php";
-include_once "../models/AthleteStance.php";
 
 class AthleteStanceTest extends TestCase
 {
-    private AthleteStance $stance;
-    private mysqli $db;
+    private $stance;
+    private $db;
 
     // test data vars
-    private int $idValid;
-    private string $descriptionValid;
-    private int $idInvalid;
+    private $idValid;
+    private $descriptionValid;
+    private $idInvalid;
 
     public function setUp(): void
     {
@@ -31,7 +35,7 @@ class AthleteStanceTest extends TestCase
     // run after each test
     public function tearDown(): void
     {
-        $this->db->close();
+        $this->db = null;
     }
 
     public function testDataStartsAsNull()

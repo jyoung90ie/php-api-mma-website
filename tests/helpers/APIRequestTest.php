@@ -2,18 +2,18 @@
 
 namespace helpers;
 
-require_once '../../autoload.php';
+include_once '../../autoload.php';
 
 use PHPUnit\Framework\TestCase;
 
 class APIRequestTest extends TestCase
 {
-    private string $apiUrl;
-    private string $eventEndpoint;
-    private string $athleteEndpoint;
-    private string $fightEndpoint;
-    private string $userEndpoint;
-    private APIRequest $apiRequest;
+    private $apiUrl;
+    private $eventEndpoint;
+    private $athleteEndpoint;
+    private $fightEndpoint;
+    private $userEndpoint;
+    private $apiRequest;
 
 
     protected function setUp(): void

@@ -2,6 +2,7 @@
 
 namespace models;
 
+use Exception;
 use InvalidArgumentException;
 use PDO;
 use PDOException;
@@ -23,18 +24,16 @@ class AthleteStance
     {
         $this->setId($id);
 
-        $query = "SELECT * FROM AthleteStances WHERE AthleteStanceID=$this->id";
-        $result = $this->db->query($query);
+        $query = "SELECT * FROM AthleteStances WHERE AthleteStanceID=?";
+        $query = $this->db->prepare($query);
+        $query->execute([$this->id]);
 
-        if (!empty($result) && $result->num_rows > 0) {
-            $this->results = $result;
 
-            $row = $result->fetch_assoc();
 
-            $this->description = $row['StanceDescription'];
+        if ($query->rowCount() > 0) {
+            $result = $query->fetch();
+            $this->description = $result['StanceDescription'];
 
-            // reset cursor back to 0
-            $this->results->data_seek(0);
         } else {
             $this->results = null;
         }
@@ -45,64 +44,81 @@ class AthleteStance
     public function getAll()
     {
         $query = "SELECT * FROM AthleteStances";
-        $results = $this->db->query($query);
+        $query = $this->db->query($query);
 
-        if (!empty($results) && $results->num_rows > 0) {
+        if ($query->rowCount() > 0) {
+            $results = $query->fetchAll();
+
             $this->results = $results;
+
+            return $results;
         } else {
             $this->results = null;
         }
 
-        return $this->results;
+        return false;
     }
 
 
-    public function create(): bool
+    public function create(?string $description = null): int
     {
+        if (!is_null($description)) {
+            $this->setDescription($description);
+        }
         $this->validateData();
 
         $query = "INSERT INTO AthleteStances (StanceDescription)
-                    VALUES ('$this->description');";
+                    VALUES (?);";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->description]);
 
-        if (!empty($result) && $result) {
-            $this->id = $this->db->insert_id;
-            return true;
+            $this->id = $this->db->lastInsertId();
+
+            return $query->rowCount();
+        } catch (PDOException | Exception $exception) {
+            die($exception->getMessage());
         }
-        return false;
     }
 
-    public function update(): bool
+    public function update(int $id, ?string $description = null): int
     {
+        $this->setId($id);
+
+        if (!is_null($description)) {
+            $this->setDescription($description);
+        }
+
         $this->validateData();
-        $this->validateIdSet();
 
-        $query = "UPDATE AthleteStances SET StanceDescription = '$this->description'
-                WHERE AthleteStanceID=$this->id";
+        $query = "UPDATE AthleteStances SET StanceDescription=?
+                WHERE AthleteStanceID=?";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->description, $this->id]);
 
-        if (!empty($result) && $result) {
-            return true;
+            return $query->rowCount();
+        } catch (PDOException | Exception $exception) {
+            die($exception->getMessage());
         }
-
-        return false;
     }
 
-    public function delete(): bool
+    public function delete(int $id): bool
     {
-        $this->validateIdSet();
+        $this->setId($id);
 
-        $query = "DELETE FROM AthleteStances WHERE AthleteStanceID=$this->id";
+        $query = "DELETE FROM AthleteStances WHERE AthleteStanceID=?";
 
-        $result = $this->db->query($query);
+        try {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->id]);
 
-        if (!empty($result) && $result) {
-            return true;
+            return $query->rowCount();
+        } catch (PDOException | Exception $exception) {
+            die($exception->getMessage());
         }
-
-        return false;
     }
 
     // utility functions
@@ -154,7 +170,7 @@ class AthleteStance
      */
     public function setDescription(string $description): void
     {
-        $this->description = $this->db->real_escape_string($description);
+        $this->description = $description;
     }
 
     public function getResults()

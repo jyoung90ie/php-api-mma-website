@@ -8,18 +8,18 @@ include_once "../models/Permission.php";
 
 class PermissionTest extends TestCase
 {
-    private Permission $permission;
-    private mysqli $db;
+    private $permission;
+    private $db;
 
     // test data vars
-    private int $idValid;
-    private string $descriptionValid;
-    private string $areaValid;
-    private string $typeValid;
-    private int $idInvalid;
-    private string $descriptionInvalid;
-    private string $areaInvalid;
-    private string $typeInvalid;
+    private $idValid;
+    private $descriptionValid;
+    private $areaValid;
+    private $typeValid;
+    private $idInvalid;
+    private $descriptionInvalid;
+    private $areaInvalid;
+    private $typeInvalid;
 
     public function setUp(): void
     {

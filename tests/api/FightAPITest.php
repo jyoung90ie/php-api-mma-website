@@ -1,36 +1,39 @@
 <?php
 
-
 namespace api;
 
+include_once '../../autoload.php';
+include_once '../../helpers/config.php';
+
+use helpers\Database;
 use http\Client;
 use PHPUnit\Framework\TestCase;
 
-chdir(__DIR__);
-
 class FightAPITest extends TestCase
 {
-    private Client $client;
-    private string $url = '';
-    private \APIAccess $api;
+    private $client;
+    private $url = '';
+    private $api;
+    private $apiId;
 
     public function setUp(): void
     {
-        $base_url = 'http://localhost:8888/promma';
+        $base_url = BASE_URL;
 
-        $db = (new \Database())->getConnection();
-        $this->api = new \APIAccess($db);
+        $db = (new Database())->getConnection();
+        $this->api = new \models\APIAccess($db);
 
         $this->api->setEndDate('2030-01-01');
         $this->api->setStartDate('2020-01-01');
         $this->api->setApiKey('random12345');
         $this->api->create();
+        $this->apiId = $this->api->getApiId();
 
-        $api_path = '/api/' . $this->api->getApiKey();
+        $apiKey = http_build_query(['apiKey' => $this->api->getApiKey()]);
 
-        $this->url = $base_url . $api_path;
+        $this->url = API_URL  . $apiKey;
 
-        $client = $client = new Client($base_url, array(
+        $client = new Client($base_url, array(
             'request.options' => array(
                 'exceptions' => false,
             )
@@ -39,7 +42,7 @@ class FightAPITest extends TestCase
 
     public function tearDown(): void
     {
-        $this->api->delete();
+        $this->api->delete($this->apiId);
     }
 
     public function testCreateValid() {

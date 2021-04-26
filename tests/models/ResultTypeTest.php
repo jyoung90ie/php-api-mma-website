@@ -8,13 +8,13 @@ include_once "../models/ResultType.php";
 
 class ResultTypeTest extends TestCase
 {
-    private ResultType $result_type;
-    private mysqli $db;
+    private $result_type;
+    private $db;
 
     // test data vars
-    private int $idValid;
-    private string $descriptionValid;
-    private int $idInvalid;
+    private $idValid;
+    private $descriptionValid;
+    private $idInvalid;
 
     public function setUp(): void
     {

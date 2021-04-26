@@ -2,7 +2,8 @@
 
 namespace models;
 
-require_once '../../autoload.php';
+include_once '../../autoload.php';
+include_once '../../helpers/config.php';
 
 use \helpers\Database;
 use InvalidArgumentException;
@@ -12,22 +13,22 @@ use PHPUnit\Framework\TestCase;
 
 class AthleteTest extends TestCase
 {
-    private Athlete $athlete;
-    private ?PDO $db;
+    private $athlete;
+    private $db;
 
     // test data vars
-    private int $idValid;
-    private string $nameValid;
-    private string $dobValid;
-    private float $heightValid;
-    private float $reachValid;
-    private int $stanceIdValid;
-    private int $idInvalid;
-    private string $nameInvalid;
-    private string $dobInvalid;
-    private float $heightInvalid;
-    private float $reachInvalid;
-    private int $stanceIdInvalid;
+    private $idValid;
+    private $nameValid;
+    private $dobValid;
+    private $heightValid;
+    private $reachValid;
+    private $stanceIdValid;
+    private $idInvalid;
+    private $nameInvalid;
+    private $dobInvalid;
+    private $heightInvalid;
+    private $reachInvalid;
+    private $stanceIdInvalid;
 
     public function setUp(): void
     {

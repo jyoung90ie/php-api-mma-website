@@ -8,17 +8,17 @@ include_once "../models/WeightClass.php";
 
 class WeightClassTest extends TestCase
 {
-    private WeightClass $weight_class;
-    private mysqli $db;
+    private $weight_class;
+    private $db;
 
     // test data vars
-    private int $idValid;
-    private string $weightClassValid;
-    private int $weightMinValid;
-    private int $weightMaxValid;
-    private int $idInvalid;
-    private int $weightMinInvalid;
-    private int $weightMaxInvalid;
+    private $idValid;
+    private $weightClassValid;
+    private $weightMinValid;
+    private $weightMaxValid;
+    private $idInvalid;
+    private $weightMinInvalid;
+    private $weightMaxInvalid;
 
     // run before each test
     public function setUp(): void
