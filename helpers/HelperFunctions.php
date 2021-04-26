@@ -11,28 +11,35 @@ class HelperFunctions
      *
      * @param array $event containing all event data
      */
-    static function displayEvent(array $event)
+    static function displayEvent(array $event, string $permissionModule)
     {
-        if (!isset($event['Headliners'])) {
-            // do not display events until a fight has been added (which contains headliners)
-            return;
+        if (isset($event['Headliners'])) {
+
+            // generate athlete images
+            $athletes = $event['Headliners'];
+            unset($athleteOneImage, $athleteTwoImage);
+
+            // variables for rendering in template
+            $athleteOne = $athletes[0];
+            $athleteTwo = $athletes[1];
+
+            $athleteOneSurname = explode(" ", $athleteOne['AthleteName']);
+            $athleteOneSurname = $athleteOneSurname[sizeof($athleteOneSurname) - 1];
+
+            $athleteTwoSurname = explode(" ", $athleteTwo['AthleteName']);
+            $athleteTwoSurname = $athleteTwoSurname[sizeof($athleteTwoSurname) - 1];
+
+            $eventHeadliner = $athleteOneSurname . ' vs ' . $athleteTwoSurname;
+            $eventHeadliner = strtoupper($eventHeadliner);
+        } else {
+            // dummy data - no fights added yet
+            $athleteOne['AthleteName'] = 'TBC';
+            $athleteTwo['AthleteName'] = $athleteOne['AthleteName'];
+            $athleteOne['AthleteImage'] = 'https://www.ufc.com/themes/custom/ufc/assets/img/silhouette-headshot-male.png';
+            $athleteTwo['AthleteImage'] = $athleteOne['AthleteImage'];
+
+            $eventHeadliner = 'TBC VS TBC';
         }
-        // generate athlete images
-        $athletes = $event['Headliners'];
-        unset($athleteOneImage, $athleteTwoImage);
-
-        // variables for rendering in template
-        $athleteOne = $athletes[0];
-        $athleteTwo = $athletes[1];
-
-        $athleteOneSurname = explode(" ", $athleteOne['AthleteName']);
-        $athleteOneSurname = $athleteOneSurname[sizeof($athleteOneSurname) - 1];
-
-        $athleteTwoSurname = explode(" ", $athleteTwo['AthleteName']);
-        $athleteTwoSurname = $athleteTwoSurname[sizeof($athleteTwoSurname) - 1];
-
-        $eventHeadliner = $athleteOneSurname . ' vs ' . $athleteTwoSurname;
-        $eventHeadliner = strtoupper($eventHeadliner);
 
         $eventUrl = '?page=event&id=' . $event['EventID'];
 
@@ -60,7 +67,15 @@ class HelperFunctions
                         <span class="location"><?= $event['EventLocation'] ?></span>
                     </div>
                     <div class="col-12 col-md-4">
-                        <a href="<?= $eventUrl ?>" class="btn btn-more">View</a>
+                        <span><a href="<?= $eventUrl ?>" class="btn btn-sm btn-more">View</a></span>
+                        <?php
+                        if (HelperFunctions::hasPermission($permissionModule, 'UPDATE')) {
+                            echo '<a href="' . $eventUrl . '&action=update" class="btn btn-sm btn-primary m-1">Update</a>';
+                        }
+                        if (HelperFunctions::hasPermission($permissionModule, 'DELETE')) {
+                            echo '<a href="' . $eventUrl . '&action=delete" class="btn btn-sm btn-danger m-1">Delete</a>';
+                        }
+                        ?>
                     </div>
                 </div>
 
@@ -254,12 +269,51 @@ class HelperFunctions
         return $outputHTML;
     }
 
+    /**
+     * Adds a notification message to a session variable which will be unset when it is displayed
+     *
+     * @param string $message to be displayed to user
+     * @return void
+     */
     static function addNotification(string $message): void
     {
         if (!isset($_SESSION['Notifications'])) {
             $_SESSION['Notifications'] = [];
         }
         array_push($_SESSION['Notifications'], $message);
+    }
+
+    /**
+     * Determines whether a user has permission to access the specified area of the website.
+     *
+     * @param string $permissionModule area of the website (e.g. events/users/etc.)
+     * @param string $permissionType type of access required (e.g. read/update/create/etc.)
+     * @return bool true for permitted; false for denied.
+     */
+    static function hasPermission(string $permissionModule, string $permissionType): bool
+    {
+        if (!isset($_SESSION['User']['Permissions'])) {
+            return false;
+        }
+        $permission = ['Area' => $permissionModule, 'Type' => $permissionType];
+
+        return in_array($permission, $_SESSION['User']['Permissions']);
+    }
+
+
+    /**
+     * Checks if a user has permission to access the page, if not they are redirected to the homepage and shown
+     * a notification.
+     *
+     * @param string $permissionModule area of the website (e.g. events/users/etc.)
+     * @param string $permissionType type of access required (e.g. read/update/create/etc.)
+     */
+    static function checkPermission(string $permissionModule, string $permissionType): void
+    {
+        if (!self::hasPermission($permissionModule, $permissionType)) {
+            self::addNotification('You are not authorised to access the requested page or it does not exist');
+            header('Location: ?page=index');
+        }
     }
 }
 
