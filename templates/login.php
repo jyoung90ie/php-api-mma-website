@@ -11,7 +11,6 @@ if (!constant("API_URL")) {
 }
 
 $authEndpoint = API_URL . '/auth';
-//$authUrl = $_SERVER['HTTP_HOST'] . '/' . trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/') . $authEndpoint;
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
