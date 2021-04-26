@@ -32,9 +32,9 @@ $urlQueryStrings = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);
 parse_str($urlQueryStrings, $queryStrings);
 
 $requestMethod = $_SERVER['REQUEST_METHOD'];
-$authPathPrefix = 'api';
+$apiPathPrefix = 'api';
 // get position of /api in the url path
-$apiUrlPosition = array_search($authPathPrefix, $urlPath);
+$apiUrlPosition = array_search($apiPathPrefix, $urlPath);
 
 // if no modules have been called then return api information
 if (sizeof($urlPath) == $apiUrlPosition + 1) {
@@ -55,6 +55,7 @@ if ($apiModule != AUTHENTICATION_MODULE) {
 
     if (!$apiAccess->verifyKey($apiKey)) {
         header(CRUDController::HTTP_UNAUTHORIZED);
+        echo json_encode(['Error' => 'Invalid API Key']);
         exit();
     }
 
@@ -63,7 +64,7 @@ if ($apiModule != AUTHENTICATION_MODULE) {
 
     if (!$user->getOne($apiAccess->getUserId())) {
         header(CRUDController::HTTP_NOT_FOUND);
-        echo json_encode(['error' => 'User could not be found']);
+        echo json_encode(['Error' => 'User could not be found']);
         exit();
     }
     // get user's access rights
