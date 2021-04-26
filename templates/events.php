@@ -3,7 +3,7 @@
 namespace templates;
 
 use helpers\APIRequest;
-use helpers\TemplatesHelper;
+use helpers\HelperFunctions;
 
 
 if (!constant("API_URL")) {
@@ -33,7 +33,7 @@ $events = $results['data'];
     <hr>
     <?php
     foreach ($events as $event) {
-        TemplatesHelper::displayEvent($event);
+        HelperFunctions::displayEvent($event);
     }
     ?>
 

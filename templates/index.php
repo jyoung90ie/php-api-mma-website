@@ -3,7 +3,7 @@
 namespace templates;
 
 use helpers\APIRequest;
-use helpers\TemplatesHelper;
+use helpers\HelperFunctions;
 
 if (!constant("API_URL")) {
     echo 'Api address not set';
@@ -85,7 +85,7 @@ $events = $results['data'];
             <!-- Events -->
             <?php
             foreach ($events as $event) {
-                TemplatesHelper::displayEvent($event);
+                HelperFunctions::displayEvent($event);
             }
             ?>
             <!-- ./Events -->

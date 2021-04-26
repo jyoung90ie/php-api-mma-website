@@ -42,6 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             unset($_SESSION['UserID'], $_SESSION['User']);
             $_SESSION['User'] = $authResponse;
 
+            $userNotification = ucwords($_SESSION['User']['UserName'])  . " you are now logged in.";
+            \helpers\HelperFunctions::addNotification($userNotification);
+
             header("Location: ?page=index");
         }
     }
@@ -52,16 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <main class="container">
         <h2>Login</h2>
 
-        <?php
-        if (isset($authResponse['Error'])) {
-            ?>
-
-            <div class="alert alert-danger" role="alert">
-                <?= var_dump($authResponse) ?? '' ?>
-            </div>
-            <?php
-        }
-        ?>
+        <?= \helpers\HelperFunctions::displayApiError($authResponse ?? []); ?>
         <form action="" method="post">
             <div class="row g-3 align-items-center mb-3">
                 <div class="col-auto">

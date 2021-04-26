@@ -1,7 +1,7 @@
 <?php
 
 use helpers\APIRequest;
-use helpers\TemplatesHelper;
+use helpers\HelperFunctions;
 
 // no/invalid id - redirect
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
@@ -73,7 +73,7 @@ $eventUrl = '?page=events'
                             <img src="<?= $athleteOne['AthleteImage'] ?>"/>
                         </div>
                         <div class="col-6 text-uppercase">
-                            <?= TemplatesHelper::outcomeBadge($athleteOne, $winner) ?>
+                            <?= HelperFunctions::displayOutcomeBadge($athleteOne, $winner) ?>
                             <span class="athlete-name"><?= $athleteOneName ?></span>
                         </div>
                     </div>
@@ -102,7 +102,7 @@ $eventUrl = '?page=events'
                 <div class="col-4">
                     <div class="row">
                         <div class="col-6 text-uppercase text-end">
-                            <?= TemplatesHelper::outcomeBadge($athleteTwo, $winner) ?>
+                            <?= HelperFunctions::displayOutcomeBadge($athleteTwo, $winner) ?>
                             <span class="athlete-name"><?= $athleteTwoName ?></span>
                         </div>
                         <div class="athlete-img col-6">

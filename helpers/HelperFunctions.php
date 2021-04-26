@@ -4,7 +4,7 @@ namespace helpers;
 
 use DateTime;
 
-class TemplatesHelper
+class HelperFunctions
 {
     /**
      * Creates HTML to display a single clickable event.
@@ -197,7 +197,7 @@ class TemplatesHelper
      * @param int|null $winnerId athleteId for the winner
      * @return string of HTML
      */
-    static function outcomeBadge(array $athlete, ?int $winnerId): string
+    static function displayOutcomeBadge(array $athlete, ?int $winnerId): string
     {
         if (is_null($winnerId)) {
             $outputHTML = '<span class="fight-outcome-badge draw">draw</span>';
@@ -208,6 +208,58 @@ class TemplatesHelper
         }
 
         return $outputHTML;
+    }
+
+
+    /**
+     * Creates HTML to display errors to user.
+     *
+     * @param array $data
+     * @return string
+     */
+    static function displayApiError(array $data): string
+    {
+        $outputHTML = '';
+        if (isset($data['Error'])) {
+            $outputHTML = '
+            <div class="alert alert-danger" role="alert">
+                ' . $data['Error'] . '
+            </div>';
+        }
+
+        return $outputHTML;
+    }
+
+    /**
+     * Creates HTML to display messages to the user, notifying them of something.
+     *
+     * Messages are set in the session variable, Messages.
+     *
+     * @return string
+     */
+    static function displayNotifications(): string
+    {
+        $outputHTML = '';
+        if (isset($_SESSION['Notifications'])) {
+            $outputHTML .= '            <div class="alert alert-primary alert-dismissible fade show" role="alert">';
+            foreach ($_SESSION['Notifications'] as $notification) {
+                $outputHTML .= $notification . '<br />';
+            }
+            $outputHTML .= '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+            $outputHTML .= '</div>';
+
+            unset($_SESSION['Notifications']);
+        }
+
+        return $outputHTML;
+    }
+
+    static function addNotification(string $message): void
+    {
+        if (!isset($_SESSION['Notifications'])) {
+            $_SESSION['Notifications'] = [];
+        }
+        array_push($_SESSION['Notifications'], $message);
     }
 }
 
