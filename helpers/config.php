@@ -2,6 +2,8 @@
 
 namespace helpers;
 
+$defaultApiKey = 'cbb82851ccacb0e895ede1ea7730d7e2'; // should be a user with roleID = 4
+
 if (stripos($_SERVER['HTTP_HOST'], 'jyoung22') !== false) {
     $dbHost = 'jyoung22.lampt.eeecs.qub.ac.uk';
     $dbUser = 'jyoung22';
@@ -28,6 +30,7 @@ define('DB_NAME', $dbName);
 define('DB_PORT', $dbPort);
 define('BASE_URL', $baseUrl);
 define('API_URL', $apiUrl);
+define('DEFAULT_API_KEY', $defaultApiKey);
 
 // setting to true will display all errors
 define('DEBUG', true);
