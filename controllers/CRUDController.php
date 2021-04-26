@@ -271,6 +271,7 @@ class CRUDController
     private function notFound(): array
     {
         $response['status_code_header'] = self::HTTP_NOT_FOUND;
+        $response['body'] = ['Error' => 'API endpoint not found.'];
         return $response;
     }
 
@@ -282,6 +283,8 @@ class CRUDController
     private function notAuthenticated(): array
     {
         $response['status_code_header'] = self::HTTP_FORBIDDEN;
+        $response['body'] = ['Error' => 'You need to be logged in to complete this action.'];
+
         return $response;
     }
 
@@ -293,6 +296,8 @@ class CRUDController
     private function notAuthorized(): array
     {
         $response['status_code_header'] = self::HTTP_UNAUTHORIZED;
+        $response['body'] = ['Error' => 'You do not have permission to access this.'];
+
         return $response;
     }
 
@@ -304,6 +309,7 @@ class CRUDController
     private function badRequest(): array
     {
         $response['status_code_header'] = self::HTTP_BAD_REQUEST;
+        $response['body'] = ['Error' => 'The API request was invalid.'];
         return $response;
     }
 
