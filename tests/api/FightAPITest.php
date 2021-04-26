@@ -33,7 +33,7 @@ class FightAPITest extends TestCase
 
         $this->url = API_URL  . $apiKey;
 
-        $client = new Client($base_url, array(
+        $this->client = new Client($base_url, array(
             'request.options' => array(
                 'exceptions' => false,
             )
