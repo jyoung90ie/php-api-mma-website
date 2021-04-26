@@ -14,7 +14,14 @@ if (!constant("API_URL")) {
     return;
 }
 
+if (!is_numeric($_GET['id']) || !($_GET['id'] > 0)) {
+    \helpers\HelperFunctions::addNotification("The Event ID used is invalid");
+    header('Location: ?page=events');
+}
+
 $id = intval($_GET['id']);
+
+
 $apiEndPoint = API_URL . '/' . $apiModule . '/' . $id . '?apiKey=' . API_KEY;
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -71,14 +78,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 $apiRequest = new APIRequest(API_URL, $apiModule, $id, $queryString);
 $results = $apiRequest->fetchApiData();
 
+if (isset($results['Error'])) {
+    if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+        // get request means no data has been submitted yet.. so error is a result of non-existant record
+        header('Location: ?page=events');
+    }
+}
+
 ?>
 
 <main class="container">
-    <h2>Create Event</h2>
+    <h2>Update Event</h2>
 
     <?= \helpers\HelperFunctions::displayApiError($apiResponse ?? []); ?>
     <form action="" method="post">
 
+        <div class="row g-3 align-items-center mb-3">
+            <div class="col-2">
+                <label for="EventID" class="col-form-label">Event ID</label>
+            </div>
+            <div class="col-auto">
+                <input type="text" class="form-control" value="<?= $id ?>" readonly>
+            </div>
+        </div>
         <div class="row g-3 align-items-center mb-3">
             <div class="col-2">
                 <label for="EventLocation" class="col-form-label">Event Location</label>
