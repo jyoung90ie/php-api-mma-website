@@ -8,22 +8,26 @@ if (stripos($_SERVER['HTTP_HOST'], 'jyoung22') !== false) {
     $dbPass = 'r5hk97fKmQNJQKNh';
     $dbName = 'jyoung22';
     $dbPort = 3306;
-    $apiUrl = 'http://jyoung22.lampt.eeecs.qub.ac.uk/promma/api';
+    $baseUrl = 'http://jyoung22.lampt.eeecs.qub.ac.uk/promma';
+    $apiEndPoint = '/api';
 } else {
     $dbHost = 'localhost';
     $dbUser = 'root';
     $dbPass = 'root';
     $dbName = 'promma';
     $dbPort = 8889;
-    $apiUrl = 'http://localhost:8888/promma/api';
+    $baseUrl = 'http://localhost:8888/promma';
+    $apiEndPoint = '/api';
 }
+$apiUrl = rtrim($baseUrl, '/ ') . '/' . trim($apiEndPoint, '/ ');
 
 define('DB_HOST', $dbHost);
 define('DB_USER', $dbUser);
 define('DB_PASS', $dbPass);
 define('DB_NAME', $dbName);
 define('DB_PORT', $dbPort);
-define('API_URL', rtrim($apiUrl, '/ '));
+define('BASE_URL', $baseUrl);
+define('API_URL', $apiUrl);
 
 // setting to true will display all errors
 define('DEBUG', true);
