@@ -2,7 +2,9 @@
 
 namespace controllers;
 
+use Exception;
 use models\User;
+use TypeError;
 
 
 class CRUDController
@@ -45,34 +47,39 @@ class CRUDController
      */
     public function process_request()
     {
-        switch ($this->requestMethod) {
-            case 'POST':
-                // create
-                $response = $this->create();
-                break;
-            case 'GET':
-                // read
-                if (!is_null($this->moduleId)) {
-                    $response = $this->getOne($this->moduleId);
-                } else {
-                    $response = $this->getAll();
-                }
-                break;
-            case 'PUT':
-                // update
-                $response = $this->update($this->moduleId);
-                break;
-            case 'DELETE':
-                // delete
-                $response = $this->delete($this->moduleId);
-                break;
-            default:
-                $response = $this->notFound();
-        }
 
-        header($response['status_code_header']);
-        if (isset($response['body']) && $response['body']) {
-            echo json_encode($response['body']);
+        try {
+            switch ($this->requestMethod) {
+                case 'POST':
+                    // create
+                    $response = $this->create();
+                    break;
+                case 'GET':
+                    // read
+                    if (!is_null($this->moduleId)) {
+                        $response = $this->getOne($this->moduleId);
+                    } else {
+                        $response = $this->getAll();
+                    }
+                    break;
+                case 'PUT':
+                    // update
+                    $response = $this->update($this->moduleId);
+                    break;
+                case 'DELETE':
+                    // delete
+                    $response = $this->delete($this->moduleId);
+                    break;
+                default:
+                    $response = $this->notFound();
+            }
+
+            header($response['status_code_header']);
+            if (isset($response['body']) && $response['body']) {
+                echo json_encode($response['body']);
+            }
+        } catch (Exception | TypeError $exception) {
+            exit(json_encode(['Error' => $exception->getMessage()]));
         }
     }
 
@@ -164,6 +171,7 @@ class CRUDController
         }
 
         $data = json_decode(file_get_contents('php://input'), true);
+
         $result = $this->module->create($data);
 
         if (!$result) {
@@ -173,6 +181,7 @@ class CRUDController
         $response['status_code_header'] = self::HTTP_CREATED;
         $response['body'] = $result;
         return $response;
+
     }
 
     /**
@@ -196,12 +205,12 @@ class CRUDController
         }
 
         $data = json_decode(file_get_contents('php://input'), true);
-
         $this->module->update($id, $data);
 
 
         $response['status_code_header'] = self::HTTP_SUCCESS_NO_CONTENT;
         return $response;
+
     }
 
     /**
