@@ -16,7 +16,8 @@ include_once '../autoload.php';
 use models\{APIAccess, Athlete, Event, Fight, User};
 use controllers\AuthController;
 use controllers\CRUDController;
-use \helpers\Database;
+use Exception;
+use helpers\Database;
 
 // api endpoint modules
 const FIGHT_MODULE = 'fight';
@@ -37,7 +38,6 @@ $requestMethod = $_SERVER['REQUEST_METHOD'];
 $authPathPrefix = 'api';
 // get position of /api in the url path
 $apiUrlPosition = array_search($authPathPrefix, $urlPath);
-
 
 // if no modules have been called then return api information
 if (sizeof($urlPath) == $apiUrlPosition + 1) {
@@ -100,7 +100,7 @@ try {
             header(CRUDController::HTTP_NOT_FOUND);
             exit();
     }
-} catch (\Exception $exception) {
+} catch (Exception $exception) {
     exit($exception->getMessage());
 }
 

@@ -17,11 +17,11 @@ class CRUDController
 
     const MAX_RECORDS = 5; // maximum number of records that can be return per api request
 
-    private ?int $moduleId;
-    private User $user;
-    private string $requestMethod;
-    private object $module;
-    private ?array $queryStrings;
+    private $moduleId;
+    private $user;
+    private $requestMethod;
+    private $module;
+    private $queryStrings;
 
     /**
      * CRUDController constructor.

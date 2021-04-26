@@ -22,7 +22,7 @@ use helpers\TemplatesHelper;
 <body>
 <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
     <div class="container-fluid">
-        <a class="navbar-brand d-lg-none header-font" href="../index.php">Pro MMA</a>
+        <a class="navbar-brand d-lg-none header-font" href="?page=index">Pro MMA</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                 data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
                 aria-label="Toggle navigation">
@@ -59,3 +59,4 @@ use helpers\TemplatesHelper;
     </div>
 </nav>
 <header id="logo"></header>
+<p><?= print_r($_SESSION['User'] ?? '') ?></p>

@@ -2,17 +2,16 @@
 
 namespace models;
 
-use PDO;
+use InvalidArgumentException;
 use PDOException;
 
 class Referee
 {
-    private ?int $id = null;
-    private ?string $name = null;
+    private $id = null;
+    private $name = null;
     private $results;
 
-    private PDO $db;
-    private string $table = "Referees";
+    private $db;
 
     public function __construct($db)
     {
@@ -23,7 +22,7 @@ class Referee
     {
         $this->setId($id);
 
-        $query = "SELECT * FROM $this->table WHERE RefereeID=?";
+        $query = "SELECT * FROM Referees WHERE RefereeID=?";
 
         try {
             $query = $this->db->prepare($query);
@@ -41,7 +40,7 @@ class Referee
 
     public function getAll()
     {
-        $query = "SELECT * FROM $this->table";
+        $query = "SELECT * FROM Referees";
         try {
             $query = $this->db->query($query);
             $result = $query->fetchAll();
@@ -59,7 +58,7 @@ class Referee
     {
         $this->validateData();
 
-        $query = "INSERT INTO $this->table (RefereeName) VALUES (?);";
+        $query = "INSERT INTO Referees (RefereeName) VALUES (?);";
 
         try {
             $query = $this->db->prepare($query);
@@ -76,7 +75,7 @@ class Referee
         $this->validateData();
         $this->validateIdSet();
 
-        $query = "UPDATE $this->table 
+        $query = "UPDATE Referees 
                     SET 
                         RefereeName = ?
                     WHERE 
@@ -96,7 +95,7 @@ class Referee
     {
         $this->validateIdSet();
 
-        $query = "DELETE FROM $this->table WHERE RefereeID=?";
+        $query = "DELETE FROM Referees WHERE RefereeID=?";
 
         try {
             $query = $this->db->prepare($query);

@@ -8,11 +8,11 @@ class APIRequest
 {
     const API_KEY = 'test123';
 
-    private string $apiBaseUrl;
-    private string $apiModule;
-    private ?int $itemId;
-    private ?array $queryStrings;
-    private ?array $apiResponse = null;
+    private $apiBaseUrl;
+    private $apiModule;
+    private $itemId;
+    private $queryStrings;
+    private $apiResponse = null;
 
     public function __construct(string $url, string $module, ?int $itemId = null, ?array $queryStrings = null)
     {

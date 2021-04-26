@@ -2,18 +2,17 @@
 
 namespace models;
 
+use InvalidArgumentException;
 use PDO;
 use PDOException;
 
 class AthleteStance
 {
 
-    private ?int $id = null;
-    private ?string $description = null;
-    private ?mysqli_result $results;
-
-    private mysqli $db;
-    private string $table = "AthleteStances";
+    private $id = null;
+    private $description = null;
+    private $results;
+    private $db;
 
     public function __construct($db)
     {
@@ -24,7 +23,7 @@ class AthleteStance
     {
         $this->setId($id);
 
-        $query = "SELECT * FROM $this->table WHERE AthleteStanceID=$this->id";
+        $query = "SELECT * FROM AthleteStances WHERE AthleteStanceID=$this->id";
         $result = $this->db->query($query);
 
         if (!empty($result) && $result->num_rows > 0) {
@@ -45,7 +44,7 @@ class AthleteStance
 
     public function getAll()
     {
-        $query = "SELECT * FROM $this->table";
+        $query = "SELECT * FROM AthleteStances";
         $results = $this->db->query($query);
 
         if (!empty($results) && $results->num_rows > 0) {
@@ -62,7 +61,7 @@ class AthleteStance
     {
         $this->validateData();
 
-        $query = "INSERT INTO $this->table (StanceDescription)
+        $query = "INSERT INTO AthleteStances (StanceDescription)
                     VALUES ('$this->description');";
 
         $result = $this->db->query($query);
@@ -79,7 +78,7 @@ class AthleteStance
         $this->validateData();
         $this->validateIdSet();
 
-        $query = "UPDATE $this->table SET StanceDescription = '$this->description'
+        $query = "UPDATE AthleteStances SET StanceDescription = '$this->description'
                 WHERE AthleteStanceID=$this->id";
 
         $result = $this->db->query($query);
@@ -95,7 +94,7 @@ class AthleteStance
     {
         $this->validateIdSet();
 
-        $query = "DELETE FROM $this->table WHERE AthleteStanceID=$this->id";
+        $query = "DELETE FROM AthleteStances WHERE AthleteStanceID=$this->id";
 
         $result = $this->db->query($query);
 
@@ -158,10 +157,7 @@ class AthleteStance
         $this->description = $this->db->real_escape_string($description);
     }
 
-    /**
-     * @return mysqli_result
-     */
-    public function getResults(): mysqli_result
+    public function getResults()
     {
         return $this->results;
     }

@@ -3,19 +3,18 @@
 namespace models;
 
 use InvalidArgumentException;
-use PDO;
 use PDOException;
 
 class RolePermission
 {
     const TABLE = "RolePermissions";
 
-    private ?int $permissionId = null;
-    private ?int $roleId = null;
-    private ?array $permissions = null;
+    private $permissionId = null;
+    private $roleId = null;
+    private $permissions = null;
 
     private $results;
-    private PDO $db;
+    private $db;
 
     public function __construct($db)
     {

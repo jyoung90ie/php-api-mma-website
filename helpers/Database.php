@@ -7,13 +7,13 @@ use PDOException;
 
 class Database
 {
-    private string $host = 'localhost';
-    private string $user = 'root';
-    private string $pass = 'root';
-    private string $db = 'promma';
-    private int $port = 8889;
+    private $host = 'localhost';
+    private $user = 'root';
+    private $pass = 'root';
+    private $db = 'promma';
+    private $port = 8889;
 
-    private ?PDO $connection = null;
+    private $connection = null;
 
     public function __construct()
     {

@@ -3,7 +3,6 @@
 namespace models;
 
 use InvalidArgumentException;
-use PDO;
 use PDOException;
 
 class Permission
@@ -14,16 +13,15 @@ class Permission
     const DESCRIPTION_MIN = 5;
     const DESCRIPTION_MAX = 100;
 
-
     const TABLE = "Permissions";
 
-    private ?int $permissionId = null;
-    private ?string $area = null;
-    private ?string $type = null;
-    private ?string $description = null;
+    private $permissionId = null;
+    private $area = null;
+    private $type = null;
+    private $description = null;
     private $results = null;
 
-    private PDO $db;
+    private $db;
 
     public function __construct($db)
     {

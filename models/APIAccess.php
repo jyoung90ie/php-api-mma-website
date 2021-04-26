@@ -10,15 +10,15 @@ class APIAccess
 {
     const TABLE = "ApiAccess";
 
-    private ?int $id = null;
-    private ?string $apiKey = null;
-    private ?string $startDate = null;
-    private ?string $endDate = null;
-    private ?int $userId = null;
-    private bool $verified = false;
+    private $id = null;
+    private $apiKey = null;
+    private $startDate = null;
+    private $endDate = null;
+    private $userId = null;
+    private $verified = false;
 
-    private PDO $db;
-    static string $table = "APIAccess";
+    private $db;
+    static $table = "APIAccess";
 
     public function __construct($db)
     {
@@ -125,7 +125,7 @@ class APIAccess
             $query->execute([$this->id]);
 
             return $query->rowCount();
-        } catch(PDOException $exception) {
+        } catch (PDOException $exception) {
             die($exception->getMessage());
         }
 

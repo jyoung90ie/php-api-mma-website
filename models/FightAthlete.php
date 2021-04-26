@@ -8,13 +8,13 @@ use PDOException;
 
 class FightAthlete
 {
-    private ?int $fightAthleteId = null;
-    private ?string $fightId = null;
-    private ?string $athleteId = null;
+    private  $fightAthleteId = null;
+    private $fightId = null;
+    private $athleteId = null;
     private $results = null;
 
-    private PDO $db;
-    private string $table = "FightAthletes";
+    private $db;
+    private $table = "FightAthletes";
 
     public function __construct($db)
     {

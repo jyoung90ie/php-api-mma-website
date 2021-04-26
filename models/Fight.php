@@ -2,9 +2,10 @@
 
 namespace models;
 
+use Exception;
 use InvalidArgumentException;
-use PDO;
 use PDOException;
+use TypeError;
 
 class Fight
 {
@@ -13,19 +14,19 @@ class Fight
     const ROUNDS_MAX = 5;
     const PERMISSION_AREA = 'FIGHTS';
 
-    private ?int $fightId = null;
-    private ?int $eventId = null;
-    private ?int $refereeId = null;
-    private ?int $titleBout = null;
-    private ?int $weightClassId = null;
-    private ?int $numOfRounds = null;
+    private $fightId = null;
+    private $eventId = null;
+    private $refereeId = null;
+    private $titleBout = null;
+    private $weightClassId = null;
+    private $numOfRounds = null;
     private $results = null;
 
-    private FightAthlete $fightAthlete1;
-    private FightAthlete $fightAthlete2;
+    private $fightAthlete1;
+    private $fightAthlete2;
 
 
-    private PDO $db;
+    private $db;
 
     public function __construct($db)
     {
@@ -111,7 +112,7 @@ class Fight
                 return $result;
             }
             return false;
-        } catch (PDOException | \Exception $exception) {
+        } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
     }
@@ -149,7 +150,7 @@ class Fight
             $this->results = $result;
 
             return $result;
-        } catch (PDOException | \Exception $exception) {
+        } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
     }
@@ -204,7 +205,7 @@ class Fight
             }
 
             return $result;
-        } catch (PDOException | \Exception $exception) {
+        } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
     }
@@ -242,7 +243,7 @@ class Fight
             ]);
 
             return $query->rowCount();
-        } catch (PDOException | \Exception $exception) {
+        } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
     }
@@ -289,7 +290,7 @@ class Fight
             }
 
             return false;
-        } catch (PDOException | \Exception $exception) {
+        } catch (PDOException | Exception $exception) {
             $this->db->rollBack();
             die($exception->getMessage());
         }
@@ -315,7 +316,7 @@ class Fight
                 $this->fightAthlete2->setAthleteId($data['AthleteID2']);
             }
 
-        } catch (\TypeError | \Exception $exception) {
+        } catch (TypeError | Exception $exception) {
             exit($exception->getMessage());
         }
     }

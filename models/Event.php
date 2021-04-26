@@ -4,7 +4,6 @@ namespace models;
 
 use Exception;
 use InvalidArgumentException;
-use PDO;
 use PDOException;
 use TypeError;
 
@@ -13,12 +12,12 @@ class Event
     const DATE_MIN = '1993-11-12'; // date of first ever event
     const PERMISSION_AREA = 'EVENTS';
 
-    private ?int $eventId = null;
-    private ?string $location = null;
-    private ?string $date = null;
+    private $eventId = null;
+    private $location = null;
+    private $date = null;
     private $results = null;
 
-    private PDO $db;
+    private $db;
 
     public function __construct($db)
     {

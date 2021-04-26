@@ -2,17 +2,15 @@
 
 namespace models;
 
-use PDO;
+use InvalidArgumentException;
 use PDOException;
 
 class ResultType
 {
-    private ?int $id = null;
-    private ?string $description = null;
+    private $id = null;
+    private $description = null;
     private $results;
-
-    private PDO $db;
-    private string $table = "ResultTypes";
+    private $db;
 
     public function __construct($db)
     {
@@ -23,7 +21,7 @@ class ResultType
     {
         $this->setId($id);
 
-        $query = "SELECT * FROM $this->table WHERE ResultTypeID = ?";
+        $query = "SELECT * FROM ResultTypes WHERE ResultTypeID = ?";
         try {
             $query = $this->db->prepare($query);
             $query->db->execute([$this->id]);
@@ -41,7 +39,7 @@ class ResultType
 
     public function getAll()
     {
-        $query = "SELECT * FROM $this->table";
+        $query = "SELECT * FROM ResultTypes";
         try {
             $query = $this->db->query($query);
 
@@ -59,7 +57,7 @@ class ResultType
     {
         $this->validateData();
 
-        $query = "INSERT INTO $this->table (ResultDescription) VALUES (?);";
+        $query = "INSERT INTO ResultTypes (ResultDescription) VALUES (?);";
 
         try {
             $query = $this->db->prepare($query);
@@ -76,7 +74,7 @@ class ResultType
         $this->validateData();
         $this->validateIdSet();
 
-        $query = "UPDATE $this->table 
+        $query = "UPDATE ResultTypes 
                 SET 
                     ResultDescription = ?
                 WHERE 
@@ -96,7 +94,7 @@ class ResultType
     {
         $this->validateIdSet();
 
-        $query = "DELETE FROM $this->table WHERE ResultTypeID = ?";
+        $query = "DELETE FROM ResultTypes WHERE ResultTypeID = ?";
 
         try {
             $query = $this->db->prepare($query);
@@ -161,7 +159,7 @@ class ResultType
     }
 
     /**
-     * @return
+     * @return mixed
      */
     public function getResults()
     {

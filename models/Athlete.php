@@ -4,7 +4,6 @@ namespace models;
 
 use Exception;
 use InvalidArgumentException;
-use PDO;
 use PDOException;
 use TypeError;
 
@@ -19,15 +18,15 @@ class Athlete
     const REACH_MAX = 250;
     const PERMISSION_AREA = 'ATHLETES';
 
-    private ?int $athleteId = null;
-    private ?string $name = null;
-    private ?float $height = null;
-    private ?float $reach = null;
-    private ?int $stanceId = null;
-    private ?string $dob = null;
+    private $athleteId = null;
+    private $name = null;
+    private $height = null;
+    private $reach = null;
+    private $stanceId = null;
+    private $dob = null;
     private $results = null;
 
-    private PDO $db;
+    private $db;
 
     public function __construct($db)
     {
@@ -87,12 +86,12 @@ class Athlete
                     $fights = $query->fetchAll();
                     array_push($athlete_data['Fights'], $fights);
                 }
-                
+
                 return $athlete_data;
             }
-            
+
             return false;
-                
+
         } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
@@ -215,6 +214,7 @@ class Athlete
     }
 
     // getters and setters
+
     /**
      * @return int|null
      */

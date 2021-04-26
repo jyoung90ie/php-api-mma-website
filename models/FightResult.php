@@ -2,19 +2,17 @@
 
 namespace models;
 
-use PDO;
+use InvalidArgumentException;
 use PDOException;
 
 class FightResult
 {
-    private ?int $id = null;
-    private ?int $fight_id = null;
-    private ?int $result_id = null;
-    private ?int $winner_id = null;
+    private $id = null;
+    private $fight_id = null;
+    private $result_id = null;
+    private $winner_id = null;
     private $results = null;
-
-    private PDO $db;
-    private string $table = "FightResults";
+    private $db;
 
     public function __construct($db)
     {
@@ -25,7 +23,7 @@ class FightResult
     {
         $this->setId($id);
 
-        $query = "SELECT * FROM $this->table WHERE FightResultID = ?";
+        $query = "SELECT * FROM FightResults WHERE FightResultID = ?";
 
         try {
             $query = $this->db->prepare($query);
@@ -51,7 +49,7 @@ class FightResult
 
         $this->setFightId($fight_id);
 
-        $query = "SELECT * FROM $this->table WHERE FightID = ?";
+        $query = "SELECT * FROM FightResults WHERE FightID = ?";
 
         try {
             $query = $this->db->prepare($query);
@@ -73,7 +71,7 @@ class FightResult
 
     public function getAll()
     {
-        $query = "SELECT * FROM $this->table";
+        $query = "SELECT * FROM FightResults";
 
         try {
             $query = $this->db->query($query);
@@ -92,7 +90,7 @@ class FightResult
     {
         $this->validateData();
 
-        $query = "INSERT INTO $this->table 
+        $query = "INSERT INTO FightResults 
                     (FightID, ResultTypeID, WinnerAthleteID)
                     VALUES (?, ?, ?);";
 
@@ -111,7 +109,7 @@ class FightResult
         $this->validateData();
         $this->validateIdSet();
 
-        $query = "UPDATE $this->table 
+        $query = "UPDATE FightResults 
                     SET 
                         FightID = ?, 
                         ResultTypeID = ?, 
@@ -133,7 +131,7 @@ class FightResult
     {
         $this->validateIdSet();
 
-        $query = "DELETE FROM $this->table WHERE FightResultID=$this->id";
+        $query = "DELETE FROM FightResults WHERE FightResultID=$this->id";
 
         try {
             $query = $this->db->prepare($query);
@@ -242,7 +240,7 @@ class FightResult
     }
 
     /**
-     * @return
+     * @return null
      */
     public function getResults()
     {

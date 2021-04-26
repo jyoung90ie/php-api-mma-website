@@ -19,21 +19,20 @@ class User
     const PERMISSION_AREA = 'USERS';
 
 
-    private ?int $userId = null;
-    private ?string $username = null;
-    private ?string $password = null;
-    private ?string $email = null;
-    private ?string $firstName = null;
-    private ?string $lastName = null;
-    private ?string $dob = null;
-    private ?int $roleId = null;
+    private $userId = null;
+    private $username = null;
+    private $password = null;
+    private $email = null;
+    private $firstName = null;
+    private $lastName = null;
+    private $dob = null;
+    private $roleId = null;
 
     private $results = null;
 
-    private bool $authenticated = false;
-    private ?array $permissions = null;
+    private $permissions = null;
 
-    private PDO $db;
+    private $db;
 
     public function __construct($db)
     {
@@ -125,7 +124,7 @@ class User
     }
 
     /**
-     * Create a new user account in the dabatase.
+     * Create a new user account in the database.
      * @param array|null $data - form data with all required database fields.
      * @return int number of rows impacted by the delete query: 1 if successful, 0 if not.
      */

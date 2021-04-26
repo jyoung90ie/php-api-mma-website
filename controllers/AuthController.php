@@ -15,8 +15,8 @@ class AuthController
     const HTTP_NOT_FOUND = 'HTTP/1.1 404 Not Found';
     const HTTP_FORBIDDEN = 'HTTP/1.1 403 Forbidden';
 
-    private User $user;
-    private string $requestMethod;
+    private $user;
+    private $requestMethod;
 
     /**
      * AuthController constructor.

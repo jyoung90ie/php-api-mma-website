@@ -2,7 +2,7 @@
 
 namespace models;
 
-use PDO;
+use InvalidArgumentException;
 use PDOException;
 
 class WeightClass
@@ -10,14 +10,13 @@ class WeightClass
     const WEIGHT_IN_LBS_MIN = 100;
     const WEIGHT_IN_LBS_MAX = 500;
 
-    private ?int $id = null;
-    private ?string $weight_class = null;
-    private ?int $min_weight = null;
-    private ?int $max_weight = null;
+    private $id = null;
+    private $weight_class = null;
+    private $min_weight = null;
+    private $max_weight = null;
     private $results;
 
-    private PDO $db;
-    private string $table = "WeightClasses";
+    private $db;
 
     public function __construct($db)
     {
@@ -28,7 +27,7 @@ class WeightClass
     {
         $this->setId($id);
 
-        $query = "SELECT * FROM $this->table WHERE WeightClassID = ?";
+        $query = "SELECT * FROM WeightClasses WHERE WeightClassID = ?";
 
         try {
             $query = $this->db->prepare($query);
@@ -49,7 +48,7 @@ class WeightClass
 
     public function getAll(): array
     {
-        $query = "SELECT * FROM $this->table";
+        $query = "SELECT * FROM WeightClasses";
         try {
             $query = $this->db->query($query);
 
@@ -67,7 +66,7 @@ class WeightClass
     {
         $this->validateData();
 
-        $query = "INSERT INTO $this->table 
+        $query = "INSERT INTO WeightClasses 
                     (WeightClass, MinWeightInLB, MaxWeightInLB)
                     VALUES (?, ?, ?);";
 
@@ -86,7 +85,7 @@ class WeightClass
         $this->validateData();
         $this->validateIdSet();
 
-        $query = "UPDATE $this->table 
+        $query = "UPDATE WeightClasses 
                     SET 
                         WeightClass = ?,
                         MinWeightInLB = ?, 
@@ -108,7 +107,7 @@ class WeightClass
     {
         $this->validateIdSet();
 
-        $query = "DELETE FROM $this->table WHERE WeightClassID = ?";
+        $query = "DELETE FROM WeightClasses WHERE WeightClassID = ?";
 
         try {
             $query = $this->db->prepare($query);
