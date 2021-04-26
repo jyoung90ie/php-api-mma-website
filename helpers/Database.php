@@ -5,13 +5,17 @@ namespace helpers;
 use PDO;
 use PDOException;
 
+if (!constant('DB_HOST')) {
+    die ('DB credentials missing');
+}
+
 class Database
 {
-    private $host = 'localhost';
-    private $user = 'root';
-    private $pass = 'root';
-    private $db = 'promma';
-    private $port = 8889;
+    private $host = DB_HOST;
+    private $user = DB_USER;
+    private $pass = DB_PASS;
+    private $db = DB_NAME;
+    private $port = DB_PORT;
 
     private $connection = null;
 

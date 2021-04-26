@@ -59,4 +59,3 @@ use helpers\TemplatesHelper;
     </div>
 </nav>
 <header id="logo"></header>
-<p><?= print_r($_SESSION['User'] ?? '') ?></p>

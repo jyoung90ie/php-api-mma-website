@@ -2,16 +2,13 @@
 
 namespace api;
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
+include_once '../autoload.php';
+include_once '../helpers/config.php';
 
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json; charset=UTF-8');
 header("Access-Control-Allow-Methods: GET,POST,PUT,DELETE");
 
-include_once '../autoload.php';
 
 use models\{APIAccess, Athlete, Event, Fight, User};
 use controllers\AuthController;

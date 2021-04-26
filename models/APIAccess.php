@@ -3,7 +3,6 @@
 namespace models;
 
 use InvalidArgumentException;
-use PDO;
 use PDOException;
 
 class APIAccess

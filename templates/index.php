@@ -10,11 +10,12 @@ if (!constant("API_URL")) {
     return;
 }
 
+
+
 // get 2 most recent events
 $apiModule = "/event";
 $queryString['start'] = 0;
 $queryString['limit'] = 2;
-
 
 $apiRequest = new APIRequest(constant("API_URL"), $apiModule, null, $queryString);
 $results = $apiRequest->fetchApiData();

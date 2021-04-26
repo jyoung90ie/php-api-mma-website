@@ -1,10 +1,9 @@
 <?php
 session_start();
 require_once 'autoload.php';
-
+include_once 'helpers/config.php';
 
 const TEMPLATES_FOLDER = 'templates/';
-const API_URL = 'http://localhost:8888/promma/api'; // no trailing backslash
 
 const NAVBAR_PAGES = [
     ['link' => './?page=index', 'text' => 'Home'],
