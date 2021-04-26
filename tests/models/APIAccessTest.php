@@ -1,34 +1,54 @@
 <?php
 
+namespace models;
 
+include_once '../../autoload.php';
+include '../../helpers/config.php';
+
+use helpers\Database;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
-
-// sets working directory to test folder - enables tests to be run all together
-chdir(__DIR__);
-
-include_once "../helpers/Database.php";
-include_once "../models/APIAccess.php";
+use TypeError;
 
 class APIAccessTest extends TestCase
 {
-    private mysqli $db;
+    private $db;
 
-    private APIAccess $apiAccess;
-    private string $apiKeyValid;
-    private string $apiKeyInvalid;
+    private $apiAccess;
+    private $apiKeyValid;
+    private $apiKeyInvalid;
+    private $testApiId;
 
-    public function setUp(): void {
+    public function setUp(): void
+    {
         $this->db = (new Database())->getConnection();
 
         $this->apiAccess = new APIAccess($this->db);
-        $this->apiKeyValid = "test123";
+        $this->apiKeyValid = "phpUnitTest123";
         $this->apiKeyInvalid = "invalidKey";
+
+
+        // test data
+        $user_id = 3;
+        $start_date = date('Y-m-d', strtotime('-1 week'));
+        $end_date = date('Y-m-d', strtotime('+4 weeks'));
+
+        // update object vars
+        $this->apiAccess->setApiKey($this->apiKeyValid);
+        $this->apiAccess->setStartDate($start_date);
+        $this->apiAccess->setEndDate($end_date);
+        $this->apiAccess->setUserId($user_id);
+
+        // create new record in db
+        $this->apiAccess->create();
+        $this->testApiId = $this->apiAccess->getApiId();
     }
 
     // run after each test
     public function tearDown(): void
     {
-        $this->db->close();
+        $this->apiAccess->delete($this->testApiId);
+        $this->db = null;
     }
 
 
@@ -38,7 +58,7 @@ class APIAccessTest extends TestCase
 
         $expected = true;
 
-        self::assertEquals($expected, $result);
+        self::assertTrue(isset($result['ApiKey']));
         self::assertEquals($expected, $this->apiAccess->isVerified());
 
         // check object variables are set
@@ -51,20 +71,16 @@ class APIAccessTest extends TestCase
     {
         $result = $this->apiAccess->verifyKey($this->apiKeyInvalid);
 
-        $expected = false;
-
         // api is invalid, expecting no access
-        self::assertEquals($expected, $result);
-        self::assertEquals($expected, $this->apiAccess->isVerified());
-
-        // check that the api_key was updated to match
-        self::assertEquals($this->apiKeyInvalid, $this->apiAccess->getApiKey());
+        self::assertFalse($result);
+        self::assertFalse($this->apiAccess->isVerified());
 
         // check object variables are NOT set
+        self::assertNull($this->apiAccess->getApiKey());
         self::assertNull($this->apiAccess->getStartDate());
         self::assertNull($this->apiAccess->getEndDate());
         self::assertNull($this->apiAccess->getUserId());
-        self::assertNull($this->apiAccess->getId());
+        self::assertNull($this->apiAccess->getApiId());
     }
 
     public function testUpdateValid()
@@ -72,14 +88,15 @@ class APIAccessTest extends TestCase
         // test data
         $new_user_id = 3;
         // today's date minus 1 week
-        $new_start_date = date('Y-m-d', strtotime('-1 week'));
+        $new_start_date = date('Y-m-d', strtotime('-2 week'));
         // get today's date and add 4 weeks
-        $new_end_date = date('Y-m-d', strtotime('+4 weeks'));
+        $new_end_date = date('Y-m-d', strtotime('+5 weeks'));
 
         // updates object with properties for valid entry
         $api = $this->apiAccess->verifyKey($this->apiKeyValid);
+        $apiId = $this->apiAccess->getApiId();
 
-        self::assertTrue($api);
+        self::assertTrue(isset($api['ApiKey']));
         self::assertTrue($this->apiAccess->isVerified());
 
         // update object vars
@@ -92,36 +109,47 @@ class APIAccessTest extends TestCase
         self::assertEquals($new_end_date, $this->apiAccess->getEndDate());
 
         // perform update
-        $result = $this->apiAccess->update();
-        self::assertTrue($result);
+        $result = $this->apiAccess->update($apiId);
+        self::assertTrue($result == 1);
     }
 
     public function testUpdateInvalidNoVarValues()
     {
-        self::expectException(InvalidArgumentException::class);
-        self::expectExceptionMessage("All object variables must have a value");
+        // values will be reset when invalid key is supplied
+        $this->apiAccess->verifyKey($this->apiKeyInvalid);
+        $apiId = $this->apiAccess->getApiId();
 
-        $this->apiAccess->update();
+        // id is null as ApiKey was invalid
+        self::expectException(TypeError::class);
+
+        $this->apiAccess->update($apiId);
     }
 
     public function testUpdateInvalidNoObjectId()
     {
+        // values will be reset when invalid key is supplied
+        $this->apiAccess->verifyKey($this->apiKeyInvalid);
+        $apiId = $this->apiAccess->getApiId();
+
         // set object vars
         $this->apiAccess->setUserId(1);
         $this->apiAccess->setStartDate(date('Y-m-d'));
         $this->apiAccess->setEndDate(date('Y-m-d', strtotime('+1 day')));
         $this->apiAccess->setApiKey($this->apiKeyValid);
 
-        self::expectException(InvalidArgumentException::class);
-        self::expectExceptionMessage("Object Id has no value");
+        // id is null as ApiKey was invalid
+        self::expectException(TypeError::class);
 
-        $this->apiAccess->update();
+        $this->apiAccess->update($apiId);
     }
 
     public function testCreateAndDeleteValid()
     {
+        // values will be reset when invalid key is supplied
+        $this->apiAccess->verifyKey($this->apiKeyInvalid);
+
         // check data is not set
-        self::assertNull($this->apiAccess->getId());
+        self::assertNull($this->apiAccess->getApiId());
         self::assertNull($this->apiAccess->getUserId());
         self::assertNull($this->apiAccess->getStartDate());
         self::assertNull($this->apiAccess->getEndDate());
@@ -142,22 +170,26 @@ class APIAccessTest extends TestCase
 
         // create new record in db
         $create_query = $this->apiAccess->create();
+        $apiId = $this->apiAccess->getApiId();
         // check that query ran successfully
-        self::assertTrue($create_query);
+        self::assertTrue($create_query > 0);
         // check the object now has an id
-        $id = $this->apiAccess->getId();
-        self::assertNotNull($id);
+        self::assertNotNull($apiId);
 
         // delete object
-        $delete_query = $this->apiAccess->delete();
-        self::assertTrue($delete_query);
+        $delete_query = $this->apiAccess->delete($apiId);
+        self::assertTrue($delete_query == 1);
     }
 
     public function testDeleteInvalidNoObjectId()
     {
-        self::expectException(InvalidArgumentException::class);
-        self::expectExceptionMessage("Object Id has no value");
+        // values will be reset when invalid key is supplied
+        $this->apiAccess->verifyKey($this->apiKeyInvalid);
+        $apiId = $this->apiAccess->getApiId();
 
-        $this->apiAccess->delete();
+        // id is null as ApiKey was invalid
+        self::expectException(TypeError::class);
+
+        $this->apiAccess->delete($apiId);
     }
 }

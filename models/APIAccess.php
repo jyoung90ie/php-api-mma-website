@@ -2,14 +2,16 @@
 
 namespace models;
 
+use Exception;
 use InvalidArgumentException;
 use PDOException;
+use TypeError;
 
 class APIAccess
 {
     const TABLE = "ApiAccess";
 
-    private $id = null;
+    private $apiId = null;
     private $apiKey = null;
     private $startDate = null;
     private $endDate = null;
@@ -29,7 +31,7 @@ class APIAccess
      * results from the database.
      *
      * @param string $apiKey - value to be verified
-     * @return mixed - true if valid, false if not, exception if db error
+     * @return mixed - array if valid, false if not, exception if db error
      */
     public function verifyKey(string $apiKey)
     {
@@ -53,7 +55,7 @@ class APIAccess
                 $end_date = $result['EndDate'];
                 $user_id = $result['UserID'];
 
-                $this->id = $result['ID'];
+                $this->apiId = $result['ID'];
                 $this->apiKey = $result['ApiKey'];
                 $this->startDate = (is_null($start_date)) ? "" : $start_date;
                 $this->endDate = (is_null($end_date)) ? "" : $end_date;
@@ -63,14 +65,25 @@ class APIAccess
                 return $result;
             }
 
+            // unset values if key was invalid
+            $this->apiId = null;
+            $this->apiKey = null;
+            $this->startDate = null;
+            $this->endDate = null;
+            $this->userId = null;
+
             return false;
         } catch (PDOException $exception) {
             die($exception->getMessage());
         }
     }
 
-    public function create(): int
+    public function create(?array $data = null): int
     {
+        if (!is_null($data)) {
+            $this->processData($data);
+        }
+
         $this->validateData();
 
         $query = "INSERT INTO ApiAccess (ApiKey, StartDate, EndDate, UserID)
@@ -80,18 +93,23 @@ class APIAccess
             $query = $this->db->prepare($query);
             $query->execute([$this->apiKey, $this->startDate, $this->endDate, $this->userId]);
 
-            $this->id = $this->db->lastInsertId();
+            $this->apiId = $this->db->lastInsertId();
 
-            return $this->id;
+            return $this->apiId;
         } catch (PDOException $exception) {
             die($exception->getMessage());
         }
     }
 
-    public function update(): int
+    public function update(int $id, ?array $data = null): int
     {
+        $this->setApiId($id);
+
+        if (!is_null($data)) {
+            $this->processData($data);
+        }
+
         $this->validateData();
-        $this->validateIdSet();
 
         $query = "UPDATE 
                         ApiAccess
@@ -105,7 +123,7 @@ class APIAccess
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->apiKey, $this->startDate, $this->endDate, $this->userId]);
+            $query->execute([$this->apiKey, $this->startDate, $this->endDate, $this->userId, $this->apiId]);
             return $query->rowCount();
         } catch (PDOException $exception) {
             die($exception->getMessage());
@@ -113,15 +131,15 @@ class APIAccess
 
     }
 
-    public function delete(): int
+    public function delete(int $id): int
     {
-        $this->validateIdSet();
+        $this->setApiId($id);
 
         $query = "DELETE FROM ApiAccess WHERE ID = ?";
 
         try {
             $query = $this->db->prepare($query);
-            $query->execute([$this->id]);
+            $query->execute([$this->apiId]);
 
             return $query->rowCount();
         } catch (PDOException $exception) {
@@ -216,11 +234,23 @@ class APIAccess
     }
 
     /**
+     * @param int $apiId
+     */
+    public function setApiId(int $apiId): void
+    {
+        if ($apiId <= 0) {
+            throw new InvalidArgumentException("Invalid input for user ID");
+        }
+
+        $this->apiId = $apiId;
+    }
+
+    /**
      * @return int
      */
-    public function getId(): ?int
+    public function getApiId(): ?int
     {
-        return $this->id;
+        return $this->apiId;
     }
 
 
@@ -236,13 +266,6 @@ class APIAccess
         }
     }
 
-    private function validateIdSet(): void
-    {
-        if (!isset($this->id)) {
-            throw new InvalidArgumentException("Object Id has no value");
-        }
-    }
-
     private function isDate(string $date): bool
     {
         if (strtotime($date)) {
@@ -250,5 +273,18 @@ class APIAccess
         }
 
         return false;
+    }
+
+    private function processData(array $data): void
+    {
+        try {
+            $this->setApiId($data['ApiId']);
+            $this->setApiKey($data['ApiKey']);
+            $this->setStartDate($data['StartDate']);
+            $this->setEndDate($data['EndDate']);
+            $this->setUserId($data['UserID']);
+        } catch (Exception | TypeError $exception) {
+            exit($exception->getMessage());
+        }
     }
 }
