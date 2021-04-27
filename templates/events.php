@@ -37,7 +37,7 @@ $events = $results['data'];
         if (HelperFunctions::hasPermission($permissionModule, 'CREATE')) {
             ?>
             <div class="mt-2 d-flex justify-content-center justify-content-md-end">
-                <a href="?page=event&action=create" class="btn btn-outline-success btn-lg">Create</a>
+                <a href="?page=event&action=create" class="btn btn-outline-success btn-lg">Add Event</a>
             </div>
             <?php
         }
