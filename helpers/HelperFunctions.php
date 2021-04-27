@@ -103,6 +103,8 @@ class HelperFunctions
                 $redStats = $fightStat[$redAthleteName];
                 $blueStats = $fightStat[$blueAthleteName];
 
+                $chartType = 'bar';
+
                 // check if stats contain thrown and landed, if not, changed output
                 if (isset($redStats['landed']) && isset($redStats['thrown'])) {
                     $redThrown = $redStats['thrown'] ?? 0;
@@ -117,6 +119,7 @@ class HelperFunctions
                     $redThrownText = sprintf('%d%% of %d', $redThrownPercent, $redThrown) ?? '';
                     $blueThrownText = sprintf('%d%% of %d', $blueThrownPercent, $blueThrown) ?? '';
                 } else {
+                    $chartType = 'doughnut';
                     // does not contain thrown and landed data points
                     $redThrownText = '';
                     $blueThrownText = '';
@@ -133,8 +136,9 @@ class HelperFunctions
                     'data' => [
                         'label' => $type,
                         'landed' => '[' . $redLanded . ', ' . $blueLanded . ']', // value should be a string
-                        'thrown' => '[' . ($redThrown ?? 0) . ', ' . ($blueThrown ?? 0) . ']'
-                    ]
+                    ],
+                    // bar chart if thrown values exist, otherwise, doughnut chart
+                    'chartType' => $chartType
                 ];
 
                 array_push($charts, $chartData);
@@ -165,10 +169,11 @@ class HelperFunctions
             <?php
             // generate javascript for charts
             foreach ($charts as $chart) {
+
                 echo "var {$chart['id']} = document.getElementById('{$chart['id']}');\n";
                 echo "var chart{$chart['id']} = new Chart({$chart['id']}, 
                     {
-                        type: 'bar',
+                        type: '{$chart['chartType']}',
                         data: 
                         {
                             labels: ['$redAthleteName', '$blueAthleteName'],
@@ -178,7 +183,22 @@ class HelperFunctions
                                 backgroundColor: ['rgb(191, 13, 13)', 'rgba(20, 74, 142, 1)']
                             }]
                         },
-                        options: { scales: { y: { beginAtZero: true } } }
+                        options: { 
+                            scales: { 
+                                y: {
+                                    display: false,
+                                    beginAtZero: true 
+                                },
+                                x: {
+                                    display: false,
+                                    grid: { display: false },
+                                },
+                            },
+                            plugins: {
+                                legend: { display: false } 
+                            },
+                        }
+                            
                     });\n";
             }
             ?>
