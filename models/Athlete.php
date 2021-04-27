@@ -97,25 +97,35 @@ class Athlete
         }
     }
 
+    /**
+     * Return list of athletes sorted by name in ascending order - results are limited to 5 records by default.
+     *
+     * @param int $limit the number of athletes to return
+     * @param int $start first record to return from
+     * @return array|false
+     */
     public function getAll(int $limit = 5, int $start = 0): array
     {
-        $query = "SELECT * FROM Athletes ORDER BY AthleteID DESC LIMIT $start, $limit;";
+        $query = "SELECT * FROM Athletes ORDER BY AthleteName ASC LIMIT $start, $limit;";
         try {
             $query = $this->db->query($query);
 
-            $result = $query->fetchAll();
-            $this->results = $result;
+            if ($query->rowCount() > 0) {
+                $result = $query->fetchAll();
+                $this->results = $result;
 
-            return $result;
+                return $result;
+            }
+            return false;
         } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
     }
 
     /**
-     * Retrieves the total records in the database - used for pagination, to calculate pages.
+     * Retrieves the total records in the database.
      *
-     * @return int total number of records.
+     * @return int total number of records
      */
     public function getTotal(): int
     {
@@ -123,6 +133,10 @@ class Athlete
         return $query->rowCount();
     }
 
+    /**
+     * @param array|null $data
+     * @return int
+     */
     public function create(?array $data): int
     {
         if (!is_null($data)) {
