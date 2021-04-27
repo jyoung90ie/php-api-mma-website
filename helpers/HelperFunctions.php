@@ -7,7 +7,7 @@ use DateTime;
 class HelperFunctions
 {
     /**
-     * Creates HTML to display a single clickable event.
+     * Creates HTML to display a single clickable event which is used for the event listing page.
      *
      * @param array $event containing all event data
      */
@@ -70,10 +70,10 @@ class HelperFunctions
                         <span><a href="<?= $eventUrl ?>" class="btn btn-sm btn-more">View</a></span>
                         <?php
                         if (HelperFunctions::hasPermission($permissionModule, 'UPDATE')) {
-                            echo '<a href="' . $eventUrl . '&action=update" class="btn btn-sm btn-primary m-1">Update</a>';
+                            echo '<a href="' . $eventUrl . '&action=update" class="btn btn-sm btn-outline-primary m-1">Update</a>';
                         }
                         if (HelperFunctions::hasPermission($permissionModule, 'DELETE')) {
-                            echo '<a href="' . $eventUrl . '&action=delete" class="btn btn-sm btn-danger m-1">Delete</a>';
+                            echo '<a href="' . $eventUrl . '&action=delete" class="btn btn-sm btn-outline-danger m-1">Delete</a>';
                         }
                         ?>
                     </div>
@@ -86,7 +86,12 @@ class HelperFunctions
     }
 
     /**
-     * @param array $fightStats
+     * Renders side-by-side athlete fight statistics for comparison. This will loop through array and output a new row
+     * for each fight stat.
+     *
+     * @param array $fightStats array of fight statistics for two athletes
+     * @param string $redAthleteName name of athlete that will be displayed in red - must match name in $fightStats
+     * @param string $blueAthleteName name of athlete that will be displayed in blue - must match name in $fightStats
      */
     static function displayFightComparisonData(array $fightStats, string $redAthleteName, string $blueAthleteName)
     {
