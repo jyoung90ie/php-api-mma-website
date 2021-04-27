@@ -6,4 +6,6 @@ if (isset($_SESSION['User'])) {
     unset($_SESSION['User']);
 }
 
-header("Location: ?page=index");
+$redirectUrl = $_SERVER['HTTP_REFERER'] ?? '?page=index';
+
+header("Location: $redirectUrl");
