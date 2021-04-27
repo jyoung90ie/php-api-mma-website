@@ -17,7 +17,7 @@ $queryString['start'] = $queryString['start'] ?? 0;
 
 $permissionModule = Event::PERMISSION_AREA;
 
-$apiRequest = new APIRequest(constant("API_URL"), $apiModule, null, $queryString);
+$apiRequest = new APIRequest(API_URL, $apiModule, API_KEY, null, $queryString);
 $results = $apiRequest->fetchApiData();
 
 if (isset($results['Error']) || !$results) {
@@ -37,7 +37,7 @@ $events = $results['data'];
         if (HelperFunctions::hasPermission($permissionModule, 'CREATE')) {
             ?>
             <div class="mt-2 d-flex justify-content-center justify-content-md-end">
-                <a href="?page=event&action=create" class="btn btn-success btn-lg">Create</a>
+                <a href="?page=event&action=create" class="btn btn-outline-success btn-lg">Create</a>
             </div>
             <?php
         }
