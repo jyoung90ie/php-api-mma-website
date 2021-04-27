@@ -4,6 +4,7 @@ namespace controllers;
 
 use Exception;
 use models\User;
+use PDOException;
 use TypeError;
 
 
@@ -78,7 +79,7 @@ class CRUDController
             if (isset($response['body']) && $response['body']) {
                 echo json_encode($response['body']);
             }
-        } catch (Exception | TypeError $exception) {
+        } catch (PDOException | Exception | TypeError $exception) {
             exit(json_encode(['Error' => $exception->getMessage()]));
         }
     }
@@ -103,7 +104,11 @@ class CRUDController
         // setup pagination
         if (isset($this->queryStrings['limit'])) {
             $limit = $this->queryStrings['limit'];
-            $limit = ($limit < self::MAX_RECORDS ? $limit : self::MAX_RECORDS);
+
+            // if systemOverride is not set, then apply default limitations
+            if (!isset($this->queryStrings['limitOverride'])) {
+                $limit = ($limit < self::MAX_RECORDS ? $limit : self::MAX_RECORDS);
+            }
         }
 
         if (isset($this->queryStrings['start'])) {
@@ -318,7 +323,7 @@ class CRUDController
     private function badRequest(): array
     {
         $response['status_code_header'] = self::HTTP_BAD_REQUEST;
-        $response['body'] = ['Error' => 'The API request was invalid.'];
+        $response['body'] = ['Error' => 'There was a problem with the  request - check the data.'];
         return $response;
     }
 
