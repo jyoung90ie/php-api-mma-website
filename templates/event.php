@@ -14,10 +14,12 @@ if (!constant("API_URL")) {
 }
 
 $apiModule = "/event";
+$eventPermissionModule = \models\Event::PERMISSION_AREA;
+$fightPermissionModule = \models\Fight::PERMISSION_AREA;
+
 $id = intval($_GET['id']);
 
-
-$apiRequest = new APIRequest(constant("API_URL"), $apiModule, $id, $queryString);
+$apiRequest = new APIRequest(API_URL, $apiModule, API_KEY, $id, $queryString);
 $results = $apiRequest->fetchApiData();
 
 if (isset($results['Error']) || !$results) {
@@ -30,15 +32,14 @@ $eventUrl = '?page=events'
 ?>
 
 <main class="event-detail-container container">
-    <a class="btn btn-more" href="<?= $eventUrl ?>">Back to Events</a>
     <div class="event-overview">
         <span class="event-name">ProMMA <?= $results['EventID'] ?></span>
         <span class="event-date"><?= DateTime::createFromFormat('Y-m-d', $results['EventDate'])->format('d F Y, h:i A T') ?></span>
         <span class="event-location"><?= $results['EventLocation'] ?></span>
     </div>
-
     <h2><i class="fas fa-list"></i> <?= ($pastEvent ? 'Results' : 'Upcoming') ?> </h2>
     <hr/>
+
     <?php
     if (sizeof($results['Fights']) == 0) {
         echo '<h3 class="text-center p-3">This event does not yet have any fights</h3>';
@@ -47,9 +48,6 @@ $eventUrl = '?page=events'
         for ($fightIndex = sizeof($results['Fights']) - 1; $fightIndex >= 0; $fightIndex--) {
             $fight = $results['Fights'][$fightIndex];
             $femaleFight = stripos($fight['WeightClass'], 'women') !== false;
-
-            // get random images for athletes - images will never be the same
-            unset($athleteOneImage, $athleteTwoImage);
 
             $athleteOne = $fight['Athletes'][0];
             $athleteTwo = $fight['Athletes'][1];
@@ -60,8 +58,11 @@ $eventUrl = '?page=events'
             // indicate whether a fight is a title bout or not
             $boutType = $fight['WeightClass'] . ($fight['TitleBout'] == 1 ? ' Title' : '');
 
-            // was the outcome a draw?
-            $winner = ($fight['WinnerAthleteID'])
+            $winRound = $fight['WinRound'] ?? 'TBC';
+            $winRoundTime = $fight['WinRoundTime'] ?? 'TBC';
+            $outcome = $fight['ResultDescription'] ?? 'TBC';
+
+            $winnerId = ($outcome == 'TBC' ? -1 : $fight['WinnerAthleteID']); // use -1 to indicate fight result is TBC
 
 
             ?>
@@ -73,7 +74,7 @@ $eventUrl = '?page=events'
                             <img src="<?= $athleteOne['AthleteImage'] ?>"/>
                         </div>
                         <div class="col-6 text-uppercase">
-                            <?= HelperFunctions::displayOutcomeBadge($athleteOne, $winner) ?>
+                            <?= HelperFunctions::displayOutcomeBadge($athleteOne, $winnerId) ?>
                             <span class="athlete-name"><?= $athleteOneName ?></span>
                         </div>
                     </div>
@@ -85,15 +86,15 @@ $eventUrl = '?page=events'
                     <div class="row">
                         <div class="col-4">
                             <span class="item">Round</span>
-                            <span class="value"><?= $fight['WinRound'] ?></span>
+                            <span class="value"><?= $winRound ?></span>
                         </div>
                         <div class="col-4">
                             <span class="item">Time</span>
-                            <span class="value"><?= $fight['WinRoundTime'] ?></span>
+                            <span class="value"><?= $winRoundTime ?></span>
                         </div>
                         <div class="col-4">
                             <span class="item">Method</span>
-                            <span class="value"><?= ($pastEvent ? $fight['ResultDescription'] : 'TBC') ?></span>
+                            <span class="value"><?= $outcome ?></span>
                         </div>
 
                     </div>
@@ -102,7 +103,7 @@ $eventUrl = '?page=events'
                 <div class="col-4">
                     <div class="row">
                         <div class="col-6 text-uppercase text-end">
-                            <?= HelperFunctions::displayOutcomeBadge($athleteTwo, $winner) ?>
+                            <?= HelperFunctions::displayOutcomeBadge($athleteTwo, $winnerId) ?>
                             <span class="athlete-name"><?= $athleteTwoName ?></span>
                         </div>
                         <div class="athlete-img col-6">

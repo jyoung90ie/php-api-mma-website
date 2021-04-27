@@ -15,6 +15,8 @@ if (!constant("API_URL")) {
 }
 
 $apiModule = "/fight";
+$permissionModule = \models\Fight::PERMISSION_AREA;
+
 $id = intval($_GET['id']);
 
 $apiRequest = new APIRequest(API_URL, $apiModule, API_KEY, $id, $queryString);
@@ -34,7 +36,6 @@ if (sizeof($athletes) < 2) {
 
 $statsData = processApiResult($athletes);
 
-$winnerId = $results['WinnerAthleteID'];
 
 $athleteRed = $athletes[0];
 $athleteBlue = $athletes[1];
@@ -46,6 +47,9 @@ $finishRound = $results['WinRound'] ?? 'TBC';
 $finishTime = $results['WinRoundTime'] ?? 'TBC';
 $titleBout = ($results['TitleBout'] == 1 ? 'Yes' : 'No');
 $outcome = $results['Outcome'] ?? 'TBC';
+
+// if outcome is TBC then set winnerId to TBC so that displayOutcomeBadge knows that it wasn't a draw (null = draw)
+$winnerId = ($outcome == 'TBC' ? -1 : $results['WinnerAthleteID']);
 
 $eventUrl = '?page=event&id=' . $results['EventID'];
 
