@@ -23,8 +23,7 @@ $apiRequest = new APIRequest(API_URL, $apiModule, API_KEY, $id, $queryString);
 $results = $apiRequest->fetchApiData();
 
 if (isset($results['Error']) || !$results) {
-    echo '<p>API request failed</p>';
-    return;
+    header("Location: ?page=events");
 }
 
 $athletes = $results['Athletes'];
@@ -56,7 +55,31 @@ $eventUrl = '?page=event&id=' . $results['EventID'];
 ?>
 
     <main class="fight-detail-container container">
-        <a class="btn btn-more" href="<?= $eventUrl ?>">Back to Event</a>
+        <div class="d-flex flex-row">
+            <div>
+                <a class="btn btn-more" href="<?= $eventUrl ?>">Back to Event</a>
+            </div>
+            <div class="ms-auto">
+                <?php
+                if ($outcome == 'TBC') {
+                    if (HelperFunctions::hasPermission($permissionModule, 'CREATE')) {
+                        echo '<a href="?page=fightresult&action=create&fightid=' . $id . '" class="mx-2 btn btn-outline-success">Add Result</a>';
+                    }
+                } else {
+                    if (HelperFunctions::hasPermission($permissionModule, 'UPDATE')) {
+                        echo '<a href="?page=fightresult&action=update&fightid=' . $id . '" class="mx-2 btn btn-outline-success">Update Result</a>';
+                    }
+                }
+                if (HelperFunctions::hasPermission($permissionModule, 'DELETE')) {
+                    echo '<a href="?page=fight&action=delete&id=' . $id . '" class="mx-2 btn btn-outline-danger">Delete Fight</a>';
+                }
+
+
+
+                ?>
+            </div>
+        </div>
+
         <h2>Fight Breakdown</h2>
         <div class="fight-outcome row">
             <div class="col-6 col-md-3">
@@ -87,7 +110,15 @@ $eventUrl = '?page=event&id=' . $results['EventID'];
             </div>
         </div>
 
-        <?php HelperFunctions::displayFightComparisonData($statsData, $athleteNameRed, $athleteNameBlue); ?>
+
+
+        <?php
+        if ($outcome != 'TBC') {
+            HelperFunctions::displayFightComparisonData($statsData, $athleteNameRed, $athleteNameBlue);
+        } else {
+            echo '<h4 class="text-center p-4">Fight stats are not yet available</h4>';
+        }?>
+
     </main>
 
 
