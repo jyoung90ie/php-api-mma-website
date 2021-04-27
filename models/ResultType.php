@@ -3,12 +3,11 @@
 namespace models;
 
 use InvalidArgumentException;
-use PDOException;
 
 class ResultType
 {
-    private $id = null;
-    private $description = null;
+    private $resultTypeId = null;
+    private $resultDescription = null;
     private $results;
     private $db;
 
@@ -19,106 +18,123 @@ class ResultType
 
     public function getOne(int $id)
     {
-        $this->setId($id);
+        $this->setResultTypeId($id);
 
         $query = "SELECT * FROM ResultTypes WHERE ResultTypeID = ?";
-        try {
-            $query = $this->db->prepare($query);
-            $query->db->execute([$this->id]);
 
+        $query = $this->db->prepare($query);
+        $query->execute([$this->resultTypeId]);
+
+        if ($query->rowCount() > 0) {
             $result = $query->fetch();
-            $this->results = $result;
 
-            $this->description = $result['ResultDescription'];
+            $this->resultTypeId = $result['ResultTypeID'];
+            $this->resultDescription = $result['ResultDescription'];
 
             return $result;
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
         }
+
+        return false;
     }
 
-    public function getAll()
+    /**
+     * Return list of fight outcomes
+     * @return array|false
+     */
+    public function getAll(): array
     {
-        $query = "SELECT * FROM ResultTypes";
-        try {
-            $query = $this->db->query($query);
+        $query = "SELECT * FROM ResultTypes ORDER BY ResultDescription A";
 
+        $query = $this->db->query($query);
+
+        if ($query->rowCount() > 0) {
             $result = $query->fetchAll();
             $this->results = $result;
 
             return $result;
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
         }
+        return false;
     }
 
-
-    public function create(): bool
+    /**
+     * Retrieves the total records in the database.
+     *
+     * @return int total number of records
+     */
+    public function getTotal(): int
     {
-        $this->validateData();
-
-        $query = "INSERT INTO ResultTypes (ResultDescription) VALUES (?);";
-
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->description]);
-
-            return $query->rowCount();
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
+        $query = $this->db->query("SELECT * FROM ResultTypes");
+        return $query->rowCount();
     }
 
-    public function update(): bool
+    /**
+     * @param array|null $data
+     * @return int
+     */
+    public function create(?array $data): int
     {
-        $this->validateData();
-        $this->validateIdSet();
+        if (!is_null($data)) {
+            $this->processData($data);
+        }
 
-        $query = "UPDATE ResultTypes 
-                SET 
-                    ResultDescription = ?
+        $query = "INSERT INTO ResultTypes 
+                    (ResultDescription)
+                VALUES 
+                    (?);";
+
+        $query = $this->db->prepare($query);
+        $query->execute([$this->resultDescription]);
+
+        $this->setResultTypeId($this->db->lastInsertId());
+
+        return $query->rowCount();
+    }
+
+    public function update(int $id, ?array $data = null): int
+    {
+        $this->setResultTypeId($id);
+
+        if (!is_null($data)) {
+            $this->processData($data);
+        }
+        $this->validateData();
+
+        $query = "UPDATE 
+                        ResultTypes 
+                    SET 
+                        ResultDescription = ?
                 WHERE 
-                    ResultTypeID = ?";
+                        ResultTypeID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->description, $this->id]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->resultDescription, $this->resultTypeId]);
 
-            return $query->rowCount();
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
     }
 
-    public function delete(): bool
+    public function delete(int $id): int
     {
-        $this->validateIdSet();
+        $this->setResultTypeId($id);
 
         $query = "DELETE FROM ResultTypes WHERE ResultTypeID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->id]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->resultTypeId]);
 
-            return $query->rowCount();
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
     }
 
     // utility functions
     private function validateData(): void
     {
-        if (is_null($this->description)) {
+        if (is_null($this->resultDescription)) {
             throw new InvalidArgumentException("All object variables must have a value");
         }
     }
 
-    private function validateIdSet(): void
+    private function processData(array $data): void
     {
-        if (!isset($this->id)) {
-            throw new InvalidArgumentException("Object Id has no value");
-        }
+        $this->setResultDescription($data['ResultDescription']);
     }
 
     // getters and setters
@@ -126,36 +142,36 @@ class ResultType
     /**
      * @return int
      */
-    public function getId(): ?int
+    public function getResultTypeId(): ?int
     {
-        return $this->id;
+        return $this->resultTypeId;
     }
 
     /**
-     * @param int $id
+     * @param int $resultTypeId
      */
-    public function setId(int $id): void
+    public function setResultTypeId(int $resultTypeId): void
     {
-        if ($id <= 0) {
+        if ($resultTypeId <= 0) {
             throw new InvalidArgumentException("Invalid ID");
         }
-        $this->id = $id;
+        $this->resultTypeId = $resultTypeId;
     }
 
     /**
      * @return string
      */
-    public function getDescription(): ?string
+    public function getResultDescription(): ?string
     {
-        return $this->description;
+        return $this->resultDescription;
     }
 
     /**
-     * @param string $description
+     * @param string $resultDescription
      */
-    public function setDescription(string $description): void
+    public function setResultDescription(string $resultDescription): void
     {
-        $this->description = $description;
+        $this->resultDescription = $resultDescription;
     }
 
     /**
