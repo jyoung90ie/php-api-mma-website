@@ -39,24 +39,23 @@ class Athlete
 
         $query = "SELECT * FROM Athletes WHERE AthleteID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->athleteId]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->athleteId]);
 
-            if ($query->rowCount() > 0) {
-                $athlete = $query->fetch();
+        if ($query->rowCount() > 0) {
+            $athlete = $query->fetch();
 
-                $this->athleteId = $athlete['AthleteID'];
-                $this->name = $athlete['AthleteName'];
-                $this->height = $athlete['AthleteHeightInCM'];
-                $this->reach = $athlete['AthleteReachInCM'];
-                $this->stanceId = $athlete['AthleteStanceID'];
-                $this->dob = $athlete['AthleteDOB'];
+            $this->athleteId = $athlete['AthleteID'];
+            $this->name = $athlete['AthleteName'];
+            $this->height = $athlete['AthleteHeightInCM'];
+            $this->reach = $athlete['AthleteReachInCM'];
+            $this->stanceId = $athlete['AthleteStanceID'];
+            $this->dob = $athlete['AthleteDOB'];
 
-                $this->results = $athlete;
+            $this->results = $athlete;
 
-                // get athlete fights
-                $query = "SELECT 
+            // get athlete fights
+            $query = "SELECT 
                                 E.EventID,
                                 E.EventLocation,
                                 E.EventDate,
@@ -76,25 +75,21 @@ class Athlete
                             LEFT JOIN Events E ON F.EventID = E.EventID
                             WHERE FA.AthleteID = ?
                             ORDER BY E.EventDate DESC";
-                $query = $this->db->prepare($query);
-                $query->execute([$this->athleteId]);
+            $query = $this->db->prepare($query);
+            $query->execute([$this->athleteId]);
 
-                $athlete_data = $athlete;
-                $athlete_data['Fights'] = [];
+            $athlete_data = $athlete;
+            $athlete_data['Fights'] = [];
 
-                if ($query->rowCount() > 0) {
-                    $fights = $query->fetchAll();
-                    array_push($athlete_data['Fights'], $fights);
-                }
-
-                return $athlete_data;
+            if ($query->rowCount() > 0) {
+                $fights = $query->fetchAll();
+                array_push($athlete_data['Fights'], $fights);
             }
 
-            return false;
-
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
+            return $athlete_data;
         }
+
+        return false;
     }
 
     /**
@@ -107,19 +102,16 @@ class Athlete
     public function getAll(int $limit = 5, int $start = 0): array
     {
         $query = "SELECT * FROM Athletes ORDER BY AthleteName ASC LIMIT $start, $limit;";
-        try {
-            $query = $this->db->query($query);
 
-            if ($query->rowCount() > 0) {
-                $result = $query->fetchAll();
-                $this->results = $result;
+        $query = $this->db->query($query);
 
-                return $result;
-            }
-            return false;
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
+        if ($query->rowCount() > 0) {
+            $result = $query->fetchAll();
+            $this->results = $result;
+
+            return $result;
         }
+        return false;
     }
 
     /**
@@ -147,16 +139,12 @@ class Athlete
                     (AthleteName, AthleteHeightInCM, AthleteReachInCM, AthleteStanceID, AthleteDOB)
                     VALUES (?, ?, ?, ?, ?);";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->name, $this->height, $this->reach, $this->stanceId, $this->dob]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->name, $this->height, $this->reach, $this->stanceId, $this->dob]);
 
-            $this->setAthleteId($this->db->lastInsertId());
+        $this->setAthleteId($this->db->lastInsertId());
 
-            return $query->rowCount();
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
     }
 
     public function update(int $id, ?array $data = null): int
@@ -179,14 +167,10 @@ class Athlete
                 WHERE 
                         AthleteID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->name, $this->height, $this->reach, $this->stanceId, $this->dob, $this->athleteId]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->name, $this->height, $this->reach, $this->stanceId, $this->dob, $this->athleteId]);
 
-            return $query->rowCount();
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
     }
 
     public function delete(int $id): int
@@ -195,14 +179,10 @@ class Athlete
 
         $query = "DELETE FROM Athletes WHERE AthleteID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->athleteId]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->athleteId]);
 
-            return $query->rowCount();
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
     }
 
     // utility functions
