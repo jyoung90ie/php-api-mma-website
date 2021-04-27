@@ -10,7 +10,7 @@ define('API_KEY', $_SESSION['User']['ApiKey'] ?? DEFAULT_API_KEY);
 const NAVBAR_PAGES = [
     ['link' => './?page=index', 'text' => 'Home'],
     ['link' => './?page=events', 'text' => 'Events'],
-    ['link' => './?page=rankings', 'text' => 'Rankings'],
+//    ['link' => './?page=rankings', 'text' => 'Rankings'],
     ['link' => './?page=athletes', 'text' => 'Athletes'],
 ];
 
