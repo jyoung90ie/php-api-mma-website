@@ -2,10 +2,7 @@
 
 namespace models;
 
-use Exception;
 use InvalidArgumentException;
-use PDOException;
-use TypeError;
 
 class Fight
 {
@@ -232,6 +229,18 @@ class Fight
 
         $this->validateData();
 
+        if (isset($data['FightAthleteID1']) && is_numeric($data['FightAthleteID1'])) {
+            $this->fightAthleteId1 = intval($data['FightAthleteID1']);
+        } else {
+            throw new InvalidArgumentException('FightAthleteID1 is invalid');
+        }
+
+        if (isset($data['FightAthleteID2']) && is_numeric($data['FightAthleteID2'])) {
+            $this->fightAthleteId2 = intval($data['FightAthleteID2']);
+        } else {
+            throw new InvalidArgumentException('FightAthleteID2 is invalid');
+        }
+
 
         $query = "UPDATE Fights
                     SET 
@@ -295,8 +304,7 @@ class Fight
      * @param int $id - the FightID to be deleted
      * @return bool - true if successful
      */
-    public
-    function delete(int $id): bool
+    public function delete(int $id): bool
     {
         $this->setFightId($id);
         $this->validateIdSet();
@@ -330,10 +338,8 @@ class Fight
     }
 
 // utility functions
-    private
-    function processData(array $data): void
+    private function processData(array $data): void
     {
-
         $this->setEventId($data['EventID']);
         $this->setRefereeId($data['RefereeID']);
         $this->setTitleBout($data['TitleBout']);
@@ -350,18 +356,6 @@ class Fight
             $this->athleteId2 = intval($data['AthleteID2']);
         } else {
             throw new InvalidArgumentException('AthleteID2 is invalid');
-        }
-
-        if (isset($data['FightAthleteID1']) && is_numeric($data['FightAthleteID1'])) {
-            $this->fightAthleteId1 = intval($data['FightAthleteID1']);
-        } else {
-            throw new InvalidArgumentException('FightAthleteID1 is invalid');
-        }
-
-        if (isset($data['FightAthleteID2']) && is_numeric($data['FightAthleteID2'])) {
-            $this->fightAthleteId2 = intval($data['FightAthleteID2']);
-        } else {
-            throw new InvalidArgumentException('FightAthleteID2 is invalid');
         }
     }
 
