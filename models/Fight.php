@@ -22,8 +22,8 @@ class Fight
     private $numOfRounds = null;
     private $results = null;
 
-    private $fightAthlete1;
-    private $fightAthlete2;
+    private $athleteID1;
+    private $athleteID2;
 
 
     private $db;
@@ -166,13 +166,20 @@ class Fight
         return $query->rowCount();
     }
 
-    public function create(array $data = null): array
+    /**
+     * @param array|null $data
+     * @return array|false
+     */
+    public function create(array $data = null)
     {
         if (!is_null($data)) {
             $this->processData($data);
         }
 
         $this->validateData();
+
+        // start sql transaction
+        $this->db->beginTransaction();
 
         $query = "INSERT INTO Fights
                         (EventID, RefereeID, TitleBout, WeightClassID, NumOfRounds)
@@ -190,21 +197,36 @@ class Fight
                 $this->numOfRounds
             ]);
 
-            $result['FightID'] = $this->db->lastInsertId();
+            if ($query->rowCount() > 0) {
 
-            $this->fightAthlete1->setFightId($result['FightID']);
-            $this->fightAthlete2->setFightId($result['FightID']);
+                $result['FightID'] = $this->db->lastInsertId();
 
-            // create fight athletes
-            if ($this->fightAthlete1->create()) {
-                $result['FightAthleteID1'] = $this->db->lastInsertId();
+                if (isset($this->athleteID1) && isset($this->athleteID2)) {
+                    // create fight athletes records
+                    $fightAthleteQ = "INSERT INTO FightAthletes 
+                                    (FightID, AthleteID)
+                                VALUES
+                                    (?, ?),
+                                    (?, ?)";
+
+                    $fightAthleteQ = $this->db->prepare($fightAthleteQ);
+                    $fightAthleteQ->execute([
+                        $result['FightID'], $this->athleteID1,
+                        $result['FightID'], $this->athleteID2
+                    ]);
+
+                    if ($fightAthleteQ->rowCount() == 2) {
+                        // everything went as expected, return result
+                        $this->db->commit();
+                        return $fightAthleteQ->rowCount();
+                    }
+
+                    // something went wrong - revert
+                    $this->db->rollBack();
+                }
             }
+            return false;
 
-            if ($this->fightAthlete2->create()) {
-                $result['FightAthleteID2'] = $this->db->lastInsertId();
-            }
-
-            return $result;
         } catch (PDOException | Exception $exception) {
             die($exception->getMessage());
         }
@@ -306,15 +328,28 @@ class Fight
             $this->setWeightClassId($data['WeightClassID']);
             $this->setNumOfRounds($data['NumOfRounds']);
 
-            if (isset($data['AthleteID1'])) {
-                $this->fightAthlete1 = new FightAthlete($this->db);
-                $this->fightAthlete1->setAthleteId($data['AthleteID1']);
+            if (isset($data['AthleteID1']) && is_numeric($data['AthleteID1'])) {
+                $this->athleteID1 = intval($data['AthleteID1']);
+            } else {
+                throw new InvalidArgumentException('AthleteID1 is invalid');
             }
 
-            if (isset($data['AthleteID2'])) {
-                $this->fightAthlete2 = new FightAthlete($this->db);
-                $this->fightAthlete2->setAthleteId($data['AthleteID2']);
+            if (isset($data['AthleteID2']) && is_numeric($data['AthleteID2'])) {
+                $this->athleteID2 = intval($data['AthleteID2']);
+            } else {
+                throw new InvalidArgumentException('AthleteID2 is invalid');
             }
+
+
+//            if (isset($data['AthleteID1'])) {
+//                $this->fightAthlete1 = new FightAthlete($this->db);
+//                $this->fightAthlete1->setAthleteId($data['AthleteID1']);
+//            }
+//
+//            if (isset($data['AthleteID2'])) {
+//                $this->fightAthlete2 = new FightAthlete($this->db);
+//                $this->fightAthlete2->setAthleteId($data['AthleteID2']);
+//            }
 
         } catch (TypeError | Exception $exception) {
             exit($exception->getMessage());
