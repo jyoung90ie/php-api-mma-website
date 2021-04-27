@@ -572,7 +572,7 @@ span.fight-outcome-badge {
     color: #b4b4b4;
 }
 
-.total-thrown, .chart-text {
+.total-thrown{
     font-size: .9em;
 }
 
@@ -582,8 +582,12 @@ span.fight-outcome-badge {
 }
 
 .chart canvas {
-    max-height: 200px;
+    max-height: 150px;
     margin-bottom: 10px;
+}
+
+.chart-text {
+    font-size: 1.2em;
 }
 
 
