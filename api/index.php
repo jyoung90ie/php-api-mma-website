@@ -10,7 +10,7 @@ header('Content-Type: application/json; charset=UTF-8');
 header("Access-Control-Allow-Methods: GET,POST,PUT,DELETE");
 
 
-use models\{APIAccess, Athlete, Event, Fight, Referee, User, WeightClass};
+use models\{APIAccess, Athlete, Event, Fight, FightResult, Referee, User, WeightClass};
 use controllers\AuthController;
 use controllers\CRUDController;
 use Exception;
@@ -18,6 +18,7 @@ use helpers\Database;
 
 // api endpoint modules
 const FIGHT_MODULE = 'fight';
+const FIGHT_RESULT_MODULE = 'fight-result';
 const ATHLETE_MODULE = 'athlete';
 const EVENT_MODULE = 'event';
 const USER_MODULE = 'user';
@@ -78,6 +79,10 @@ try {
     switch ($apiModule) {
         case FIGHT_MODULE:
             $fightRequest = new CRUDController(new Fight($db), $user, $requestMethod, $id, $queryStrings);
+            $fightRequest->process_request();
+            break;
+        case FIGHT_RESULT_MODULE:
+            $fightRequest = new CRUDController(new FightResult($db), $user, $requestMethod, $id, $queryStrings);
             $fightRequest->process_request();
             break;
         case EVENT_MODULE:
