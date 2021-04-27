@@ -293,11 +293,15 @@ class HelperFunctions
     /**
      * Creates HTML to display errors to user.
      *
-     * @param array $data
+     * @param $data
      * @return string
      */
-    static function displayApiError(array $data): string
+    static function displayApiError($data): string
     {
+        if (!is_array($data)) {
+            return '';
+        }
+
         $outputHTML = '';
         if (isset($data['Error'])) {
             $outputHTML = '
