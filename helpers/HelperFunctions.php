@@ -70,7 +70,7 @@ class HelperFunctions
                         <span><a href="<?= $eventUrl ?>" class="btn btn-sm btn-more">View</a></span>
                         <?php
                         if (HelperFunctions::hasPermission($permissionModule, 'UPDATE')) {
-                            echo '<a href="' . $eventUrl . '&action=update" class="btn btn-sm btn-outline-primary m-1">Update</a>';
+                            echo '<a href="' . $eventUrl . '&action=update" class="btn btn-sm btn-outline-secondary m-1">Update</a>';
                         }
                         if (HelperFunctions::hasPermission($permissionModule, 'DELETE')) {
                             echo '<a href="' . $eventUrl . '&action=delete" class="btn btn-sm btn-outline-danger m-1">Delete</a>';
