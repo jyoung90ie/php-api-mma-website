@@ -20,8 +20,6 @@ if (!is_numeric($_GET['id']) || !($_GET['id'] > 0)) {
 }
 
 $id = intval($_GET['id']);
-
-
 $apiEndPoint = API_URL . '/' . $apiModule . '/' . $id . '?apiKey=' . API_KEY;
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -42,11 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // convert form data into array
         $formContents = file_get_contents("php://input");
         parse_str($formContents, $formContents);
-
-        // add default role
         $jsonContents = json_encode($formContents);
-
-//        print_r($jsonContents);
 
         $apiRequest = curl_init();
         curl_setopt($apiRequest, CURLOPT_URL, $apiEndPoint);
@@ -80,7 +74,7 @@ $results = $apiRequest->fetchApiData();
 
 if (isset($results['Error'])) {
     if ($_SERVER['REQUEST_METHOD'] == 'GET') {
-        // get request means no data has been submitted yet.. so error is a result of non-existant record
+        // get request means no data has been submitted yet.. so error is a result of non-existent record
         header('Location: ?page=events');
     }
 }
