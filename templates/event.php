@@ -38,6 +38,22 @@ $eventUrl = '?page=events'
         <span class="event-location"><?= $results['EventLocation'] ?></span>
     </div>
     <h2><i class="fas fa-list"></i> <?= ($pastEvent ? 'Results' : 'Upcoming') ?> </h2>
+    <div class="d-flex flex-row">
+        <div>
+            <a class="btn btn-outline-secondary" href="<?= $eventUrl ?>">Back to Events</a>
+        </div>
+        <div class="ms-auto">
+            <?php
+            if (HelperFunctions::hasPermission($fightPermissionModule, 'UPDATE')) {
+                echo '<a href="?page=event&action=update&id=' . $id . '" class="mx-2 btn btn-outline-primary">Update Event</a>';
+            }
+            if (HelperFunctions::hasPermission($fightPermissionModule, 'CREATE')) {
+                echo '<a href="?page=fight&action=create&eventid=' . $id . '" class="mx-2 btn btn-outline-success">Add Fight</a>';
+            }
+            ?>
+        </div>
+    </div>
+
     <hr/>
 
     <?php
