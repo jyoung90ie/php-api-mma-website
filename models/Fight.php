@@ -22,8 +22,10 @@ class Fight
     private $numOfRounds = null;
     private $results = null;
 
-    private $athleteID1;
-    private $athleteID2;
+    private $athleteId1;
+    private $athleteId2;
+    private $fightAthleteId1;
+    private $fightAthleteId2;
 
 
     private $db;
@@ -62,26 +64,25 @@ class Fight
                     LEFT JOIN ResultTypes RT on RT.ResultTypeID = FR.ResultTypeID
                     WHERE F.FightID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->fightId]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->fightId]);
 
-            if ($query->rowCount() > 0) {
+        if ($query->rowCount() > 0) {
 
-                $result = $query->fetch();
+            $result = $query->fetch();
 
-                $this->fightId = $result['FightID'];
-                $this->eventId = $result['EventID'];
-                $this->refereeId = $result['RefereeID'];
-                $this->titleBout = $result['TitleBout'];
-                $this->weightClassId = $result['WeightClassID'];
-                $this->numOfRounds = $result['NumOfRounds'];
-                $result['Athletes'] = [];
+            $this->fightId = $result['FightID'];
+            $this->eventId = $result['EventID'];
+            $this->refereeId = $result['RefereeID'];
+            $this->titleBout = $result['TitleBout'];
+            $this->weightClassId = $result['WeightClassID'];
+            $this->numOfRounds = $result['NumOfRounds'];
+            $result['Athletes'] = [];
 
-                $this->results = $result;
+            $this->results = $result;
 
-                // add athlete data
-                $query = "SELECT 
+            // add athlete data
+            $query = "SELECT 
                             FightAthleteID,
                             FightID,
                             A.AthleteName,
@@ -101,20 +102,17 @@ class Fight
                             Athletes A on FightAthletes.AthleteID = A.AthleteID
                         WHERE FightID=?
                         ";
-                $query = $this->db->prepare($query);
-                $query->execute([$this->fightId]);
+            $query = $this->db->prepare($query);
+            $query->execute([$this->fightId]);
 
-                if ($query->rowCount() > 0) {
-                    $athleteData = $query->fetchAll();
-                    $result['Athletes'] = $athleteData;
-                }
-
-                return $result;
+            if ($query->rowCount() > 0) {
+                $athleteData = $query->fetchAll();
+                $result['Athletes'] = $athleteData;
             }
-            return false;
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
+
+            return $result;
         }
+        return false;
     }
 
     public function getAll(int $limit, int $start): array
@@ -144,15 +142,12 @@ class Fight
                     LIMIT $start, $limit 
                 ";
 
-        try {
-            $query = $this->db->query($query);
-            $result = $query->fetchAll();
-            $this->results = $result;
 
-            return $result;
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
-        }
+        $query = $this->db->query($query);
+        $result = $query->fetchAll();
+        $this->results = $result;
+
+        return $result;
     }
 
     /**
@@ -186,50 +181,45 @@ class Fight
                     VALUES 
                         (?, ?, ?, ?, ?)";
 
-        try {
-            $query = $this->db->prepare($query);
+        $query = $this->db->prepare($query);
 
-            $query->execute([
-                $this->eventId,
-                $this->refereeId,
-                $this->titleBout,
-                $this->weightClassId,
-                $this->numOfRounds
-            ]);
+        $query->execute([
+            $this->eventId,
+            $this->refereeId,
+            $this->titleBout,
+            $this->weightClassId,
+            $this->numOfRounds
+        ]);
 
-            if ($query->rowCount() > 0) {
+        if ($query->rowCount() > 0) {
 
-                $result['FightID'] = $this->db->lastInsertId();
+            $result['FightID'] = $this->db->lastInsertId();
 
-                if (isset($this->athleteID1) && isset($this->athleteID2)) {
-                    // create fight athletes records
-                    $fightAthleteQ = "INSERT INTO FightAthletes 
+            if (isset($this->athleteId1) && isset($this->athleteId2)) {
+                // create fight athletes records
+                $fightAthleteQ = "INSERT INTO FightAthletes 
                                     (FightID, AthleteID)
                                 VALUES
                                     (?, ?),
                                     (?, ?)";
 
-                    $fightAthleteQ = $this->db->prepare($fightAthleteQ);
-                    $fightAthleteQ->execute([
-                        $result['FightID'], $this->athleteID1,
-                        $result['FightID'], $this->athleteID2
-                    ]);
+                $fightAthleteQ = $this->db->prepare($fightAthleteQ);
+                $fightAthleteQ->execute([
+                    $result['FightID'], $this->athleteId1,
+                    $result['FightID'], $this->athleteId2
+                ]);
 
-                    if ($fightAthleteQ->rowCount() == 2) {
-                        // everything went as expected, return result
-                        $this->db->commit();
-                        return $fightAthleteQ->rowCount();
-                    }
-
-                    // something went wrong - revert
-                    $this->db->rollBack();
+                if ($fightAthleteQ->rowCount() == 2) {
+                    // everything went as expected, return result
+                    $this->db->commit();
+                    return $fightAthleteQ->rowCount();
                 }
-            }
-            return false;
 
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
+                // something went wrong - revert
+                $this->db->rollBack();
+            }
         }
+        return false;
     }
 
     public function update(int $id, array $data = null): int
@@ -242,32 +232,55 @@ class Fight
 
         $this->validateData();
 
+
         $query = "UPDATE Fights
                     SET 
-                        EventID = ?,
-                        RefereeID = ?,
-                        TitleBout = ?,
-                        WeightClassID = ?,
-                        NumOfRounds = ?
-                WHERE 
-                        FightID = ?";
+                        EventID=:eventId,
+                        RefereeID=:refereeId,
+                        TitleBout=:titleBout,
+                        WeightClassID=:weightClassId,
+                        NumOfRounds=:numOfRounds
+                    WHERE 
+                        FightID=:fightId";
 
-        try {
-            $query = $this->db->prepare($query);
 
-            $query->execute([
-                $this->eventId,
-                $this->refereeId,
-                $this->titleBout,
-                $this->weightClassId,
-                $this->numOfRounds,
-                $this->fightId
-            ]);
+        $query = $this->db->prepare($query);
 
-            return $query->rowCount();
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
+        $params = [
+            ':eventId' => $this->eventId,
+            ':refereeId' => $this->refereeId,
+            ':titleBout' => $this->titleBout,
+            ':weightClassId' => $this->weightClassId,
+            ':numOfRounds' => $this->numOfRounds,
+            ':fightId' => $this->fightId
+        ];
+
+        $queryCounter = 0;
+
+        $query->execute($params);
+
+        if ($query->rowCount() > 0) {
+            $queryCounter++;
         }
+
+        // update fight athletes
+        $updateQuery = "UPDATE FightAthletes SET AthleteID=:athleteId WHERE FightAthleteID=:fightAthleteId";
+        $updateQuery = $this->db->prepare($updateQuery);
+
+        $updateQueryData = [
+            [':athleteId' => $this->athleteId1, ':fightAthleteId' => $this->fightAthleteId1],
+            [':athleteId' => $this->athleteId2, ':fightAthleteId' => $this->fightAthleteId2]
+        ];
+
+        foreach ($updateQueryData as $data) {
+            $updateQuery->execute($data);
+
+            if ($updateQuery->rowCount() > 0) {
+                $queryCounter++;
+            }
+        }
+
+        return $queryCounter;
     }
 
     /**
@@ -282,7 +295,8 @@ class Fight
      * @param int $id - the FightID to be deleted
      * @return bool - true if successful
      */
-    public function delete(int $id): bool
+    public
+    function delete(int $id): bool
     {
         $this->setFightId($id);
         $this->validateIdSet();
@@ -295,76 +309,73 @@ class Fight
             "DELETE FROM Fights WHERE FightID = ?;"
         ];
 
-        try {
-            $executionCounter = 0;
-            foreach ($queries as $query) {
-                $query = $this->db->prepare($query);
-                $query->execute([$this->fightId]);
 
-                if ($query->rowCount() > 0) {
-                    $executionCounter++;
-                }
+        $executionCounter = 0;
+        foreach ($queries as $query) {
+            $query = $this->db->prepare($query);
+            $query->execute([$this->fightId]);
+
+            if ($query->rowCount() > 0) {
+                $executionCounter++;
             }
-
-            if ($executionCounter > 0) {
-                $this->db->commit();
-                return true;
-            }
-
-            return false;
-        } catch (PDOException | Exception $exception) {
-            $this->db->rollBack();
-            die($exception->getMessage());
         }
+
+        if ($executionCounter > 0) {
+            $this->db->commit();
+            return true;
+        }
+
+        $this->db->rollBack();
+        return false;
     }
 
-    // utility functions
-    private function processData(array $data): void
+// utility functions
+    private
+    function processData(array $data): void
     {
-        try {
-            $this->setEventId($data['EventID']);
-            $this->setRefereeId($data['RefereeID']);
-            $this->setTitleBout($data['TitleBout']);
-            $this->setWeightClassId($data['WeightClassID']);
-            $this->setNumOfRounds($data['NumOfRounds']);
 
-            if (isset($data['AthleteID1']) && is_numeric($data['AthleteID1'])) {
-                $this->athleteID1 = intval($data['AthleteID1']);
-            } else {
-                throw new InvalidArgumentException('AthleteID1 is invalid');
-            }
+        $this->setEventId($data['EventID']);
+        $this->setRefereeId($data['RefereeID']);
+        $this->setTitleBout($data['TitleBout']);
+        $this->setWeightClassId($data['WeightClassID']);
+        $this->setNumOfRounds($data['NumOfRounds']);
 
-            if (isset($data['AthleteID2']) && is_numeric($data['AthleteID2'])) {
-                $this->athleteID2 = intval($data['AthleteID2']);
-            } else {
-                throw new InvalidArgumentException('AthleteID2 is invalid');
-            }
+        if (isset($data['AthleteID1']) && is_numeric($data['AthleteID1'])) {
+            $this->athleteId1 = intval($data['AthleteID1']);
+        } else {
+            throw new InvalidArgumentException('AthleteID1 is invalid');
+        }
 
+        if (isset($data['AthleteID2']) && is_numeric($data['AthleteID2'])) {
+            $this->athleteId2 = intval($data['AthleteID2']);
+        } else {
+            throw new InvalidArgumentException('AthleteID2 is invalid');
+        }
 
-//            if (isset($data['AthleteID1'])) {
-//                $this->fightAthlete1 = new FightAthlete($this->db);
-//                $this->fightAthlete1->setAthleteId($data['AthleteID1']);
-//            }
-//
-//            if (isset($data['AthleteID2'])) {
-//                $this->fightAthlete2 = new FightAthlete($this->db);
-//                $this->fightAthlete2->setAthleteId($data['AthleteID2']);
-//            }
+        if (isset($data['FightAthleteID1']) && is_numeric($data['FightAthleteID1'])) {
+            $this->fightAthleteId1 = intval($data['FightAthleteID1']);
+        } else {
+            throw new InvalidArgumentException('FightAthleteID1 is invalid');
+        }
 
-        } catch (TypeError | Exception $exception) {
-            exit($exception->getMessage());
+        if (isset($data['FightAthleteID2']) && is_numeric($data['FightAthleteID2'])) {
+            $this->fightAthleteId2 = intval($data['FightAthleteID2']);
+        } else {
+            throw new InvalidArgumentException('FightAthleteID2 is invalid');
         }
     }
 
-    private function validateData(): void
+    private
+    function validateData(): void
     {
         if (is_null($this->eventId) || is_null($this->refereeId) || is_null($this->titleBout) || is_null($this->weightClassId)
-            || is_null($this->numOfRounds)) {
+            || is_null($this->numOfRounds) || is_null($this->athleteId1) || is_null($this->athleteId2)) {
             throw new InvalidArgumentException("All object variables must have a value");
         }
     }
 
-    private function validateIdSet(): void
+    private
+    function validateIdSet(): void
     {
         if (!isset($this->fightId)) {
             throw new InvalidArgumentException("Object Id has no value");
@@ -372,13 +383,13 @@ class Fight
     }
 
 
-
-    // getters and setters
+// getters and setters
 
     /**
      * @return int|null
      */
-    public function getFightId(): ?int
+    public
+    function getFightId(): ?int
     {
         return $this->fightId;
     }
@@ -386,18 +397,20 @@ class Fight
     /**
      * @param int|null $fightId
      */
-    public function setFightId(?int $fightId): void
+    public
+    function setFightId(?int $fightId): void
     {
         if ($fightId <= 0) {
             throw new InvalidArgumentException("Invalid ID");
         }
-        $this->fightId = $fightId;
+        $this->fightId = intval($fightId);
     }
 
     /**
      * @return int|null
      */
-    public function getEventId(): ?int
+    public
+    function getEventId(): ?int
     {
         return $this->eventId;
     }
@@ -405,19 +418,21 @@ class Fight
     /**
      * @param int|null $eventId
      */
-    public function setEventId(?int $eventId): void
+    public
+    function setEventId(?int $eventId): void
     {
         if ($eventId <= 0) {
             throw new InvalidArgumentException("Invalid Event ID");
         }
 
-        $this->eventId = $eventId;
+        $this->eventId = intval($eventId);
     }
 
     /**
      * @return int|null
      */
-    public function getRefereeId(): ?int
+    public
+    function getRefereeId(): ?int
     {
         return $this->refereeId;
     }
@@ -425,19 +440,21 @@ class Fight
     /**
      * @param int|null $refereeId
      */
-    public function setRefereeId(?int $refereeId): void
+    public
+    function setRefereeId(?int $refereeId): void
     {
         if ($refereeId <= 0) {
             throw new InvalidArgumentException("Invalid Referee ID");
         }
 
-        $this->refereeId = floatval($refereeId);
+        $this->refereeId = intval($refereeId);
     }
 
     /**
      * @return int|null
      */
-    public function getTitleBout(): ?int
+    public
+    function getTitleBout(): ?int
     {
         return $this->titleBout;
     }
@@ -445,7 +462,8 @@ class Fight
     /**
      * @param bool|null $titleBout
      */
-    public function setTitleBout(?bool $titleBout): void
+    public
+    function setTitleBout(?bool $titleBout): void
     {
         if ($titleBout) {
             $this->titleBout = 1;
@@ -457,7 +475,8 @@ class Fight
     /**
      * @return int|null
      */
-    public function getWeightClassId(): ?int
+    public
+    function getWeightClassId(): ?int
     {
         return $this->weightClassId;
     }
@@ -465,7 +484,8 @@ class Fight
     /**
      * @param int|null $weightClassId
      */
-    public function setWeightClassId(?int $weightClassId): void
+    public
+    function setWeightClassId(?int $weightClassId): void
     {
         if ($weightClassId <= 0) {
             throw new InvalidArgumentException("Invalid Weight Class ID");
@@ -477,7 +497,8 @@ class Fight
     /**
      * @return int|null
      */
-    public function getNumOfRounds(): ?int
+    public
+    function getNumOfRounds(): ?int
     {
         return $this->numOfRounds;
     }
@@ -485,7 +506,8 @@ class Fight
     /**
      * @param int|null $numOfRounds
      */
-    public function setNumOfRounds(?int $numOfRounds): void
+    public
+    function setNumOfRounds(?int $numOfRounds): void
     {
         if ($numOfRounds < self::ROUNDS_MIN || $numOfRounds > self::ROUNDS_MAX) {
             throw new InvalidArgumentException("Number of rounds must be between " . self::ROUNDS_MIN . "-" .
@@ -498,9 +520,46 @@ class Fight
     /**
      * @return null
      */
-    public function getResults()
+    public
+    function getResults()
     {
         return $this->results;
+    }
+
+    /**
+     * @return mixed
+     */
+    public
+    function getAthleteId2()
+    {
+        return $this->athleteId2;
+    }
+
+    /**
+     * @param mixed $athleteId2
+     */
+    public
+    function setAthleteId2($athleteId2): void
+    {
+        $this->athleteId2 = $athleteId2;
+    }
+
+    /**
+     * @return mixed
+     */
+    public
+    function getAthleteId1()
+    {
+        return $this->athleteId1;
+    }
+
+    /**
+     * @param mixed $athleteId1
+     */
+    public
+    function setAthleteId1($athleteId1): void
+    {
+        $this->athleteId1 = $athleteId1;
     }
 
 

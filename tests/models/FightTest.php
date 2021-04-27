@@ -1,10 +1,15 @@
 <?php
 
+namespace models;
 
+include_once '../../helpers/config.php';
+include_once '../../autoload.php';
+
+use helpers\Database;
+
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
-include_once "../helpers/Database.php";
-include_once "../models/Fight.php";
 
 class FightTest extends TestCase
 {
@@ -50,17 +55,17 @@ class FightTest extends TestCase
     // run after each test
     public function tearDown(): void
     {
-        $this->db->close();
+        $this->db = null;
     }
 
     public function testDataStartsAsNull()
     {
-        self::assertNull($this->fight->getId());
+        self::assertNull($this->fight->getFightId());
         self::assertNull($this->fight->getEventId());
         self::assertNull($this->fight->getRefereeId());
         self::assertNull($this->fight->getTitleBout());
         self::assertNull($this->fight->getWeightClassId());
-        self::assertNull($this->fight->getRounds());
+        self::assertNull($this->fight->getNumOfRounds());
         self::assertNull($this->fight->getResults());
     }
 
@@ -71,18 +76,18 @@ class FightTest extends TestCase
         $this->fight->setRefereeId($this->refereeIdValid);
         $this->fight->setTitleBout($this->titleBoutValid);
         $this->fight->setWeightClassId($this->weightClassIdValid);
-        $this->fight->setRounds($this->roundsValid);
-
+        $this->fight->setNumOfRounds($this->roundsValid);
+ 
         // create new record in db
         $create_query = $this->fight->create();
         // check that query ran successfully
         self::assertTrue($create_query);
         // check the object now has an id
-        $id = $this->fight->getId();
+        $id = $this->fight->getFightId();
         self::assertNotNull($id);
 
         // delete object
-        $delete_query = $this->fight->delete();
+        $delete_query = $this->fight->delete($id);
         self::assertTrue($delete_query);
     }
 
@@ -96,12 +101,12 @@ class FightTest extends TestCase
 
         $data = $results->fetch_assoc();
 
-        self::assertEquals($data['FightID'], $this->fight->getId());
+        self::assertEquals($data['FightID'], $this->fight->getFightId());
         self::assertEquals($data['EventID'], $this->fight->getEventId());
         self::assertEquals($data['RefereeID'], $this->fight->getRefereeId());
         self::assertEquals($data['TitleBout'], $this->fight->getTitleBout());
         self::assertEquals($data['WeightClassID'], $this->fight->getWeightClassId());
-        self::assertEquals($data['NumOfRounds'], $this->fight->getRounds());
+        self::assertEquals($data['NumOfRounds'], $this->fight->getNumOfRounds());
     }
 
     public function testGetOneInvalid()
@@ -114,59 +119,30 @@ class FightTest extends TestCase
 
     public function testGetAllAndGetResultsValid()
     {
-        $results = $this->fight->getAll();
+        $results = $this->fight->getAll(10, 0);
 
         self::assertEquals($this->fight->getResults(), $results);
-        self::assertTrue($results->num_rows > 0);
+        self::assertTrue(sizeof($results) > 0);
     }
 
     public function testUpdate()
     {
 
-        $new_fight = new Fight($this->db);
 
-        // create object
-        $new_fight->setEventID($this->eventIdValid);
-        $new_fight->setRefereeId($this->refereeIdValid);
-        $new_fight->setTitleBout($this->titleBoutValid);
-        $new_fight->setWeightClassId($this->weightClassIdValid);
-        $new_fight->setRounds($this->roundsValid);
-
-        $new_fight->create();
-
-        $new_fight_id = $new_fight->getId();
-
-        // use existing object to pero
-
-        $new_event_id = 3;
-        $new_referee_id = 1;
-        $new_title_bout = true;
-        $new_weight_class_id = 3;
-        $new_rounds = 5;
-
-        // update object vars
-        $new_fight->setEventID($new_event_id);
-        $new_fight->setRefereeId($new_referee_id);
-        $new_fight->setTitleBout($new_title_bout);
-        $new_fight->setWeightClassId($new_weight_class_id);
-        $new_fight->setRounds($new_rounds);
+        $data = ["EventID" => 524,
+            "RefereeID" => 15,
+            "TitleBout" => 0,
+            "WeightClassID" => 2,
+            "NumOfRounds" => 3,
+            "AthleteID1" => 25,
+            "AthleteID2" => 34,
+            "FightAthleteID1" => 10370,
+            "FightAthleteID2" => 10371];
 
         // perform update
-        $update_query = $new_fight->update();
-        self::assertTrue($update_query);
+        $update_query = $this->fight->update(5202, $data);
+        self::assertTrue($update_query > 0);
 
-        // set another object to retrieve data for new_fight to compare
-        $this->fight->getOne($new_fight_id);
-
-        self::assertEquals($new_fight->getId(), $this->fight->getId());
-        self::assertEquals($new_fight->getEventId(), $this->fight->getEventId());
-        self::assertEquals($new_fight->getRefereeId(), $this->fight->getRefereeId());
-        self::assertEquals($new_fight->getTitleBout(), $this->fight->getTitleBout());
-        self::assertEquals($new_fight->getWeightClassId(), $this->fight->getWeightClassId());
-        self::assertEquals($new_fight->getRounds(), $this->fight->getRounds());
-
-        // delete from db
-        self::assertTrue($new_fight->delete());
     }
 
 
@@ -190,20 +166,20 @@ class FightTest extends TestCase
 
     public function testSetRoundsValid()
     {
-        $this->fight->setRounds($this->roundsValid);
-        self::assertEquals($this->roundsValid, $this->fight->getRounds());
+        $this->fight->setNumOfRounds($this->roundsValid);
+        self::assertEquals($this->roundsValid, $this->fight->getNumOfRounds());
     }
 
     public function testSetRoundsInvalidBelow()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->fight->setRounds($this->roundsInvalidBelow);
+        $this->fight->setNumOfRounds($this->roundsInvalidBelow);
     }
 
     public function testSetRoundsInvalidAbove()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->fight->setRounds($this->roundsInvalidAbove);
+        $this->fight->setNumOfRounds($this->roundsInvalidAbove);
     }
 
     public function testGetSetRefereeIdValid()
@@ -232,13 +208,13 @@ class FightTest extends TestCase
 
     public function testGetSetIdValid()
     {
-        $this->fight->setId($this->idValid);
-        self::assertEquals($this->idValid, $this->fight->getId());
+        $this->fight->setFightId($this->idValid);
+        self::assertEquals($this->idValid, $this->fight->getFightId());
     }
 
     public function testGetSetIdInvalid()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->fight->setId($this->idInvalid);
+        $this->fight->setFightId($this->idInvalid);
     }
 }
