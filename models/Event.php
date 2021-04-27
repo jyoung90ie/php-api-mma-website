@@ -2,10 +2,7 @@
 
 namespace models;
 
-use Exception;
 use InvalidArgumentException;
-use PDOException;
-use TypeError;
 
 class Event
 {
@@ -31,20 +28,19 @@ class Event
 
         $query = "SELECT * FROM Events WHERE EventID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->eventId]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->eventId]);
 
-            if ($query->rowCount() > 0) {
-                $event = $query->fetch();
+        if ($query->rowCount() > 0) {
+            $event = $query->fetch();
 
-                $this->location = $event['EventLocation'];
-                $this->date = $event['EventDate'];
+            $this->location = $event['EventLocation'];
+            $this->date = $event['EventDate'];
 
-                $this->results = $event;
+            $this->results = $event;
 
-                // get fights from event
-                $query = "SELECT F.*,
+            // get fights from event
+            $query = "SELECT F.*,
                                 WC.WeightClass,
                                 R.RefereeName,
                                 FR.WinnerAthleteID,
@@ -57,54 +53,52 @@ class Event
                             LEFT JOIN FightResults FR on F.FightID = FR.FightID
                             LEFT JOIN ResultTypes RT on FR.ResultTypeID = RT.ResultTypeID
                             WHERE F.EventID = ?";
-                $query = $this->db->prepare($query);
-                $query->execute([$this->eventId]);
+            $query = $this->db->prepare($query);
+            $query->execute([$this->eventId]);
 
-                $eventData = $event;
-                $eventData['Fights'] = [];
-                $athleteData['Athletes'] = [];
+            $eventData = $event;
+            $eventData['Fights'] = [];
+            $athleteData['Athletes'] = [];
 
-                if ($query->rowCount() > 0) {
-                    $fights = $query->fetchAll();
-                    foreach ($fights as $fight) {
-                        $athleteId = $this->db->prepare("SELECT AthleteID FROM FightAthletes WHERE FightID=?;");
-                        $athleteId->execute([$fight['FightID']]);
+            if ($query->rowCount() > 0) {
+                $fights = $query->fetchAll();
+                foreach ($fights as $fight) {
+                    $athleteId = $this->db->prepare("SELECT AthleteID FROM FightAthletes WHERE FightID=?;");
+                    $athleteId->execute([$fight['FightID']]);
 
-                        if ($athleteId->rowCount() > 0) {
-                            $athletes = $athleteId->fetchAll();
+                    if ($athleteId->rowCount() > 0) {
+                        $athletes = $athleteId->fetchAll();
 
-                            // create list of athlete id's so 1 query can retrieve them all
-                            $athleteIdList = [];
+                        // create list of athlete id's so 1 query can retrieve them all
+                        $athleteIdList = [];
+                        foreach ($athletes as $athlete) {
+                            array_push($athleteIdList, $athlete['AthleteID']);
+                        }
+
+                        $placeholders = str_repeat('?,', sizeof($athleteIdList) - 1) . '?';
+                        $athleteQuery = "SELECT * FROM Athletes WHERE AthleteID IN ($placeholders);";
+                        $athleteQuery = $this->db->prepare($athleteQuery);
+
+                        $athleteQuery->execute($athleteIdList);
+
+                        if ($athleteQuery->rowCount() > 0) {
+                            $athletes = $athleteQuery->fetchAll();
+                            $athleteData['Athletes'] = [];
+                            // loop through athletes and add winner flag
                             foreach ($athletes as $athlete) {
-                                array_push($athleteIdList, $athlete['AthleteID']);
+                                $athlete['Winner'] = ($fight['WinnerAthleteID'] == $athlete['AthleteID'] ? 1 : 0);
+                                array_push($athleteData['Athletes'], $athlete);
                             }
-
-                            $placeholders = str_repeat('?,', sizeof($athleteIdList) - 1) . '?';
-                            $athleteQuery = "SELECT * FROM Athletes WHERE AthleteID IN ($placeholders);";
-                            $athleteQuery = $this->db->prepare($athleteQuery);
-
-                            $athleteQuery->execute($athleteIdList);
-
-                            if ($athleteQuery->rowCount() > 0) {
-                                $athletes = $athleteQuery->fetchAll();
-                                $athleteData['Athletes'] = [];
-                                // loop through athletes and add winner flag
-                                foreach ($athletes as $athlete) {
-                                    $athlete['Winner'] = ($fight['WinnerAthleteID'] == $athlete['AthleteID'] ? 1 : 0);
-                                    array_push($athleteData['Athletes'], $athlete);
-                                }
-                                array_push($eventData['Fights'], array_merge($fight, $athleteData));
-                            }
+                            array_push($eventData['Fights'], array_merge($fight, $athleteData));
                         }
                     }
                 }
-                return $eventData;
             }
-
-            return false;
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
+            return $eventData;
         }
+
+        return false;
+
     }
 
     /**
@@ -124,17 +118,16 @@ class Event
                     ORDER BY 
                          EventDate DESC 
                     LIMIT $start, $limit";
-        try {
-            $query = $this->db->query($query);
+        $query = $this->db->query($query);
 
-            if ($query->rowCount() > 0) {
-                $results = $query->fetchAll();
-                $this->results = $results;
+        if ($query->rowCount() > 0) {
+            $results = $query->fetchAll();
+            $this->results = $results;
 
-                $eventData = [];
+            $eventData = [];
 
-                foreach ($results as $event) {
-                    $athletesQuery = "SELECT 
+            foreach ($results as $event) {
+                $athletesQuery = "SELECT 
                                         F.FightID,
                                         F.TitleBout,
                                         A.AthleteID,
@@ -153,24 +146,20 @@ class Event
                                     ORDER BY F.FightID DESC
                                     LIMIT 2; ";
 
-                    $athletesQuery = $this->db->prepare($athletesQuery);
-                    $athletesQuery->execute([$event['EventID']]);
+                $athletesQuery = $this->db->prepare($athletesQuery);
+                $athletesQuery->execute([$event['EventID']]);
 
-                    if ($athletesQuery->rowCount() > 0) {
-                        $event['Headliners'] = $athletesQuery->fetchAll();
-                    }
-
-                    array_push($eventData, $event);
+                if ($athletesQuery->rowCount() > 0) {
+                    $event['Headliners'] = $athletesQuery->fetchAll();
                 }
 
-                return $eventData;
+                array_push($eventData, $event);
             }
 
-            return false;
-
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
+            return $eventData;
         }
+
+        return false;
     }
 
     /**
@@ -195,16 +184,13 @@ class Event
 
         $query = "INSERT INTO Events (EventLocation, EventDate) VALUES (?, ?);";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->location, $this->date]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->location, $this->date]);
 
-            $this->eventId = $this->db->lastInsertId();
+        $this->eventId = $this->db->lastInsertId();
 
-            return $query->rowCount();
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
+
     }
 
     public function update(int $id, ?array $data = null): int
@@ -224,14 +210,11 @@ class Event
                     WHERE 
                         EventID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->location, $this->date, $this->eventId]);
 
-            return $query->rowCount();
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
-        }
+        $query = $this->db->prepare($query);
+        $query->execute([$this->location, $this->date, $this->eventId]);
+
+        return $query->rowCount();
     }
 
     public function delete(int $id): int
@@ -240,25 +223,21 @@ class Event
 
         $query = "DELETE FROM Events WHERE EventID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->eventId]);
 
-            return $query->rowCount();
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
-        }
+        $query = $this->db->prepare($query);
+        $query->execute([$this->eventId]);
+
+        return $query->rowCount();
+
     }
 
     // utility functions
     private function processData(array $data): void
     {
-        try {
-            $this->setDate($data['EventDate']);
-            $this->setLocation($data['EventLocation']);
-        } catch (Exception | TypeError $exception) {
-            exit($exception->getMessage());
-        }
+
+        $this->setDate($data['EventDate']);
+        $this->setLocation($data['EventLocation']);
+
     }
 
     private function validateData(): void
