@@ -88,17 +88,20 @@ class HelperFunctions
     /**
      * @param array $fightStats
      */
-    static function displayFightComparisonData(array $fightStats, string $redAthlete, string $blueAthlete)
+    static function displayFightComparisonData(array $fightStats, string $redAthleteName, string $blueAthleteName)
     {
-        if (!isset($fightStats) || !isset($redAthlete) || !isset($blueAthlete)) {
+        if (!isset($fightStats) || !isset($redAthleteName) || !isset($blueAthleteName)) {
             return;
         }
+
+        // store chart data
+        $charts = [];
 
         foreach ($fightStats as $fightStat) {
             if (sizeof($fightStats) > 0) {
                 $type = $fightStat['type'] ?? '';
-                $redStats = $fightStat[$redAthlete];
-                $blueStats = $fightStat[$blueAthlete];
+                $redStats = $fightStat[$redAthleteName];
+                $blueStats = $fightStat[$blueAthleteName];
 
                 // check if stats contain thrown and landed, if not, changed output
                 if (isset($redStats['landed']) && isset($redStats['thrown'])) {
@@ -123,28 +126,64 @@ class HelperFunctions
                     $blueLanded = reset($blueStats);
                 }
 
+                $chartId = str_replace(' ', '', ucwords($type));
+
+                $chartData = [
+                    'id' => $chartId,
+                    'data' => [
+                        'label' => $type,
+                        'landed' => '[' . $redLanded . ', ' . $blueLanded . ']', // value should be a string
+                        'thrown' => '[' . ($redThrown ?? 0) . ', ' . ($blueThrown ?? 0) . ']'
+                    ]
+                ];
+
+                array_push($charts, $chartData);
 
                 ?>
                 <div class="fight-stats row">
-                    <div class="col-4">
+                    <div class="order-lg-0 col-6 col-lg-4">
                         <span class="total-landed red"><?= $redLanded ?></span>
                         <span class="total-thrown"><?= $redThrownText ?></span>
                     </div>
-                    <div class="col-4 charts">
-                        <div class="chart">
 
-                        </div>
-                        <span class="chart-text"><?= $type ?></span>
-                    </div>
-                    <div class="col-4">
+                    <div class="order-lg-2 col-6 col-lg-4">
                         <span class="total-landed blue"><?= $blueLanded ?></span>
                         <span class="total-thrown"><?= $blueThrownText ?></span>
+                    </div>
+                    <div class="order-lg-1 col-12 col-lg-4 charts">
+                        <div class="chart">
+                            <canvas id="<?= $chartId ?>"></canvas>
+                        </div>
+                        <span class="chart-text"><?= $type ?></span>
                     </div>
                 </div>
                 <?php
             }
-
         }
+        ?>
+        <script>
+            <?php
+            // generate javascript for charts
+            foreach ($charts as $chart) {
+                echo "var {$chart['id']} = document.getElementById('{$chart['id']}');\n";
+                echo "var chart{$chart['id']} = new Chart({$chart['id']}, 
+                    {
+                        type: 'bar',
+                        data: 
+                        {
+                            labels: ['$redAthleteName', '$blueAthleteName'],
+                            datasets: [{
+                                label: '{$chart['data']['label']}',
+                                data: {$chart['data']['landed']},
+                                backgroundColor: ['rgb(191, 13, 13)', 'rgba(20, 74, 142, 1)']
+                            }]
+                        },
+                        options: { scales: { y: { beginAtZero: true } } }
+                    });\n";
+            }
+            ?>
+        </script>
+        <?php
     }
 
 
