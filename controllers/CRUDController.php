@@ -210,9 +210,9 @@ class CRUDController
         }
 
         $data = json_decode(file_get_contents('php://input'), true);
-        $this->module->update($id, $data);
 
-
+        // if an update query is run but no fields are changed, sql will return 0 rows affected
+        $response['body'] = $this->module->update($id, $data);
         $response['status_code_header'] = self::HTTP_SUCCESS_NO_CONTENT;
         return $response;
 
