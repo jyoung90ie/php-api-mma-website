@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 // get existing values for event
-$apiRequest = new APIRequest(API_URL, $apiModule, $id, $queryString);
+$apiRequest = new APIRequest(API_URL, $apiModule, API_KEY, $id, $queryString);
 $results = $apiRequest->fetchApiData();
 
 if (isset($results['Error'])) {

@@ -29,7 +29,7 @@ class APIRequestTest extends TestCase
     {
         $apiModule = $this->eventEndpoint;
         $queryStrings = ['page' => 'events', 'start' => 10];
-        $apiRequest = new APIRequest($this->apiUrl, $apiModule, null, $queryStrings);
+        $apiRequest = new APIRequest($this->apiUrl, $apiModule, null, null, $queryStrings);
 
         $response = $apiRequest->fetchApiData();
 
@@ -46,7 +46,7 @@ class APIRequestTest extends TestCase
     {
         $apiModule = $this->eventEndpoint;
         $itemId = 1;
-        $apiRequest = new APIRequest($this->apiUrl, $apiModule, $itemId);
+        $apiRequest = new APIRequest($this->apiUrl, $apiModule, null, $itemId);
 
         $response = $apiRequest->fetchApiData();
 
@@ -60,7 +60,7 @@ class APIRequestTest extends TestCase
     {
         $apiModule = "/events";
         $itemId = 99999;
-        $apiRequest = new APIRequest($this->apiUrl, $apiModule, $itemId);
+        $apiRequest = new APIRequest($this->apiUrl, $apiModule, null, $itemId);
 
         $response = $apiRequest->fetchApiData();
 
@@ -69,7 +69,7 @@ class APIRequestTest extends TestCase
 
         $apiModule = $this->eventEndpoint;
         $itemId = -1;
-        $apiRequest = new APIRequest($this->apiUrl, $apiModule, $itemId);
+        $apiRequest = new APIRequest($this->apiUrl, $apiModule, null, $itemId);
 
         $response = $apiRequest->fetchApiData();
 
@@ -83,14 +83,14 @@ class APIRequestTest extends TestCase
 
         // expect itemId to through typeError exception as it's not an int
         $this->expectException(\TypeError::class);
-        $apiRequest = new APIRequest($this->apiUrl, $apiModule, $itemId);
+        $apiRequest = new APIRequest($this->apiUrl, $apiModule, null, $itemId);
     }
 
     // athletes
     public function testFetchResponseAthleteAllValid(): void
     {
         $apiModule = $this->athleteEndpoint;
-        $apiRequest = new APIRequest($this->apiUrl, $apiModule);
+        $apiRequest = new APIRequest($this->apiUrl, $apiModule, null);
 
         $response = $apiRequest->fetchApiData();
 
@@ -105,7 +105,7 @@ class APIRequestTest extends TestCase
     {
         $apiModule = $this->athleteEndpoint;
         $itemId = 1;
-        $apiRequest = new APIRequest($this->apiUrl, $apiModule, $itemId);
+        $apiRequest = new APIRequest($this->apiUrl, $apiModule, null, $itemId);
 
         $response = $apiRequest->fetchApiData();
 
@@ -119,7 +119,7 @@ class APIRequestTest extends TestCase
     {
         $apiModule = "/athletes";
         $itemId = 99999;
-        $apiRequest = new APIRequest($this->apiUrl, $apiModule, $itemId);
+        $apiRequest = new APIRequest($this->apiUrl, $apiModule, null, $itemId);
 
         $response = $apiRequest->fetchApiData();
 
@@ -128,7 +128,7 @@ class APIRequestTest extends TestCase
 
         $apiModule = $this->athleteEndpoint;
         $itemId = -1;
-        $apiRequest = new APIRequest($this->apiUrl, $apiModule, $itemId);
+        $apiRequest = new APIRequest($this->apiUrl, $apiModule, null, $itemId);
 
         $response = $apiRequest->fetchApiData();
 
@@ -140,7 +140,7 @@ class APIRequestTest extends TestCase
 
         // expect itemId to through typeError exception as it's not an int
         $this->expectException(\TypeError::class);
-        $apiRequest = new APIRequest($this->apiUrl, $apiModule, $itemId);
+        $apiRequest = new APIRequest($this->apiUrl, $apiModule, null, $itemId);
     }
 
 }

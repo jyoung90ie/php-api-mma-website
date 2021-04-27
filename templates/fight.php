@@ -17,7 +17,7 @@ if (!constant("API_URL")) {
 $apiModule = "/fight";
 $id = intval($_GET['id']);
 
-$apiRequest = new APIRequest(constant("API_URL"), $apiModule, $id, $queryString);
+$apiRequest = new APIRequest(API_URL, $apiModule, API_KEY, $id, $queryString);
 $results = $apiRequest->fetchApiData();
 
 if (isset($results['Error']) || !$results) {

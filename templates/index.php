@@ -18,7 +18,7 @@ $apiModule = "/event";
 $queryString['start'] = 0;
 $queryString['limit'] = 2;
 
-$apiRequest = new APIRequest(constant("API_URL"), $apiModule, null, $queryString);
+$apiRequest = new APIRequest(API_URL, $apiModule, API_KEY, null, $queryString);
 $results = $apiRequest->fetchApiData();
 
 if (isset($results['Error']) || !$results) {

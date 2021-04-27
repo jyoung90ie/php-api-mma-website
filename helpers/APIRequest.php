@@ -6,20 +6,20 @@ namespace helpers;
 
 class APIRequest
 {
-    const API_KEY = 'test123';
-
     private $apiBaseUrl;
     private $apiModule;
     private $itemId;
     private $queryStrings;
     private $apiResponse = null;
+    private $apiKey;
 
-    public function __construct(string $url, string $module, ?int $itemId = null, ?array $queryStrings = null)
+    public function __construct(string $url, string $module, ?string $apiKey, ?int $itemId = null, ?array $queryStrings = null)
     {
         $this->apiBaseUrl = rtrim($url, '/');
         $this->apiModule = trim($module, '/');
         $this->itemId = intvaL(ltrim($itemId, '/'));
         $this->queryStrings = $queryStrings;
+        $this->apiKey = $apiKey;
     }
 
     /**
@@ -33,7 +33,7 @@ class APIRequest
             $apiDataUrl .= '/' . $this->itemId;
         }
 
-        $apiDataUrl .= '?apiKey=' . self::API_KEY;
+        $apiDataUrl .= '?apiKey=' . $this->apiKey;
         if (isset($this->queryStrings)) {
             // remove any apiKey already set as part of querystring
             if (isset($this->queryStrings['apiKey'])) {
