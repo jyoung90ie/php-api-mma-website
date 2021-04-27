@@ -581,6 +581,11 @@ span.fight-outcome-badge {
     margin: auto 0;
 }
 
+.chart canvas {
+    max-height: 200px;
+    margin-bottom: 10px;
+}
+
 
 /*
 login
