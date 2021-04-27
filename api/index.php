@@ -10,7 +10,7 @@ header('Content-Type: application/json; charset=UTF-8');
 header("Access-Control-Allow-Methods: GET,POST,PUT,DELETE");
 
 
-use models\{APIAccess, Athlete, Event, Fight, User};
+use models\{APIAccess, Athlete, Event, Fight, Referee, User, WeightClass};
 use controllers\AuthController;
 use controllers\CRUDController;
 use Exception;
@@ -21,6 +21,8 @@ const FIGHT_MODULE = 'fight';
 const ATHLETE_MODULE = 'athlete';
 const EVENT_MODULE = 'event';
 const USER_MODULE = 'user';
+const REFEREE_MODULE = 'referee';
+const WEIGHT_MODULE = 'weight';
 const AUTHENTICATION_MODULE = 'auth';
 
 $db = (new Database())->getConnection();
@@ -86,17 +88,25 @@ try {
             $athleteRequest = new CRUDController(new Athlete($db), $user, $requestMethod, $id, $queryStrings);
             $athleteRequest->process_request();
             break;
+        case REFEREE_MODULE:
+            $refereeRequest = new CRUDController(new Referee($db), $user, $requestMethod, $id, $queryStrings);
+            $refereeRequest->process_request();
+            break;
+        case WEIGHT_MODULE:
+            $weightRequest = new CRUDController(new WeightClass($db), $user, $requestMethod, $id, $queryStrings);
+            $weightRequest->process_request();
+            break;
         case USER_MODULE:
             $userRequest = new CRUDController(new User($db), $user, $requestMethod, $id, $queryStrings);
             $userRequest->process_request();
             break;
         case AUTHENTICATION_MODULE:
-            $userRequest = new AuthController(new User($db), $requestMethod);
-            $userRequest->process_request();
+            $authRequest = new AuthController(new User($db), $requestMethod);
+            $authRequest->process_request();
             break;
         default:
             header(CRUDController::HTTP_NOT_FOUND);
-            exit();
+            exit(json_encode(['Error' => 'API endpoint does not exist']));
     }
 } catch (Exception $exception) {
     exit($exception->getMessage());
