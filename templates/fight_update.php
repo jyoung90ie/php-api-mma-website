@@ -8,7 +8,6 @@ $apiModule = 'fight';
 
 \helpers\HelperFunctions::checkPermission($permissionModule, $permissionType);
 
-
 // no/invalid id - redirect
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     header("Location: ?page=events");
