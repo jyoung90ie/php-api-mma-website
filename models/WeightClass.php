@@ -7,6 +7,7 @@ use PDOException;
 
 class WeightClass
 {
+    const PERMISSION_AREA = 'FIGHTS';
     const WEIGHT_IN_LBS_MIN = 100;
     const WEIGHT_IN_LBS_MAX = 500;
 
@@ -46,19 +47,39 @@ class WeightClass
         }
     }
 
+    /**
+     * Return list of weight classes, ordered by ascending maximum permitted weight for each class.
+     *
+     * @return array|false
+     */
     public function getAll(): array
     {
-        $query = "SELECT * FROM WeightClasses";
+        $query = "SELECT * FROM WeightClasses ORDER BY MaxWeightInLB ASC";
         try {
             $query = $this->db->query($query);
 
-            $result = $query->fetchAll();
-            $this->results = $result;
+            if ($query->rowCount() > 0) {
 
-            return $result;
+                $result = $query->fetchAll();
+                $this->results = $result;
+
+                return $result;
+            }
+            return false;
         } catch (PDOException $exception) {
             die($exception->getMessage());
         }
+    }
+
+    /**
+     * Retrieves the total records in the database.
+     *
+     * @return int total number of records
+     */
+    public function getTotal(): int
+    {
+        $query = $this->db->query("SELECT * FROM WeightClasses");
+        return $query->rowCount();
     }
 
 

@@ -7,6 +7,7 @@ use PDOException;
 
 class Referee
 {
+    const PERMISSION_AREA = 'FIGHTS';
     private $id = null;
     private $name = null;
     private $results;
@@ -38,19 +39,39 @@ class Referee
         }
     }
 
+    /**
+     * Returns a list of Referee's alphabetically ordered by first name.
+     *
+     * @return mixed list of referees if successful, otherwise, return false
+     */
     public function getAll()
     {
-        $query = "SELECT * FROM Referees";
+        $query = "SELECT * FROM Referees ORDER BY RefereeName";
         try {
             $query = $this->db->query($query);
-            $result = $query->fetchAll();
 
-            $this->results = $result;
+            if ($query->rowCount() > 0) {
+                $result = $query->fetchAll();
 
-            return $result;
+                $this->results = $result;
+
+                return $result;
+            }
+            return false;
         } catch (PDOException $exception) {
             die($exception->getMessage());
         }
+    }
+
+    /**
+     * Retrieves the total records in the database.
+     *
+     * @return int total number of records
+     */
+    public function getTotal(): int
+    {
+        $query = $this->db->query("SELECT * FROM Referees");
+        return $query->rowCount();
     }
 
 
