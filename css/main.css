@@ -132,38 +132,56 @@ h3 {
 *******************************/
 .content h2 {
     margin-bottom: 30px;
-    color: var(--color2);
     text-align: center;
 }
 
-/* news */
-.my-card-img {
-    margin: auto 0;
-}
-
-@media (max-width: 991px) {
-    .my-card-img {
-        margin-top: 12px;
-    }
-}
-
-.news {
+.featured-athletes {
     padding-bottom: 70px;
 }
 
-.news .card {
+.featured-athletes .card {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+    text-align: center;
+    transition: transform 300ms ease-in-out;
+    min-height: 200px;
 }
 
+.featured-athletes .athlete-name {
+    margin: 10px 0;
+    font-size: 1.4em;
+    font-weight: bold;
+}
 
-.news .card-img {
-    max-height: 250px;
+.featured-athletes .card-img {
+    margin: 10px auto 20px auto;
     width: 100%;
+    height: auto;
+    max-height: 150px;
     object-fit: cover;
+    object-position: top;
     overflow: hidden;
-    margin: 0;
 
 }
+
+.featured-athletes .card:hover {
+    transform: scale(1.1);
+    cursor: pointer;
+}
+
+.featured-athletes .card:hover .athlete-name {
+    color: var(--color1);
+}
+
+.content .athlete-stats {
+    font-size: 1em;
+    margin-bottom: 20px;
+}
+
+.athlete-stats .flex-column div:nth-child(even) {
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
 
 /* events */
 .home-events-container {
@@ -252,7 +270,7 @@ Event Listing Page
     background-color: #fff;
     padding: 30px 10px;
     margin-bottom: 20px;
-    transition: box-shadow 0.4s;
+    transition: all 0.4s;
     border-radius: 5px;
     overflow: hidden;
 
@@ -260,6 +278,7 @@ Event Listing Page
 
 .event:hover, .fight:hover {
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+    transform: scale(1.05);
     cursor: pointer;
 }
 
@@ -684,11 +703,6 @@ span.type {
     font-weight: bold;
 }
 
-span.value {
-
-}
-
-
 .athlete-image {
     width: 250px;
     margin: auto;
@@ -701,4 +715,23 @@ span.value {
     object-position: top;
     object-fit: cover;
     overflow: hidden;
+}
+
+/*
+search
+*/
+
+.search-box {
+    margin: 50px 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.search-box div {
+    margin: 10px;
+}
+
+.search-box input {
+    width: 50vw;
 }
