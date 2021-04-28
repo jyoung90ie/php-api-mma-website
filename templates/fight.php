@@ -61,13 +61,16 @@ $eventUrl = '?page=event&id=' . $results['EventID'];
             </div>
             <div class="ms-auto">
                 <?php
+                if (HelperFunctions::hasPermission($permissionModule, 'CREATE')) {
+                    echo '<a href="?page=fight&action=update&id=' . $id . '" class="mx-2 btn btn-outline-secondary">Update Fight</a>';
+                }
                 if ($outcome == 'TBC') {
                     if (HelperFunctions::hasPermission($permissionModule, 'CREATE')) {
                         echo '<a href="?page=fightresult&action=create&fightid=' . $id . '" class="mx-2 btn btn-outline-success">Add Result</a>';
                     }
                 } else {
                     if (HelperFunctions::hasPermission($permissionModule, 'UPDATE')) {
-                        echo '<a href="?page=fightresult&action=update&fightid=' . $id . '" class="mx-2 btn btn-outline-success">Update Result</a>';
+                        echo '<a href="?page=fightresult&action=update&fightid=' . $id . '" class="mx-2 btn btn-outline-secondary">Update Result</a>';
                     }
                 }
                 if (HelperFunctions::hasPermission($permissionModule, 'DELETE')) {
