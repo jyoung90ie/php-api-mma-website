@@ -3,6 +3,7 @@
 namespace controllers;
 
 use Exception;
+use models\Athlete;
 use models\FightAthlete;
 use models\User;
 use PDOException;
@@ -117,7 +118,12 @@ class CRUDController
             $start = ($start > 0 ? $start : 0);
         }
 
-        $result = $this->module->getAll($limit, $start);
+        if (isset($this->queryStrings['random']) && $this->module instanceof Athlete) {
+            $result = $this->module->getRandom(); // returns 3 random athletes
+        } else {
+            $result = $this->module->getAll($limit, $start);
+        }
+
 
         $currentResults = 0;
         $data = [];

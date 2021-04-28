@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             unset($_SESSION['UserID'], $_SESSION['User']);
             $_SESSION['User'] = $authResponse;
 
-            $userNotification = ucwords($_SESSION['User']['UserName'])  . " you are now logged in.";
+            $userNotification = ucwords($_SESSION['User']['UserName']) . " you are now logged in.";
             \helpers\HelperFunctions::addNotification($userNotification);
 
             header("Location: ?page=index");
@@ -50,7 +50,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 ?>
-
     <main class="container">
         <h2>Login</h2>
 
