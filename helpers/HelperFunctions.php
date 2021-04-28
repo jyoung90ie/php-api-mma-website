@@ -117,10 +117,10 @@ class HelperFunctions
             <div class="fight row" onclick="window.location='?page=fight&id=<?= $fight['FightID'] ?>'">
                 <div class="col-4">
                     <div class="row">
-                        <div class="athlete-img col-6">
+                        <div class="athlete-img col-12 col-md-6">
                             <img src="<?= $athleteOne['AthleteImage'] ?>"/>
                         </div>
-                        <div class="col-6 text-uppercase">
+                        <div class="col-12 col-md-6 text-uppercase">
                             <?= HelperFunctions::displayOutcomeBadge($athleteOne, $winnerId) ?>
                             <span class="athlete-name"><?= $athleteOneName ?></span>
                         </div>
@@ -131,15 +131,15 @@ class HelperFunctions
                     <span class="weight-class"><?= $boutType ?> Bout</span>
                     <span class="versus">vs</span>
                     <div class="row">
-                        <div class="col-4">
+                        <div class="col-12 col-md-4">
                             <span class="item">Round</span>
                             <span class="value"><?= $winRound ?></span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-12 col-md-4">
                             <span class="item">Time</span>
                             <span class="value"><?= $winRoundTime ?></span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-12 col-md-4">
                             <span class="item">Method</span>
                             <span class="value"><?= $outcome ?></span>
                         </div>
@@ -148,12 +148,12 @@ class HelperFunctions
                 </div>
 
                 <div class="col-4">
-                    <div class="row">
-                        <div class="col-6 text-uppercase text-end">
+                    <div class="row ">
+                        <div class="col-12 order-1 order-md-0 col-md-6 text-uppercase text-end">
                             <?= HelperFunctions::displayOutcomeBadge($athleteTwo, $winnerId) ?>
                             <span class="athlete-name"><?= $athleteTwoName ?></span>
                         </div>
-                        <div class="athlete-img col-6">
+                        <div class="athlete-img order-0 order-md-1 col-12 col-md-6">
                             <img src="<?= $athleteTwo['AthleteImage'] ?>"/>
                         </div>
                     </div>
