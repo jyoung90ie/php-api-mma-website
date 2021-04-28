@@ -46,7 +46,7 @@ $events = $results['data'];
     <hr>
     <?php
     foreach ($events as $event) {
-        HelperFunctions::displayEvent($event, $permissionModule);
+        HelperFunctions::displayEvents($event, $permissionModule);
     }
     ?>
 

@@ -9,14 +9,14 @@ class HelperFunctions
     /**
      * Creates HTML to display a single clickable event which is used for the event listing page.
      *
-     * @param array $event containing all event data
+     * @param array $events containing all event data
      */
-    static function displayEvent(array $event, string $permissionModule)
+    static function displayEvents(array $events, string $permissionModule)
     {
-        if (isset($event['Headliners'])) {
+        if (isset($events['Headliners'])) {
 
             // generate athlete images
-            $athletes = $event['Headliners'];
+            $athletes = $events['Headliners'];
             unset($athleteOneImage, $athleteTwoImage);
 
             // variables for rendering in template
@@ -41,13 +41,13 @@ class HelperFunctions
             $eventHeadliner = 'TBC VS TBC';
         }
 
-        $eventUrl = '?page=event&id=' . $event['EventID'];
+        $eventUrl = '?page=event&id=' . $events['EventID'];
 
         ?>
         <!-- Event -->
         <div class="event row" onclick="window.location='<?= $eventUrl ?>'">
             <div class="col-12 col-md-2 name">
-                Pro MMA <?= sprintf('%03d', $event['EventID']) ?>
+                Pro MMA <?= sprintf('%03d', $events['EventID']) ?>
             </div>
             <div class="col-12 col-md-4 athlete-images">
                 <div class="athlete-left">
@@ -63,8 +63,8 @@ class HelperFunctions
                         <span class="headliner">
                             <a href="<?= $eventUrl ?>"><?= $eventHeadliner ?></a>
                         </span>
-                        <span class="date"><?= DateTime::createFromFormat('Y-m-d', $event['EventDate'])->format('D, d F Y, h:i A T') ?></span>
-                        <span class="location"><?= $event['EventLocation'] ?></span>
+                        <span class="date"><?= DateTime::createFromFormat('Y-m-d', $events['EventDate'])->format('D, d F Y, h:i A T') ?></span>
+                        <span class="location"><?= $events['EventLocation'] ?></span>
                     </div>
                     <div class="col-12 col-md-4">
                         <span><a href="<?= $eventUrl ?>" class="btn btn-sm btn-more">View</a></span>
@@ -83,6 +83,86 @@ class HelperFunctions
         </div>
         <!-- ./Event -->
         <?php
+    }
+
+
+    /**
+     * Creates HTML to display a single clickable fight which is used to create a list of fights.
+     *
+     * @param array $event containing all fight data
+     */
+    static function displayFights(array $fights, string $permissionModule)
+    {
+        for ($fightIndex = sizeof($fights['Fights']) - 1; $fightIndex >= 0; $fightIndex--) {
+            $fight = $fights['Fights'][$fightIndex];
+
+            $athleteOne = $fight['Athletes'][0];
+            $athleteTwo = $fight['Athletes'][1];
+
+            $athleteOneName = str_replace(" ", "<br />", $athleteOne['AthleteName']);
+            $athleteTwoName = str_replace(" ", "<br />", $athleteTwo['AthleteName']);
+
+            // indicate whether a fight is a title bout or not
+            $boutType = $fight['WeightClass'] . ($fight['TitleBout'] == 1 ? ' Title' : '');
+
+            $winRound = $fight['WinRound'] ?? 'TBC';
+            $winRoundTime = $fight['WinRoundTime'] ?? 'TBC';
+            $outcome = $fight['ResultDescription'] ?? 'TBC';
+
+            $winnerId = ($outcome == 'TBC' ? -1 : $fight['WinnerAthleteID']); // use -1 to indicate fight result is TBC
+
+
+            ?>
+            <!--        Fight-->
+            <div class="fight row" onclick="window.location='?page=fight&id=<?= $fight['FightID'] ?>'">
+                <div class="col-4">
+                    <div class="row">
+                        <div class="athlete-img col-6">
+                            <img src="<?= $athleteOne['AthleteImage'] ?>"/>
+                        </div>
+                        <div class="col-6 text-uppercase">
+                            <?= HelperFunctions::displayOutcomeBadge($athleteOne, $winnerId) ?>
+                            <span class="athlete-name"><?= $athleteOneName ?></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-4 fight-detail">
+                    <span class="weight-class"><?= $boutType ?> Bout</span>
+                    <span class="versus">vs</span>
+                    <div class="row">
+                        <div class="col-4">
+                            <span class="item">Round</span>
+                            <span class="value"><?= $winRound ?></span>
+                        </div>
+                        <div class="col-4">
+                            <span class="item">Time</span>
+                            <span class="value"><?= $winRoundTime ?></span>
+                        </div>
+                        <div class="col-4">
+                            <span class="item">Method</span>
+                            <span class="value"><?= $outcome ?></span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="col-4">
+                    <div class="row">
+                        <div class="col-6 text-uppercase text-end">
+                            <?= HelperFunctions::displayOutcomeBadge($athleteTwo, $winnerId) ?>
+                            <span class="athlete-name"><?= $athleteTwoName ?></span>
+                        </div>
+                        <div class="athlete-img col-6">
+                            <img src="<?= $athleteTwo['AthleteImage'] ?>"/>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <!--        ./Fight-->
+            <?php
+        }
     }
 
     /**

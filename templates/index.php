@@ -86,7 +86,7 @@ $events = $results['data'];
             <!-- Events -->
             <?php
             foreach ($events as $event) {
-                HelperFunctions::displayEvent($event, Event::PERMISSION_AREA);
+                HelperFunctions::displayEvents($event, Event::PERMISSION_AREA);
             }
             ?>
             <!-- ./Events -->
