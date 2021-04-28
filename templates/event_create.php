@@ -54,44 +54,47 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 }
-
+$eventUrl = '?page=events';
 ?>
 
-    <main class="container">
-        <h2>Create Event</h2>
+<main class="container">
+    <h2>Create Event</h2>
+    <div class="mb-5">
+        <a class="btn btn-more" href="<?= $eventUrl ?>">Back to Events</a>
+    </div>
 
-        <?= \helpers\HelperFunctions::displayApiError($apiResponse ?? []); ?>
-        <form action="" method="post">
-            <div class="row g-3 align-items-center mb-3">
-                <div class="col-2">
-                    <label for="EventLocation" class="col-form-label">Event Location</label>
-                </div>
-                <div class="col-auto">
-                    <input type="text" name="EventLocation" class="form-control"
-                           value="<?= $_POST['EventLocation'] ?? '' ?>" required>
-                </div>
-                <div class="col-auto">
+    <?= \helpers\HelperFunctions::displayApiError($apiResponse ?? []); ?>
+    <form action="" method="post">
+        <div class="row g-3 align-items-center mb-3">
+            <div class="col-2">
+                <label for="EventLocation" class="col-form-label">Event Location</label>
+            </div>
+            <div class="col-auto">
+                <input type="text" name="EventLocation" class="form-control"
+                       value="<?= $_POST['EventLocation'] ?? '' ?>" required>
+            </div>
+            <div class="col-auto">
                     <span id="EventLocationErrors" class="form-text error">
                     <?= $validationErrors['EventLocation'] ?? '' ?>
                     </span>
-                </div>
             </div>
+        </div>
 
-            <div class="row g-3 align-items-center mb-3">
-                <div class="col-2">
-                    <label for="EventDate" class="col-form-label">Event Date</label>
-                </div>
-                <div class="col-auto">
-                    <input type="date" name="EventDate" class="form-control"
-                           value="<?= $_POST['EventDate'] ?? '' ?>" required>
-                </div>
-                <div class="col-auto">
+        <div class="row g-3 align-items-center mb-3">
+            <div class="col-2">
+                <label for="EventDate" class="col-form-label">Event Date</label>
+            </div>
+            <div class="col-auto">
+                <input type="date" name="EventDate" class="form-control"
+                       value="<?= $_POST['EventDate'] ?? '' ?>" required>
+            </div>
+            <div class="col-auto">
                     <span id="EventDateErrors" class="form-text error">
                     <?= $validationErrors['EventDate'] ?? '' ?>
                     </span>
-                </div>
             </div>
+        </div>
 
-            <button type="submit" class="btn btn-primary">Create</button>
-        </form>
-    </main>
+        <button type="submit" class="btn btn-primary">Create</button>
+    </form>
+</main>

@@ -79,10 +79,15 @@ if (isset($results['Error'])) {
     }
 }
 
+$eventUrl = '?page=event&id=' . $id;
+
 ?>
 
 <main class="container">
     <h2>Update Event</h2>
+    <div class="mb-5">
+        <a class="btn btn-more" href="<?= $eventUrl ?>">Back to Event</a>
+    </div>
 
     <?= \helpers\HelperFunctions::displayApiError($apiResponse ?? []); ?>
     <form action="" method="post">
