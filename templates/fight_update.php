@@ -103,11 +103,14 @@ if (isset($results['Error'])) {
         header('Location: ?page=events');
     }
 }
-
+$fightUrl = '?page=fight&id=' . $id;
 ?>
 
 <main class="container">
     <h2>Event - Update Fight</h2>
+    <div class="mb-5">
+        <a class="btn btn-more" href="<?= $fightUrl ?>">Back to Fight</a>
+    </div>
 
     <?= \helpers\HelperFunctions::displayApiError($apiResponse ?? []); ?>
     <form action="" method="post">
