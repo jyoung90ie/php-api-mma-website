@@ -84,6 +84,7 @@ class Fight
                             FightID,
                             A.AthleteName,
                             A.AthleteID, 
+                            A.AthleteImage,
                             stats_strikesLanded,
                             stats_strikesThrown,
                             stats_significantStrikesLanded,

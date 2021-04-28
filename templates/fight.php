@@ -76,9 +76,6 @@ $eventUrl = '?page=event&id=' . $results['EventID'];
                 if (HelperFunctions::hasPermission($permissionModule, 'DELETE')) {
                     echo '<a href="?page=fight&action=delete&id=' . $id . '" class="mx-2 btn btn-outline-danger">Delete Fight</a>';
                 }
-
-
-
                 ?>
             </div>
         </div>
@@ -104,15 +101,20 @@ $eventUrl = '?page=event&id=' . $results['EventID'];
         </div>
         <div class="fight-athletes row">
             <div class="col-6">
-                <span class="athlete-name"><?= $athleteNameRed ?></span>
+                <a href="?page=athlete&id=<?= $athleteRed['AthleteID'] ?>">
+                    <img src="<?= $athleteRed['AthleteImage'] ?>" alt="Profile picture of <?= $athleteNameRed ?>">
+                    <span class="athlete-name"><?= $athleteNameRed ?></span>
+                </a>
                 <?= HelperFunctions::displayOutcomeBadge($athleteRed, $winnerId) ?>
             </div>
             <div class="col-6">
-                <span class="athlete-name"><?= $athleteNameBlue ?></span>
+                <a href="?page=athlete&id=<?= $athleteBlue['AthleteID'] ?>">
+                    <img src="<?= $athleteBlue['AthleteImage'] ?>" alt="Profile picture of <?= $athleteNameBlue ?>">
+                    <span class="athlete-name"><?= $athleteNameBlue ?></span>
+                </a>
                 <?= HelperFunctions::displayOutcomeBadge($athleteBlue, $winnerId) ?>
             </div>
         </div>
-
 
 
         <?php
@@ -120,7 +122,7 @@ $eventUrl = '?page=event&id=' . $results['EventID'];
             HelperFunctions::displayFightComparisonData($statsData, $athleteNameRed, $athleteNameBlue);
         } else {
             echo '<h4 class="text-center p-4">Fight stats are not yet available</h4>';
-        }?>
+        } ?>
 
     </main>
 
