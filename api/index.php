@@ -10,7 +10,7 @@ header('Content-Type: application/json; charset=UTF-8');
 header("Access-Control-Allow-Methods: GET,POST,PUT,DELETE");
 
 
-use models\{APIAccess, Athlete, Event, Fight, FightResult, Referee, User, WeightClass};
+use models\{APIAccess, Athlete, Event, Fight, FightAthlete, FightResult, Referee, ResultType, User, WeightClass};
 use controllers\AuthController;
 use controllers\CRUDController;
 use Exception;
@@ -20,10 +20,12 @@ use helpers\Database;
 const FIGHT_MODULE = 'fight';
 const FIGHT_RESULT_MODULE = 'fight-result';
 const ATHLETE_MODULE = 'athlete';
+const FIGHT_ATHLETE_MODULE = 'fight-athlete';
 const EVENT_MODULE = 'event';
 const USER_MODULE = 'user';
 const REFEREE_MODULE = 'referee';
 const WEIGHT_MODULE = 'weight';
+const RESULT_TYPE_MODULE = 'result-type';
 const AUTHENTICATION_MODULE = 'auth';
 
 $db = (new Database())->getConnection();
@@ -82,8 +84,8 @@ try {
             $fightRequest->process_request();
             break;
         case FIGHT_RESULT_MODULE:
-            $fightRequest = new CRUDController(new FightResult($db), $user, $requestMethod, $id, $queryStrings);
-            $fightRequest->process_request();
+            $fightResult = new CRUDController(new FightResult($db), $user, $requestMethod, $id, $queryStrings);
+            $fightResult->process_request();
             break;
         case EVENT_MODULE:
             $eventRequest = new CRUDController(new Event($db), $user, $requestMethod, $id, $queryStrings);
@@ -92,6 +94,10 @@ try {
         case ATHLETE_MODULE:
             $athleteRequest = new CRUDController(new Athlete($db), $user, $requestMethod, $id, $queryStrings);
             $athleteRequest->process_request();
+            break;
+        case FIGHT_ATHLETE_MODULE:
+            $fightAthleteRequest = new CRUDController(new FightAthlete($db), $user, $requestMethod, $id, $queryStrings);
+            $fightAthleteRequest->process_request();
             break;
         case REFEREE_MODULE:
             $refereeRequest = new CRUDController(new Referee($db), $user, $requestMethod, $id, $queryStrings);
@@ -104,6 +110,10 @@ try {
         case USER_MODULE:
             $userRequest = new CRUDController(new User($db), $user, $requestMethod, $id, $queryStrings);
             $userRequest->process_request();
+            break;
+        case RESULT_TYPE_MODULE:
+            $resultTypeRequest = new CRUDController(new ResultType($db), $user, $requestMethod, $id, $queryStrings);
+            $resultTypeRequest->process_request();
             break;
         case AUTHENTICATION_MODULE:
             $authRequest = new AuthController(new User($db), $requestMethod);

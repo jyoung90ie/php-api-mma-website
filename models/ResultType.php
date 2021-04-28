@@ -6,6 +6,7 @@ use InvalidArgumentException;
 
 class ResultType
 {
+    const PERMISSION_AREA = 'FIGHTS';
     private $resultTypeId = null;
     private $resultDescription = null;
     private $results;
@@ -38,12 +39,12 @@ class ResultType
     }
 
     /**
-     * Return list of fight outcomes
+     * Return list of all fight outcomes
      * @return array|false
      */
     public function getAll(): array
     {
-        $query = "SELECT * FROM ResultTypes ORDER BY ResultDescription A";
+        $query = "SELECT * FROM ResultTypes ORDER BY ResultDescription ASC";
 
         $query = $this->db->query($query);
 
@@ -68,6 +69,8 @@ class ResultType
     }
 
     /**
+     * Creates a new result type and stores it in the database.
+     *
      * @param array|null $data
      * @return int
      */
