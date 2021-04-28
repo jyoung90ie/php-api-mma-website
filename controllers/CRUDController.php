@@ -3,6 +3,7 @@
 namespace controllers;
 
 use Exception;
+use models\FightAthlete;
 use models\User;
 use PDOException;
 use TypeError;
@@ -151,7 +152,12 @@ class CRUDController
             return $this->notAuthorized();
         }
 
-        $result = $this->module->getOne($id);
+        if ($this->module instanceof FightAthlete) {
+            $result = $this->module->getByFightId($id);
+        } else {
+            $result = $this->module->getOne($id);
+        }
+
         if (!$result) {
             // fight doesn't exist
             return $this->notFound();
@@ -285,7 +291,7 @@ class CRUDController
     private function notFound(): array
     {
         $response['status_code_header'] = self::HTTP_NOT_FOUND;
-        $response['body'] = ['Error' => 'API endpoint not found.'];
+        $response['body'] = ['Error' => 'Record with specified ID does not exist.'];
         return $response;
     }
 

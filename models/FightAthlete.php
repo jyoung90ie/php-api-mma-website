@@ -7,6 +7,17 @@ use InvalidArgumentException;
 class FightAthlete
 {
     const PERMISSION_AREA = 'FIGHTS';
+    const DATA_FIELDS = [
+        'stats_strikesThrown',
+        'stats_strikesLanded',
+        'stats_significantStrikesThrown',
+        'stats_significantStrikesLanded',
+        'stats_takedownsThrown',
+        'stats_takedownsLanded',
+        'stats_submissionAttempts',
+        'stats_knockDowns',
+        'stats_positionReversals'
+    ];
     private $fightAthleteId = null;
     private $fightId = null;
     private $athleteId = null;
@@ -18,30 +29,58 @@ class FightAthlete
     public function __construct($db)
     {
         $this->db = $db;
-        $this->dataFields = [
-            'stats_strikesThrown',
-            'stats_strikesLanded',
-            'stats_significantStrikesThrown',
-            'stats_significantStrikesLanded',
-            'stats_takedownsThrown',
-            'stats_takedownsLanded',
-            'stats_submissionAttempts',
-            'stats_knockDowns',
-            'stats_positionReversals'
-        ];
+        $this->dataFields = self::DATA_FIELDS;
     }
 
+    /**
+     * Return the fight athlete record
+     *
+     * @param int $fightAthleteId for the records you wish to return
+     * @return false
+     */
+    public function getOne(int $fightAthleteId)
+    {
+        $this->setFightAthleteId($fightAthleteId);
+
+        $query = "SELECT 
+                        *
+                    FROM 
+                        FightAthletes 
+                    WHERE
+                        FightAthleteID = ?";
+
+        $query = $this->db->prepare($query);
+        $query->execute([$this->fightAthleteId]);
+
+        if ($query->rowCount() > 0) {
+            $results = $query->fetchAll();
+
+            $this->results = $results;
+
+            return $results;
+        }
+
+        return false;
+    }
     /**
      * Return the fight athlete records for the associated fight
      *
      * @param int $fightId for the records you wish to return
      * @return false
      */
-    public function getOne(int $fightId)
+    public function getByFightId(int $fightId)
     {
         $this->setFightId($fightId);
 
-        $query = "SELECT * FROM FightAthletes WHERE FightID = ?";
+        $query = "SELECT 
+                        FA.*,
+                        A.AthleteName,
+                        F.NumOfRounds
+                    FROM 
+                        FightAthletes FA
+                    LEFT JOIN Athletes A on A.AthleteID = FA.AthleteID
+                    LEFT JOIN Fights F on FA.FightID = F.FightID
+                    WHERE FA.FightID = ?";
 
         $query = $this->db->prepare($query);
         $query->execute([$this->fightId]);
@@ -125,15 +164,23 @@ class FightAthlete
     {
         $this->setFightAthleteId($fightAthleteId);
 
-        if (!is_null($data)) {
-            $this->processData($data, true);
+        $validationErrors = '';
+
+        foreach ($this->dataFields as $field) {
+            if (!isset($data[$field]) || (empty($data[$field]) && !($data[$field] >= 0))) {
+                $validationErrors .= "$field must have a value. \n";
+            } elseif (!is_numeric($data[$field]) || !(intval($data[$field]) >= 0)) {
+                $validationErrors .= "$field must be a number (greater than or equal to zero). \n";
+            }
+
+            $data[$field] = intval($data[$field]);
         }
 
-        $this->validateData();
+        if (!empty($validationErrors)) {
+            throw new InvalidArgumentException($validationErrors);
+        }
 
         $params = [
-            ':fightId' => $this->fightId,
-            ':athleteId' => $this->athleteId,
             ':fightAthleteId' => $this->fightAthleteId
         ];
 
@@ -141,19 +188,20 @@ class FightAthlete
         $updateFields = "";
         foreach ($this->dataFields as $field) {
             $updateFields .= "$field=:$field, ";
-            $params[$updateFields] = [$field => $data[$field]];
+            $params[':'.$field] = $data[$field];
         }
 
         // remove trailing comma
-        $updateFields = rtrim($updateFields, ',');
+        $updateFields = rtrim($updateFields, ', ');
+
+//        throw new InvalidArgumentException($updateFields);
 
         $query = "UPDATE 
                         FightAthletes
                     SET 
-                        FightID = :fightId, AthleteID = :athleteId,
                         $updateFields
                     WHERE 
-                        FightAthleteID = :fightAthleteId";
+                        FightAthleteID=:fightAthleteId";
 
         $query = $this->db->prepare($query);
 
@@ -192,22 +240,6 @@ class FightAthlete
     {
         $this->setFightId($data['FightID']);
         $this->setAthleteId($data['AthleteID']);
-
-        $validationErrors = '';
-
-        foreach ($this->dataFields as $field) {
-            if (!isset($data[$field]) || empty($data[$field])) {
-                $validationErrors .= "$field must have a value. \n";
-            } elseif (!is_numeric($data[$field])) {
-                $validationErrors .= "$field must be a number. \n";
-            }
-
-            $data[$field] = intval($data[$field]);
-        }
-
-        if (!empty($validationErrors)) {
-            throw new InvalidArgumentException($validationErrors);
-        }
     }
 
     // getters and setters

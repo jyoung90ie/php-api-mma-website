@@ -12,6 +12,8 @@ class FightResult
     private $fightId = null;
     private $resultTypeId = null;
     private $winnerId = null;
+    private $winRound = null;
+    private $winRoundTime = null;
     private $results = null;
     private $db;
 
@@ -20,11 +22,11 @@ class FightResult
         $this->db = $db;
     }
 
-    public function getOne(int $id)
+    public function getOne(int $fightId)
     {
-        $this->setFightResultId($id);
+        $this->setFightResultId($fightId);
 
-        $query = "SELECT * FROM FightResults WHERE FightResultID = ?";
+        $query = "SELECT * FROM FightResults WHERE FightID = ?";
 
         $query = $this->db->prepare($query);
         $query->execute([$this->fightResultId]);
@@ -107,14 +109,14 @@ class FightResult
         $this->validateData();
 
         $query = "INSERT INTO FightResults 
-                    (FightID, ResultTypeID, WinnerAthleteID)
-                    VALUES (?, ?, ?);";
+                    (FightID, ResultTypeID, WinnerAthleteID, WinRound, WinRoundTime)
+                    VALUES (?, ?, ?, ?, ?);";
 
         $query = $this->db->prepare($query);
-        $query->execute([$this->fightId, $this->resultTypeId, $this->winnerId]);
+        $query->execute([$this->fightId, $this->resultTypeId, $this->winnerId, $this->winRound, $this->winRoundTime]);
 
         if ($query->rowCount() > 0) {
-            $this->fightResultId = $this->db->lastInsertedId();
+            $this->fightResultId = $this->db->lastInsertId();
 
             return $query->rowCount();
         }
@@ -122,22 +124,29 @@ class FightResult
         return false;
     }
 
-    public function update(int $id, array $data): bool
+    public function update(int $fightId, array $data): bool
     {
-        $this->setFightId($id);
+        $this->setFightId($fightId);
         $this->processData($data);
         $this->validateData();
 
         $query = "UPDATE FightResults 
                     SET 
-                        FightID = ?, 
                         ResultTypeID = ?, 
-                        WinnerAthleteID = ?
+                        WinnerAthleteID = ?,
+                        WinRound = ?,
+                        WinRoundTime = ?
                     WHERE 
-                        FightResultID = ?";
+                        FightID = ?";
 
         $query = $this->db->prepare($query);
-        $query->execute([$this->fightId, $this->resultTypeId, $this->winnerId, $this->fightResultId]);
+        $query->execute([
+            $this->resultTypeId,
+            $this->winnerId,
+            $this->winRound,
+            $this->winRoundTime,
+            $this->fightId
+        ]);
 
         return $query->rowCount();
     }
@@ -157,16 +166,21 @@ class FightResult
     // utility functions
     private function validateData(): void
     {
-        if (is_null($this->fightId) || is_null($this->resultTypeId) || is_null($this->winnerId)) {
+        if (is_null($this->fightId) || is_null($this->resultTypeId) || is_null($this->winnerId)
+            || is_null($this->winRoundTime) || is_null($this->winRound)) {
             throw new InvalidArgumentException("All object variables must have a value");
         }
     }
 
     function processData(array $data): void
     {
-        $this->setFightId($data['FightID']);
+        if (isset($data['FightID'])) {
+            $this->setFightId($data['FightID']);
+        }
         $this->setWinnerId($data['WinnerAthleteID']);
         $this->setResultTypeId($data['ResultTypeID']);
+        $this->setWinRound($data['WinRound']);
+        $this->setWinRoundTime($data['WinRoundTime']);
     }
 
     // getters and setters
@@ -256,5 +270,43 @@ class FightResult
     public function getResults()
     {
         return $this->results;
+    }
+
+    /**
+     * @return null
+     */
+    public function getWinRoundTime()
+    {
+        return $this->winRoundTime;
+    }
+
+    /**
+     * @param null $winRoundTime
+     */
+    public function setWinRoundTime($winRoundTime): void
+    {
+        if (!isset($winRoundTime)) {
+            throw new InvalidArgumentException("Win Round Time must have a value in the format MM:SS");
+        }
+        $this->winRoundTime = $winRoundTime;
+    }
+
+    /**
+     * @return null
+     */
+    public function getWinRound()
+    {
+        return $this->winRound;
+    }
+
+    /**
+     * @param null $winRound
+     */
+    public function setWinRound($winRound): void
+    {
+        if (!is_numeric($winRound) || ($winRound > 5 && $winRound < 1)) {
+            throw new InvalidArgumentException("Win Round must be a number between 1 and 5");
+        }
+        $this->winRound = intval($winRound);
     }
 }
