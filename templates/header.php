@@ -38,7 +38,7 @@ use helpers\HelperFunctions;
         </div>
         <div class="my-navbar d-none d-lg-flex">
             <div class="m-auto">
-                <h1>Pro MMA</h1>
+                <span class="header-font">Pro MMA</span>
             </div>
             <div class="flex-row-reverse">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
