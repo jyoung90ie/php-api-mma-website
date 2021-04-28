@@ -32,6 +32,10 @@ class Athlete
         $this->db = $db;
     }
 
+    /**
+     * @param int $id
+     * @return false
+     */
     public function getOne(int $id)
     {
         $this->setAthleteId($id);
@@ -140,65 +144,6 @@ class Athlete
         return false;
     }
 
-    public function getOneOLD(int $id)
-    {
-        $this->setAthleteId($id);
-
-        $query = "SELECT * FROM Athletes WHERE AthleteID = ?";
-
-        $query = $this->db->prepare($query);
-        $query->execute([$this->athleteId]);
-
-        if ($query->rowCount() > 0) {
-            $athlete = $query->fetch();
-
-            $this->athleteId = $athlete['AthleteID'];
-            $this->name = $athlete['AthleteName'];
-            $this->height = $athlete['AthleteHeightInCM'];
-            $this->reach = $athlete['AthleteReachInCM'];
-            $this->stanceId = $athlete['AthleteStanceID'];
-            $this->dob = $athlete['AthleteDOB'];
-
-            $this->results = $athlete;
-
-            // get athlete fights
-            $query = "SELECT 
-                                E.EventID,
-                                E.EventLocation,
-                                E.EventDate,
-                                FA.FightID,
-                                F.WeightClassID,
-                                F.TitleBout,
-                                F.NumOfRounds,
-                                (CASE 
-                                    WHEN FR.WinnerAthleteID=FA.AthleteID THEN 'Won'
-                                    WHEN NOT(ISNULL(FR.WinnerAthleteID)) THEN 'Lost'                                   
-                                    WHEN ISNULL(FR.WinnerAthleteID) THEN 'Draw'
-                                    ELSE 'Other' END
-                                ) AS Outcome
-                            FROM FightAthletes FA
-                            LEFT JOIN FightResults FR on FA.FightID = FR.FightID
-                            LEFT JOIN Fights F ON FA.FightID = F.FightID
-                            LEFT JOIN Events E ON F.EventID = E.EventID
-                            WHERE FA.AthleteID = ?
-                            ORDER BY E.EventDate DESC";
-            $query = $this->db->prepare($query);
-            $query->execute([$this->athleteId]);
-
-            $athlete_data = $athlete;
-            $athlete_data['Fights'] = [];
-
-            if ($query->rowCount() > 0) {
-                $fights = $query->fetchAll();
-                array_push($athlete_data['Fights'], $fights);
-            }
-
-            return $athlete_data;
-        }
-
-        return false;
-    }
-
     /**
      * Return list of athletes sorted by name in ascending order - results are limited to 5 records by default.
      *
@@ -209,6 +154,47 @@ class Athlete
     public function getAll(int $limit = 5, int $start = 0): array
     {
         $query = "SELECT * FROM Athletes ORDER BY AthleteName ASC LIMIT $start, $limit;";
+
+        $query = $this->db->query($query);
+
+        if ($query->rowCount() > 0) {
+            $result = $query->fetchAll();
+            $this->results = $result;
+
+            return $result;
+        }
+        return false;
+    }
+
+    /**
+     * Return a number of random athletes - used for feature athletes.
+     *
+     * @param int $limit number of athletes to return (Default = 3)
+     * @return array|false
+     */
+    public function getRandom(int $limit = 3): array
+    {
+        $query = "SELECT 
+                        A.*,
+                        COUNT(F.FightID) AS TotalFights,
+                        SUM(IF(FR.WinnerAthleteID=A.AthleteID, 1, 0)) AS TotalWins,
+                        SUM(IF(RT.ResultDescription='Draw', 1, 0)) AS TotalDraws,
+                        SUM(IF(RT.ResultDescription='Decision%', 1, 0)) AS TotalDecisionWins,
+                        SUM(IF(RT.ResultDescription='Submission', 1, 0)) AS TotalSubmissions,
+                        A.randId
+
+                    FROM 
+                        (SELECT *, RAND() AS randId FROM Athletes) AS A
+                        LEFT JOIN FightAthletes FA on A.AthleteID = FA.AthleteID
+                        LEFT JOIN Fights F ON F.FightID = FA.FightID
+                        LEFT JOIN WeightClasses WC on F.WeightClassID = WC.WeightClassID
+                        LEFT JOIN Referees R on F.RefereeID = R.RefereeID
+                        LEFT JOIN FightResults FR on F.FightID = FR.FightID
+                        LEFT JOIN ResultTypes RT on FR.ResultTypeID = RT.ResultTypeID
+                    GROUP BY A.AthleteID
+                        HAVING COUNT(F.FightID) > 5
+                    ORDER BY A.randId DESC
+                    LIMIT $limit;";
 
         $query = $this->db->query($query);
 
