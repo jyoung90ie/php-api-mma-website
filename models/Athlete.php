@@ -56,9 +56,9 @@ class Athlete
                     SUM(IF(RT.ResultDescription='Draw', 1, 0)) AS TotalDraws,
                     SUM(IF(RT.ResultDescription='Decision%', 1, 0)) AS TotalDecisionWins,
                     SUM(IF(RT.ResultDescription='Submission', 1, 0)) AS TotalSubmissions
-                FROM Fights F 
-                LEFT JOIN FightAthletes FA on F.FightID = FA.FightID
-                LEFT JOIN Athletes A on FA.AthleteID = A.AthleteID
+                FROM Athletes A
+                LEFT JOIN FightAthletes FA on FA.AthleteID = A.AthleteID
+                LEFT JOIN Fights F on F.FightID = FA.FightID                
                 LEFT JOIN WeightClasses WC on F.WeightClassID = WC.WeightClassID
                 LEFT JOIN Referees R on F.RefereeID = R.RefereeID
                 LEFT JOIN FightResults FR on F.FightID = FR.FightID
