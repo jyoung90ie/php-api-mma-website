@@ -10,8 +10,7 @@ define('API_KEY', $_SESSION['User']['ApiKey'] ?? DEFAULT_API_KEY);
 const NAVBAR_PAGES = [
     ['link' => './?page=index', 'text' => 'Home'],
     ['link' => './?page=events', 'text' => 'Events'],
-//    ['link' => './?page=rankings', 'text' => 'Rankings'],
-    ['link' => './?page=athletes', 'text' => 'Athletes'],
+    ['link' => './?page=search', 'text' => 'Search'],
 ];
 
 parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $queryString);
@@ -44,8 +43,6 @@ if (!isset($_GET['page'])) {
 
     $page .= '.php';
 }
-
-
 
 // include pages as needed
 if (file_exists($page)) {
