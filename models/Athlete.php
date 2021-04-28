@@ -4,7 +4,6 @@ namespace models;
 
 use Exception;
 use InvalidArgumentException;
-use PDOException;
 use TypeError;
 
 class Athlete
@@ -37,7 +36,31 @@ class Athlete
     {
         $this->setAthleteId($id);
 
-        $query = "SELECT * FROM Athletes WHERE AthleteID = ?";
+        $query = "SELECT
+                    A.*,
+                    SUM(FA.stats_strikesThrown) AS TotalStrikesThrown,
+                    SUM(FA.stats_strikesLanded) AS TotalStrikesLanded,
+                    SUM(FA.stats_significantStrikesThrown) AS TotalSignificantStrikesThrown,
+                    SUM(FA.stats_significantStrikesLanded) AS TotalSignificantStrikesLanded,
+                    SUM(FA.stats_takedownsThrown) AS TotalTakedownsThrown,
+                    SUM(FA.stats_takedownsLanded) AS TotalTakedownsLanded,
+                    SUM(FA.stats_submissionAttempts) AS TotalSubmissionAttemps,
+                    SUM(FA.stats_knockDowns) AS TotalKnockdowns,
+                    SUM(FA.stats_positionReversals) AS TotalPositionReversals,
+                    COUNT(F.FightID) AS TotalFights,
+                    SUM(IF(FR.WinnerAthleteID=A.AthleteID, 1, 0)) AS TotalWins,
+                    SUM(IF(RT.ResultDescription='Draw', 1, 0)) AS TotalDraws,
+                    SUM(IF(RT.ResultDescription='Decision%', 1, 0)) AS TotalDecisionWins,
+                    SUM(IF(RT.ResultDescription='Submission', 1, 0)) AS TotalSubmissions
+                FROM Fights F 
+                LEFT JOIN FightAthletes FA on F.FightID = FA.FightID
+                LEFT JOIN Athletes A on FA.AthleteID = A.AthleteID
+                LEFT JOIN WeightClasses WC on F.WeightClassID = WC.WeightClassID
+                LEFT JOIN Referees R on F.RefereeID = R.RefereeID
+                LEFT JOIN FightResults FR on F.FightID = FR.FightID
+                LEFT JOIN ResultTypes RT on FR.ResultTypeID = RT.ResultTypeID
+                WHERE A.AthleteID = ?
+                GROUP BY A.AthleteID";
 
         $query = $this->db->prepare($query);
         $query->execute([$this->athleteId]);
@@ -62,13 +85,16 @@ class Athlete
                                 RT.ResultDescription,
                                 FR.WinRound,
                                 FR.WinRoundTime
+                                
                             FROM Fights F 
                             LEFT JOIN FightAthletes FA on F.FightID = FA.FightID
+                            LEFT JOIN Athletes A on A.AthleteID = FA.AthleteID
                             LEFT JOIN WeightClasses WC on F.WeightClassID = WC.WeightClassID
                             LEFT JOIN Referees R on F.RefereeID = R.RefereeID
                             LEFT JOIN FightResults FR on F.FightID = FR.FightID
                             LEFT JOIN ResultTypes RT on FR.ResultTypeID = RT.ResultTypeID
-                            WHERE FA.AthleteID = ?";
+                            WHERE FA.AthleteID = ?
+                            ";
             $query = $this->db->prepare($query);
             $query->execute([$this->athleteId]);
 
@@ -416,3 +442,32 @@ class Athlete
     }
 
 }
+
+$sql = " 
+SELECT 
+	A.AthleteID,
+	SUM(FA.stats_strikesThrown) AS TotalStrikesThrown,
+	SUM(FA.stats_strikesLanded) AS TotalStrikesLanded,
+	SUM(FA.stats_significantStrikesThrown) AS TotalSignificantStrikesThrown,
+	SUM(FA.stats_significantStrikesLanded) AS TotalSignificantStrikesLanded,
+	SUM(FA.stats_takedownsThrown) AS TotalTakedownsThrown,
+	SUM(FA.stats_takedownsLanded) AS TotalTakedownsLanded,
+	SUM(FA.stats_submissionAttempts) AS TotalSubmissionAttemps,
+	SUM(FA.stats_knockDowns) AS TotalKnockdowns,
+	SUM(FA.stats_positionReversals) AS TotalPositionReversals,
+    COUNT(F.FightID) AS TotalFights,
+    SUM(IF(FR.WinnerAthleteID=A.AthleteID, 1, 0)) AS TotalWins,
+    SUM(IF(RT.ResultDescription='Draw', 1, 0)) AS TotalDraws,
+    SUM(IF(RT.ResultDescription='Decision%', 1, 0)) AS TotalDecisionWins,
+    SUM(IF(RT.ResultDescription='Submission', 1, 0)) AS TotalSubmissions
+	
+
+FROM Fights F 
+LEFT JOIN FightAthletes FA on F.FightID = FA.FightID
+LEFT JOIN Athletes A on FA.AthleteID = A.AthleteID
+LEFT JOIN WeightClasses WC on F.WeightClassID = WC.WeightClassID
+LEFT JOIN Referees R on F.RefereeID = R.RefereeID
+LEFT JOIN FightResults FR on F.FightID = FR.FightID
+LEFT JOIN ResultTypes RT on FR.ResultTypeID = RT.ResultTypeID
+WHERE A.AthleteID = 2673
+";
