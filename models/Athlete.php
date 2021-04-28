@@ -54,6 +54,87 @@ class Athlete
 
             $this->results = $athlete;
 
+            // get fights athlete has competed in
+            $query = "SELECT F.*,
+                                WC.WeightClass,
+                                R.RefereeName,
+                                FR.WinnerAthleteID,
+                                RT.ResultDescription,
+                                FR.WinRound,
+                                FR.WinRoundTime
+                            FROM Fights F 
+                            LEFT JOIN FightAthletes FA on F.FightID = FA.FightID
+                            LEFT JOIN WeightClasses WC on F.WeightClassID = WC.WeightClassID
+                            LEFT JOIN Referees R on F.RefereeID = R.RefereeID
+                            LEFT JOIN FightResults FR on F.FightID = FR.FightID
+                            LEFT JOIN ResultTypes RT on FR.ResultTypeID = RT.ResultTypeID
+                            WHERE FA.AthleteID = ?";
+            $query = $this->db->prepare($query);
+            $query->execute([$this->athleteId]);
+
+            $athleteData = $athlete;
+            $athleteData['Fights'] = [];
+
+            if ($query->rowCount() > 0) {
+                $fights = $query->fetchAll();
+                foreach ($fights as $fight) {
+                    $athleteId = $this->db->prepare("SELECT AthleteID FROM FightAthletes WHERE FightID=?;");
+                    $athleteId->execute([$fight['FightID']]);
+
+                    if ($athleteId->rowCount() > 0) {
+                        $athletes = $athleteId->fetchAll();
+
+                        // create list of athlete id's so 1 query can retrieve them all
+                        $athleteIdList = [];
+                        foreach ($athletes as $athlete) {
+                            array_push($athleteIdList, $athlete['AthleteID']);
+                        }
+
+                        $placeholders = str_repeat('?,', sizeof($athleteIdList) - 1) . '?';
+                        $athleteQuery = "SELECT * FROM Athletes WHERE AthleteID IN ($placeholders);";
+                        $athleteQuery = $this->db->prepare($athleteQuery);
+
+                        $athleteQuery->execute($athleteIdList);
+
+                        if ($athleteQuery->rowCount() > 0) {
+                            $athletes = $athleteQuery->fetchAll();
+                            $fightAthleteData['Athletes'] = [];
+                            // loop through athletes and add winner flag
+                            foreach ($athletes as $athlete) {
+                                $athlete['Winner'] = ($fight['WinnerAthleteID'] == $athlete['AthleteID'] ? 1 : 0);
+                                array_push($fightAthleteData['Athletes'], $athlete);
+                            }
+                            array_push($athleteData['Fights'], array_merge($fight, $fightAthleteData));
+                        }
+                    }
+                }
+            }
+            return $athleteData;
+        }
+        return false;
+    }
+
+    public function getOneOLD(int $id)
+    {
+        $this->setAthleteId($id);
+
+        $query = "SELECT * FROM Athletes WHERE AthleteID = ?";
+
+        $query = $this->db->prepare($query);
+        $query->execute([$this->athleteId]);
+
+        if ($query->rowCount() > 0) {
+            $athlete = $query->fetch();
+
+            $this->athleteId = $athlete['AthleteID'];
+            $this->name = $athlete['AthleteName'];
+            $this->height = $athlete['AthleteHeightInCM'];
+            $this->reach = $athlete['AthleteReachInCM'];
+            $this->stanceId = $athlete['AthleteStanceID'];
+            $this->dob = $athlete['AthleteDOB'];
+
+            $this->results = $athlete;
+
             // get athlete fights
             $query = "SELECT 
                                 E.EventID,
