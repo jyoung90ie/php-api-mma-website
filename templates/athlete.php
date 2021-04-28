@@ -28,79 +28,109 @@ if (isset($athleteData['Error']) || !$athleteData) {
     header("Location: ?page=events");
 }
 
+$numOfFights = sizeof($athleteData['Fights']);
+
+
+// variables for back button
+$referrer = $_SERVER['HTTP_REFERER'];
+$backButtonUrl = '';
+
+if (stripos($referrer, 'search') !== false) {
+    $backButtonUrl = '?page=search';
+    $backButtonText = 'Back to Search';
+} elseif (stripos($referrer, 'fight') !== false) {
+    $backButtonUrl = $referrer;
+    $backButtonText = 'Back to Fight';
+} else {
+    $backButtonUrl = '?page=index';
+    $backButtonText = 'Back to Homepage';
+}
+
+
+if ($numOfFights > 0) {
+
 // store data from api response
-$totalStrikesLanded = $athleteData['TotalStrikesLanded'] ?? 0;
-$totalStrikesThrown = $athleteData['TotalStrikesThrown'] ?? 1;
-$totalSignificantStrikesLanded = $athleteData['TotalSignificantStrikesLanded'] ?? 0;
-$totalSignificantStrikesThrown = $athleteData['TotalSignificantStrikesThrown'] ?? 1;
-$totalTakedownsLanded = $athleteData['TotalTakedownsLanded'] ?? 0;
-$totalTakedownsThrown = $athleteData['TotalTakedownsThrown'] ?? 1;
-$totalFights = $athleteData['TotalFights'] ?? '';
-$totalWins = $athleteData['TotalWins'] ?? '';
-$totalDraws = $athleteData['TotalDraws'] ?? '';
-$totalDecisionWins = $athleteData['TotalDecisionWins'] ?? '';
-$totalSubsmissions = $athleteData['TotalSubmissions'] ?? '';
-$totalLoses = $totalFights - $totalWins - $totalDraws;
+    $totalStrikesLanded = $athleteData['TotalStrikesLanded'] ?? 0;
+    $totalStrikesThrown = $athleteData['TotalStrikesThrown'] ?? 0;
+    $totalSignificantStrikesLanded = $athleteData['TotalSignificantStrikesLanded'] ?? 0;
+    $totalSignificantStrikesThrown = $athleteData['TotalSignificantStrikesThrown'] ?? 0;
+    $totalTakedownsLanded = $athleteData['TotalTakedownsLanded'] ?? 0;
+    $totalTakedownsThrown = $athleteData['TotalTakedownsThrown'] ?? 0;
+    $totalFights = $athleteData['TotalFights'] ?? 0;
+    $totalWins = $athleteData['TotalWins'] ?? 0;
+    $totalDraws = $athleteData['TotalDraws'] ?? 0;
+    $totalDecisionWins = $athleteData['TotalDecisionWins'] ?? 0;
+    $totalSubmissions = $athleteData['TotalSubmissions'] ?? 0;
+    $totalLoses = $totalFights - $totalWins - $totalDraws;
 
 
 // process vars for displaying
-$percentStrikesLanded = intval($totalStrikesLanded / $totalStrikesThrown * 100);
-$percentStrikesNotLanded = 100 - $percentStrikesLanded;
-$percentSigStrikesLanded = intval($totalSignificantStrikesLanded / $totalSignificantStrikesThrown * 100);
-$percentSigStrikesNotLanded = 100 - $percentStrikesLanded;
-$percentTakedownsLanded = intval($totalTakedownsLanded / $totalTakedownsThrown * 100);
-$percentTakedownsNotLanded = 100 - $percentStrikesLanded;
-$fightRecord = $totalWins . 'W ' . $totalDraws . 'D ' . $totalLoses . 'L';
+    $percentStrikesLanded = intval($totalStrikesLanded / $totalStrikesThrown * 100);
+    $percentStrikesNotLanded = 100 - $percentStrikesLanded;
+    $percentSigStrikesLanded = intval($totalSignificantStrikesLanded / $totalSignificantStrikesThrown * 100);
+    $percentSigStrikesNotLanded = 100 - $percentStrikesLanded;
+    $percentTakedownsLanded = intval($totalTakedownsLanded / $totalTakedownsThrown * 100);
+    $percentTakedownsNotLanded = 100 - $percentStrikesLanded;
+    $fightRecord = $totalWins . 'W ' . $totalDraws . 'D ' . $totalLoses . 'L';
 
-$percentDecisionWins = intval($totalDecisionWins / $totalWins * 100);
-$percentSubmissionWins = intval($totalSubsmissions / $totalWins * 100);
-$percentOtherWins = 100 - $percentDecisionWins - $percentSubmissionWins;
+    $percentDecisionWins = intval($totalDecisionWins / $totalWins * 100);
+    $percentSubmissionWins = intval($totalSubmissions / $totalWins * 100);
+    $percentOtherWins = 100 - $percentDecisionWins - $percentSubmissionWins;
 
 
 // create data array for chart
-$chartInputData = [
-    [
-        'id' => 'totalWins',
-        'title' => 'Wins',
-        'labels' => "['Decision', 'Submission', 'Other']",
-        'colours' => "['#2a6a99', '#5596D4', '#A7CAE9']",
-        'data' => "[20, 30, 50]",
-        'chartType' => 'doughnut'
-    ],
-    [
-        'id' => 'totalStrikes',
-        'title' => 'Total Strikes',
-        'labels' => "['Landed', 'Missed']",
-        'data' => "[$percentStrikesLanded, $percentStrikesNotLanded]",
-        'chartType' => 'doughnut'
-    ],
-    [
-        'id' => 'totalSignificantStrikes',
-        'title' => 'Total Significant Strikes',
-        'labels' => "['Landed', 'Missed']",
-        'data' => "[$percentSigStrikesLanded, $percentSigStrikesNotLanded]",
-        'chartType' => 'doughnut'
-    ],
-    [
-        'id' => 'totalTakeDowns',
-        'title' => 'Total Takedowns',
-        'labels' => "['Landed', 'Missed']",
-        'data' => "[$percentTakedownsLanded, $percentTakedownsNotLanded]",
-        'chartType' => 'doughnut'
-    ],
+    $chartInputData = [
+        [
+            'id' => 'totalWins',
+            'title' => 'Wins',
+            'labels' => "['Decision', 'Submission', 'Other']",
+            'colours' => "['#2a6a99', '#5596D4', '#A7CAE9']",
+            'data' => "[20, 30, 50]",
+            'chartType' => 'doughnut'
+        ],
+        [
+            'id' => 'totalStrikes',
+            'title' => 'Total Strikes',
+            'labels' => "['Landed', 'Missed']",
+            'data' => "[$percentStrikesLanded, $percentStrikesNotLanded]",
+            'chartType' => 'doughnut'
+        ],
+        [
+            'id' => 'totalSignificantStrikes',
+            'title' => 'Total Significant Strikes',
+            'labels' => "['Landed', 'Missed']",
+            'data' => "[$percentSigStrikesLanded, $percentSigStrikesNotLanded]",
+            'chartType' => 'doughnut'
+        ],
+        [
+            'id' => 'totalTakeDowns',
+            'title' => 'Total Takedowns',
+            'labels' => "['Landed', 'Missed']",
+            'data' => "[$percentTakedownsLanded, $percentTakedownsNotLanded]",
+            'chartType' => 'doughnut'
+        ],
 
 
-]
+    ];
+}
 
 ?>
 
     <main class="athlete-container container">
         <h1><?= $athleteData['AthleteName'] ?></h1>
+        <div class="mb-5">
+            <a class="btn btn-more" href="<?= $backButtonUrl ?>"><?=$backButtonText ?></a>
+        </div>
         <div class="athlete-image">
             <img src="<?= $athleteData['AthleteImage'] ?>" alt="Image of <?= $athleteData['AthleteName'] ?>">
         </div>
         <div class="athlete-overview">
             <h2>Athlete Stats</h2>
+            <?php
+            if ($numOfFights == 0) {
+                echo '<h3>Athlete has no fights</h3>';
+            } else {
+            ?>
             <div class="d-flex flex-column p-4">
                 <div class="p-2">
                     <span class="type">Total Fights</span>
@@ -117,6 +147,9 @@ $chartInputData = [
         </div>
         <h2>Fight Results</h2>
         <?php HelperFunctions::displayFights($athleteData, $permissionModule) ?>
+        <?php
+        }
+        ?>
     </main>
 <?php
 /**
