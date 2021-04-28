@@ -599,10 +599,17 @@ span.fight-outcome-badge {
     margin: auto 0;
 }
 
-.chart canvas {
+.fight-detail-container canvas {
     max-height: 150px;
     margin-bottom: 10px;
 }
+
+.athlete-container canvas {
+    max-height: 180px;
+    margin-bottom: 10px;
+}
+
+
 
 .chart-text {
     font-size: 1.2em;
@@ -672,6 +679,15 @@ athlete
     display: block;
     font-size: 1.3em;
 }
+
+span.type {
+    font-weight: bold;
+}
+
+span.value {
+
+}
+
 
 .athlete-image {
     width: 250px;
