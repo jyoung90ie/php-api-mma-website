@@ -5,6 +5,7 @@ namespace controllers;
 use Exception;
 use models\Athlete;
 use models\FightAthlete;
+use models\Search;
 use models\User;
 use PDOException;
 use TypeError;
@@ -55,7 +56,7 @@ class CRUDController
             switch ($this->requestMethod) {
                 case 'POST':
                     // create
-                    $response = $this->create();
+                    $response = $this->handlePost();
                     break;
                 case 'GET':
                     // read
@@ -174,6 +175,19 @@ class CRUDController
     }
 
     /**
+     * Determines whether a post request should be handled by create() or by search()
+     * @return array
+     */
+    private function handlePost(): array
+    {
+        if ($this->module instanceof Search) {
+            return $this->search();
+        } else {
+            return $this->create();
+        }
+    }
+
+    /**
      * Handles the creation of a new module object. This works by fetching the POST data via php://input and hence no
      * data parameter is required.
      *
@@ -199,6 +213,22 @@ class CRUDController
         $response['body'] = $result;
         return $response;
 
+    }
+
+
+    private function search(): array
+    {
+        $searchTerm = json_decode(file_get_contents('php://input'), true);
+
+        $result = $this->module->searchByAthleteName($searchTerm);
+
+        if (!$result) {
+            return $this->badRequest();
+        }
+
+        $response['status_code_header'] = self::HTTP_SUCCESS;
+        $response['body'] = $result;
+        return $response;
     }
 
     /**

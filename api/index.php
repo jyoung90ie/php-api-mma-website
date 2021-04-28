@@ -10,7 +10,17 @@ header('Content-Type: application/json; charset=UTF-8');
 header("Access-Control-Allow-Methods: GET,POST,PUT,DELETE");
 
 
-use models\{APIAccess, Athlete, Event, Fight, FightAthlete, FightResult, Referee, ResultType, User, WeightClass};
+use models\{APIAccess,
+    Athlete,
+    Event,
+    Fight,
+    FightAthlete,
+    FightResult,
+    Referee,
+    ResultType,
+    Search,
+    User,
+    WeightClass};
 use controllers\AuthController;
 use controllers\CRUDController;
 use Exception;
@@ -27,6 +37,7 @@ const REFEREE_MODULE = 'referee';
 const WEIGHT_MODULE = 'weight';
 const RESULT_TYPE_MODULE = 'result-type';
 const AUTHENTICATION_MODULE = 'auth';
+const SEARCH_MODULE = 'search';
 
 $db = (new Database())->getConnection();
 
@@ -114,6 +125,10 @@ try {
         case RESULT_TYPE_MODULE:
             $resultTypeRequest = new CRUDController(new ResultType($db), $user, $requestMethod, $id, $queryStrings);
             $resultTypeRequest->process_request();
+            break;
+        case SEARCH_MODULE:
+            $authRequest = new CRUDController(new Search($db), $user, $requestMethod, null, $queryStrings);
+            $authRequest->process_request();
             break;
         case AUTHENTICATION_MODULE:
             $authRequest = new AuthController(new User($db), $requestMethod);
