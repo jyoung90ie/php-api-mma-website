@@ -151,7 +151,7 @@ class CRUDController
         $response['body']['totalResults'] = $this->module->getTotal();
         $response['body']['resultsPerPage'] = $limit;
         $response['body']['currentResults'] = $currentResults;
-        $response['body']['links'] = $this->createLinks($start, $limit, sizeof($result));
+        $response['body']['links'] = $this->createLinks($start, $limit, $currentResults);
         $response['body']['data'] = $data;
         return $response;
     }

@@ -1,4 +1,7 @@
 <?php
+
+use helpers\HelperFunctions;
+
 session_start();
 include_once 'autoload.php';
 include_once 'helpers/config.php';
@@ -13,15 +16,17 @@ const NAVBAR_PAGES = [
     ['link' => './?page=search', 'text' => 'Search'],
 ];
 
+// used within view pages to access
 parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $queryString);
-$activePage = '?page=' . $queryString['page'] ?? 'index';
+
+$activePage = '?page=' . ($queryString['page'] ?? 'index');
 
 // html header
 include_once TEMPLATES_FOLDER . 'header.php';
 
-if (!isset($_GET['page'])) {
-    $page = '';
-} else {
+$page = '';
+
+if (isset($_GET['page'])) {
     $page = TEMPLATES_FOLDER . htmlspecialchars($_GET['page']);
 
     if (isset($_GET['action'])) {
@@ -43,6 +48,8 @@ if (!isset($_GET['page'])) {
 
     $page .= '.php';
 }
+
+$id = $_GET['id'] ?? null;
 
 // include pages as needed
 if (file_exists($page)) {

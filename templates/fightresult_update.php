@@ -16,8 +16,8 @@ HelperFunctions::checkPermission($permissionModule, $permissionType);
 
 
 // no/invalid id - redirect
-if (!isset($_GET['fightid']) || !is_numeric($_GET['fightid'])) {
-    $userNotification = 'Fight ID missing or invalid - redirected to Events page.';
+if (!isset($_GET['fightid']) || !is_numeric($_GET['fightid']) || $_GET['fightid'] <= 0) {
+    $userNotification = 'Invalid Fight ID - redirected to Events page.';
     HelperFunctions::addNotification($userNotification);
     header("Location: ?page=events");
 }
@@ -35,7 +35,7 @@ $fightResult = new APIRequest(API_URL, 'fight-result', API_KEY, $fightId, null);
 $frResponse = $fightResult->fetchApiData();
 
 if (!isset($frResponse['FightID'])) {
-    $userNotification = 'Fight Result does not exist - redirect to relevant page.';
+    $userNotification = 'Fight Result does not exist - redirected to relevant page.';
     HelperFunctions::addNotification($userNotification);
 
     header("Location: ?page=fight-result&id=$fightId&action=create");
@@ -150,7 +150,7 @@ $fightUrl = '?page=fight&id=' . $fightId;
 ?>
 
     <main class="container">
-        <h2>Fight - Add Result</h2>
+        <h2>Fight - Update Result</h2>
         <div class="mb-5">
             <a class="btn btn-more" href="<?= $fightUrl ?>">Back to Fight</a>
         </div>

@@ -245,7 +245,7 @@ function apiEndPoints(): array
                 'description' => 'The fight result will be deleted subject to requester permission.'
             ]
         ],
-        '/fight-athlete/' => [
+        '/fight-athlete' => [
             'get' => [
                 'description' => 'Returns all fight athlete records using paginated results.'
             ],
@@ -266,7 +266,7 @@ function apiEndPoints(): array
                 'description' => 'Deletes the specified fight athlete record - subject to requester permission.'
             ]
         ],
-        '/referee/' => [
+        '/referee' => [
             'get' => [
                 'description' => 'Returns all referee records.'
             ],
@@ -285,7 +285,7 @@ function apiEndPoints(): array
                 'description' => 'Deletes the specified referee record - subject to requester permission.'
             ]
         ],
-        '/result-type/' => [
+        '/result-type' => [
             'get' => [
                 'description' => 'Returns all result type records.'
             ],

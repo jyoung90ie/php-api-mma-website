@@ -24,7 +24,7 @@ $apiRequest = new APIRequest(API_URL, $apiModule, API_KEY, $id, $queryString);
 $allData = $apiRequest->fetchApiData();
 $athleteData = $allData['data'];
 
-if (isset($athleteData['Error']) || !$athleteData) {
+if (isset($athleteData['Error']) || !$athleteData || !isset($athleteData['AthleteID'])) {
     HelperFunctions::addNotification('Athlete does not exist');
     header("Location: ?page=events");
 }

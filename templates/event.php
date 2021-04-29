@@ -4,7 +4,8 @@ use helpers\APIRequest;
 use helpers\HelperFunctions;
 
 // no/invalid id - redirect
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+if (!isset($_GET['id']) || !is_numeric($_GET['id']) || !($_GET['id'] > 0)) {
+    HelperFunctions::addNotification('Invalid Event ID - redirect to Events page');
     header("Location: ?page=events");
 }
 
@@ -17,12 +18,10 @@ $apiModule = "/event";
 $eventPermissionModule = \models\Event::PERMISSION_AREA;
 $fightPermissionModule = \models\Fight::PERMISSION_AREA;
 
-$id = intval($_GET['id']);
-
 $apiRequest = new APIRequest(API_URL, $apiModule, API_KEY, $id, $queryString);
 $results = $apiRequest->fetchApiData();
 
-if (isset($results['Error']) || !$results) {
+if (isset($results['Error']) || !$results || !isset($results['EventID'])) {
     header("Location: ?page=events");
 }
 

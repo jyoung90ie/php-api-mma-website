@@ -8,10 +8,7 @@ $apiModule = 'fight';
 
 \helpers\HelperFunctions::checkPermission($permissionModule, $permissionType);
 
-// no/invalid id - redirect
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    header("Location: ?page=events");
-}
+
 
 if (!constant("API_URL")) {
     echo 'Api address not set';
@@ -25,6 +22,11 @@ $apiEndPoint = API_URL . '/' . $apiModule . '/' . $id . '?apiKey=' . API_KEY;
 // get existing values for event - calling early so can store fightAthleteIDs
 $apiRequest = new APIRequest(API_URL, 'fight', API_KEY, $id, $queryString);
 $results = $apiRequest->fetchApiData();
+
+if (!isset($results['Athletes'])) {
+    \helpers\HelperFunctions::addNotification('Invalid Fight ID - redirected to Events page');
+    header('Location: ?page=events');
+}
 
 $fightAthleteId1 = $results['Athletes'][0]['FightAthleteID'];
 $fightAthleteId2 = $results['Athletes'][1]['FightAthleteID'];

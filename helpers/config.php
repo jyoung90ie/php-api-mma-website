@@ -33,7 +33,7 @@ define('API_URL', $apiUrl);
 define('DEFAULT_API_KEY', $defaultApiKey);
 
 // setting to true will display all errors
-define('DEBUG', true);
+define('DEBUG', false);
 
 if (DEBUG) {
     ini_set('display_errors', 1);

@@ -20,9 +20,10 @@ $permissionModule = Event::PERMISSION_AREA;
 $apiRequest = new APIRequest(API_URL, $apiModule, API_KEY, null, $queryString);
 $results = $apiRequest->fetchApiData();
 
-if (isset($results['Error']) || !$results) {
-    echo 'API request failed';
-    return;
+$numOfResults = ($results['currentResults'] ?? 0);
+
+if ($numOfResults == 0) {
+    header('Location: ?page=events');
 }
 
 $events = $results['data'];

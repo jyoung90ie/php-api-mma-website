@@ -17,8 +17,8 @@ HelperFunctions::checkPermission($permissionModule, $permissionType);
 
 
 // no/invalid id - redirect
-if (!isset($_GET['fightid']) || !is_numeric($_GET['fightid'])) {
-    $userNotification = 'Fight ID missing or invalid - redirected to Events page.';
+if (!isset($_GET['fightid']) || !is_numeric($_GET['fightid']) || $_GET['fightid'] <= 0) {
+    $userNotification = 'Invalid Fight ID - redirected to Events page.';
     HelperFunctions::addNotification($userNotification);
     header("Location: ?page=events");
 }

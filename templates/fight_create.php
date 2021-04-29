@@ -77,6 +77,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 // get data from API
+$eventRequest = new APIRequest(API_URL, 'event', API_KEY, $id,  null);
+$event = $eventRequest->fetchApiData();
+
+if (!isset($event['EventID'])) {
+    \helpers\HelperFunctions::addNotification('Invalid Event ID - redirected to Events page');
+    header('Location: ?page=events');
+}
+
+// get data from API
 $refereeRequest = new APIRequest(API_URL, 'referee', API_KEY, null,  ['limit' => 5000, 'limitOverride' => true]);
 $referees = $refereeRequest->fetchApiData();
 
