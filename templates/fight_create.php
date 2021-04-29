@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 // get data from API
-$refereeRequest = new APIRequest(API_URL, 'referee', API_KEY, null, null);
+$refereeRequest = new APIRequest(API_URL, 'referee', API_KEY, null,  ['limit' => 5000, 'limitOverride' => true]);
 $referees = $refereeRequest->fetchApiData();
 
 $weightRequest = new APIRequest(API_URL, 'weight', API_KEY, null, null);

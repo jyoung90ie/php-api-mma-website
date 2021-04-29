@@ -4,6 +4,10 @@ namespace models;
 
 use InvalidArgumentException;
 
+/**
+ * Class Event
+ * @package models
+ */
 class Event
 {
     const DATE_MIN = '1993-11-12'; // date of first ever event
@@ -21,10 +25,16 @@ class Event
         $this->db = $db;
     }
 
-    public function getOne(int $id)
+    /**
+     * Returns data for specified event, including fights - note fights are NOT paginated.
+     *
+     * @param int $eventId the event id
+     * @return array|false single event with list of fights
+     */
+    public function getOne(int $eventId)
     {
         // performs validation checks before setting
-        $this->setEventId($id);
+        $this->setEventId($eventId);
 
         $query = "SELECT * FROM Events WHERE EventID = ?";
 
@@ -96,17 +106,15 @@ class Event
             }
             return $eventData;
         }
-
         return false;
-
     }
 
     /**
-     * Return list of events in descending order by event date.
+     * Return list of events in descending order by event date - results are paginated.
      *
      * @param int $limit the number of events to return
      * @param int $start the event to start from
-     * @return array|false
+     * @return array|false list of events with athlete data
      */
     public function getAll(int $limit = 5, int $start = 0)
     {
@@ -173,13 +181,15 @@ class Event
         return $query->rowCount();
     }
 
-
-    public function create(?array $data): int
+    /**
+     * Create a new event entry in the database
+     *
+     * @param array|null $data should contain EventLocation, EventDate
+     * @return int number of records created
+     */
+    public function create(array $data): int
     {
-        if (!is_null($data)) {
-            $this->processData($data);
-        }
-
+        $this->processData($data);
         $this->validateData();
 
         $query = "INSERT INTO Events (EventLocation, EventDate) VALUES (?, ?);";
@@ -193,13 +203,17 @@ class Event
 
     }
 
-    public function update(int $id, ?array $data = null): int
+    /**
+     * Updates database record for the specified event.
+     *
+     * @param int $id the event id
+     * @param array|null $data should contain EventLocation, EventDate
+     * @return int number of records updated
+     */
+    public function update(int $id, array $data): int
     {
         $this->setEventId($id);
-
-        if (!is_null($data)) {
-            $this->processData($data);
-        }
+        $this->processData($data);
 
         $this->validateData();
 
@@ -210,13 +224,18 @@ class Event
                     WHERE 
                         EventID = ?";
 
-
         $query = $this->db->prepare($query);
         $query->execute([$this->location, $this->date, $this->eventId]);
 
         return $query->rowCount();
     }
 
+    /**
+     * Delete the specified record from the database.
+     *
+     * @param int $id of the record to be deleted
+     * @return int the number of rows deleted
+     */
     public function delete(int $id): int
     {
         $this->setEventId($id);
@@ -228,18 +247,23 @@ class Event
         $query->execute([$this->eventId]);
 
         return $query->rowCount();
-
     }
 
-    // utility functions
+    /**
+     * Extracts inputs from data array and calls setters. If any data is not in the expected format
+     * exceptions will be thrown from the relevant setter.
+     *
+     * @param array $data
+     */
     private function processData(array $data): void
     {
-
-        $this->setDate($data['EventDate']);
-        $this->setLocation($data['EventLocation']);
-
+        $this->setDate($data['EventDate'] ?? '');
+        $this->setLocation($data['EventLocation'] ?? '');
     }
 
+    /**
+     * Checks that all record fields have been populated. If not, throws InvalidArgumentException.
+     */
     private function validateData(): void
     {
         if (is_null($this->location) || is_null($this->date)) {
@@ -263,10 +287,10 @@ class Event
     public function setEventId(int $eventId): void
     {
         if ($eventId <= 0) {
-            $this->eventId = -1;
-        } else {
-            $this->eventId = $eventId;
+            throw new InvalidArgumentException("Invalid value for EventID.");
         }
+
+        $this->eventId = $eventId;
     }
 
     /**
@@ -282,6 +306,9 @@ class Event
      */
     public function setLocation(string $location): void
     {
+        if (empty($location)) {
+            throw new InvalidArgumentException('Invalid value for EventLocation.');
+        }
         $this->location = $location;
     }
 

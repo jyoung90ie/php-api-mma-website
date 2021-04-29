@@ -19,7 +19,6 @@ class APIAccess
     private $verified = false;
 
     private $db;
-    static $table = "APIAccess";
 
     public function __construct($db)
     {
@@ -43,72 +42,73 @@ class APIAccess
                     AND 
                         (StartDate <= ? OR StartDate IS NULL) AND (EndDate >= ? OR EndDate IS NULL)";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$apiKey, $now, $now]);
 
-            if ($query->rowCount() > 0) {
-                $result = $query->fetch();
+        $query = $this->db->prepare($query);
+        $query->execute([$apiKey, $now, $now]);
 
+        if ($query->rowCount() > 0) {
+            $result = $query->fetch();
 
-                $start_date = $result['StartDate'];
-                $end_date = $result['EndDate'];
-                $user_id = $result['UserID'];
+            $start_date = $result['StartDate'];
+            $end_date = $result['EndDate'];
+            $user_id = $result['UserID'];
 
-                $this->apiId = $result['ID'];
-                $this->apiKey = $result['ApiKey'];
-                $this->startDate = (is_null($start_date)) ? "" : $start_date;
-                $this->endDate = (is_null($end_date)) ? "" : $end_date;
-                $this->userId = (is_null($user_id)) ? -1 : $user_id;
-                $this->verified = true;
+            $this->apiId = $result['ID'];
+            $this->apiKey = $result['ApiKey'];
+            $this->startDate = (is_null($start_date)) ? "" : $start_date;
+            $this->endDate = (is_null($end_date)) ? "" : $end_date;
+            $this->userId = (is_null($user_id)) ? -1 : $user_id;
+            $this->verified = true;
 
-                return $result;
-            }
-
-            // unset values if key was invalid
-            $this->apiId = null;
-            $this->apiKey = null;
-            $this->startDate = null;
-            $this->endDate = null;
-            $this->userId = null;
-
-            return false;
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
+            return $result;
         }
+
+        // unset values if key was invalid
+        $this->apiId = null;
+        $this->apiKey = null;
+        $this->startDate = null;
+        $this->endDate = null;
+        $this->userId = null;
+
+        return false;
     }
 
-    public function create(?array $data = null): int
+    /**
+     * Create a new entry in the APIAccess table.
+     *
+     * @param array $data all values must be provided (ApiKey, StartDate, EndDate, UserID)
+     * @return int the number of rows created
+     */
+    public function create(array $data): int
     {
-        if (!is_null($data)) {
-            $this->processData($data);
-        }
-
+        $this->processData($data);
         $this->validateData();
 
         $query = "INSERT INTO ApiAccess (ApiKey, StartDate, EndDate, UserID)
                     VALUES(?, ?, ?, ?);";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->apiKey, $this->startDate, $this->endDate, $this->userId]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->apiKey, $this->startDate, $this->endDate, $this->userId]);
 
+        $rowCount = $query->rowCount();
+        if ($rowCount > 0) {
             $this->apiId = $this->db->lastInsertId();
-
-            return $this->apiId;
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
         }
+
+        return $rowCount;
     }
 
-    public function update(int $id, ?array $data = null): int
+    /**
+     * Update specified entry in the database.
+     *
+     * @param int $id of record to be updated
+     * @param array $data all values must be provided (ApiKey, StartDate, EndDate, UserID)
+     * @return int the number of rows created
+     */
+    public function update(int $id, array $data): int
     {
         $this->setApiId($id);
-
-        if (!is_null($data)) {
-            $this->processData($data);
-        }
-
+        $this->processData($data);
         $this->validateData();
 
         $query = "UPDATE 
@@ -121,32 +121,68 @@ class APIAccess
                     WHERE 
                         ID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->apiKey, $this->startDate, $this->endDate, $this->userId, $this->apiId]);
-            return $query->rowCount();
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
-
+        $query = $this->db->prepare($query);
+        $query->execute([$this->apiKey, $this->startDate, $this->endDate, $this->userId, $this->apiId]);
+        return $query->rowCount();
     }
 
+    /**
+     * Delete the specified record from the database.
+     *
+     * @param int $id of the record to be deleted
+     * @return int the number of rows deleted
+     */
     public function delete(int $id): int
     {
         $this->setApiId($id);
 
         $query = "DELETE FROM ApiAccess WHERE ID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->apiId]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->apiId]);
 
-            return $query->rowCount();
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
+        return $query->rowCount();
+    }
+
+    /**
+     * Checks that all record fields have been populated. If not, throws
+     * InvalidArgumentException.
+     */
+    private function validateData(): void
+    {
+        if (is_null($this->userId) || is_null($this->apiKey) || is_null($this->startDate) || is_null($this->endDate)) {
+            throw new InvalidArgumentException("All object variables must have a value");
+        }
+    }
+
+    /**
+     * Verifies that the input string is in the correct date format.
+     *
+     * @param string $date to be verified
+     * @return bool true if valid date, otherwise false
+     */
+    private function isDate(string $date): bool
+    {
+        if (strtotime($date)) {
+            return true;
         }
 
+        return false;
+    }
 
+    /**
+     * Extracts inputs from data array and calls setters. If any data is not in the expected format
+     * exceptions will be thrown from the relevant setter.
+     *
+     * @param array $data
+     */
+    private function processData(array $data): void
+    {
+        $this->setApiId($data['ApiId'] ?? 0);
+        $this->setApiKey($data['ApiKey'] ?? '');
+        $this->setStartDate($data['StartDate'] ?? '');
+        $this->setEndDate($data['EndDate'] ?? '');
+        $this->setUserId($data['UserID'] ?? 0);
     }
 
     /**
@@ -162,6 +198,9 @@ class APIAccess
      */
     public function setApiKey(string $apiKey): void
     {
+        if (empty($apiKey)) {
+            throw new InvalidArgumentException("API Key must have a value");
+        }
         $this->apiKey = $apiKey;
     }
 
@@ -227,7 +266,13 @@ class APIAccess
     public function setUserId(int $userId): void
     {
         if ($userId <= 0) {
-            throw new InvalidArgumentException("Invalid input for user ID");
+            throw new InvalidArgumentException("Invalid input for User ID");
+        }
+
+        // make sure record exists
+        $user = (new User($this->db))->getOne($userId);
+        if (!$user) {
+            throw new InvalidArgumentException("No record exists with the specified UserID");
         }
 
         $this->userId = $userId;
@@ -239,7 +284,7 @@ class APIAccess
     public function setApiId(int $apiId): void
     {
         if ($apiId <= 0) {
-            throw new InvalidArgumentException("Invalid input for user ID");
+            throw new InvalidArgumentException("Invalid input for API ID");
         }
 
         $this->apiId = $apiId;
@@ -253,38 +298,11 @@ class APIAccess
         return $this->apiId;
     }
 
-
+    /**
+     * @return bool value of verified instance variable
+     */
     public function isVerified(): bool
     {
         return $this->verified;
-    }
-
-    private function validateData(): void
-    {
-        if (is_null($this->userId) || is_null($this->apiKey) || is_null($this->startDate) || is_null($this->endDate)) {
-            throw new InvalidArgumentException("All object variables must have a value");
-        }
-    }
-
-    private function isDate(string $date): bool
-    {
-        if (strtotime($date)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    private function processData(array $data): void
-    {
-        try {
-            $this->setApiId($data['ApiId']);
-            $this->setApiKey($data['ApiKey']);
-            $this->setStartDate($data['StartDate']);
-            $this->setEndDate($data['EndDate']);
-            $this->setUserId($data['UserID']);
-        } catch (Exception | TypeError $exception) {
-            exit($exception->getMessage());
-        }
     }
 }

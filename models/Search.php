@@ -9,7 +9,10 @@ namespace models;
  */
 class Search
 {
+    private $searchTerm;
     private $db;
+
+    const MIN_LENGTH = 5;
 
     public function __construct($db)
     {
@@ -24,6 +27,8 @@ class Search
      */
     public function searchByAthleteName(array $data)
     {
+        $this->setSearchTerm($data['searchTerm'] ?? '');
+
         $query = "SELECT 
                         A.*,
                         LastFight.*,
@@ -43,8 +48,8 @@ class Search
 
                     WHERE A.AthleteName LIKE :athleteName
                     ";
-        $searchTerm = $data['searchTerm'];
-        $params = [':athleteName' => '%' . $searchTerm . '%'];
+
+        $params = [':athleteName' => '%' . $this->searchTerm . '%'];
 
         $query = $this->db->prepare($query);
         $query->execute($params);
@@ -56,6 +61,26 @@ class Search
         }
 
         return false;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getSearchTerm()
+    {
+        return $this->searchTerm;
+    }
+
+    /**
+     * @param mixed $searchTerm
+     */
+    public function setSearchTerm($searchTerm): void
+    {
+        if (empty($searchTerm) || strlen($searchTerm) < self::MIN_LENGTH) {
+            throw new \InvalidArgumentException('Invalid value for searchTerm - must be at least '.
+                self::MIN_LENGTH.' characters long');
+        }
+        $this->searchTerm = $searchTerm;
     }
 
 }

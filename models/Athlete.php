@@ -2,9 +2,7 @@
 
 namespace models;
 
-use Exception;
 use InvalidArgumentException;
-use TypeError;
 
 class Athlete
 {
@@ -33,10 +31,14 @@ class Athlete
     }
 
     /**
-     * @param int $id
-     * @return false
+     * Returns data on specified athlete, including fights - note fights are paginated.
+     *
+     * @param int $id the athlete id
+     * @param int $limit the number of results to return
+     * @param int $start where to start returning records from
+     * @return array|false single athlete with list of fights
      */
-    public function getOne(int $id)
+    public function getOne(int $id, int $limit = 5, int $start = 0)
     {
         $this->setAthleteId($id);
 
@@ -64,7 +66,8 @@ class Athlete
                 LEFT JOIN FightResults FR on F.FightID = FR.FightID
                 LEFT JOIN ResultTypes RT on FR.ResultTypeID = RT.ResultTypeID
                 WHERE A.AthleteID = ?
-                GROUP BY A.AthleteID";
+                GROUP BY A.AthleteID
+                ";
 
         $query = $this->db->prepare($query);
         $query->execute([$this->athleteId]);
@@ -97,7 +100,8 @@ class Athlete
                             LEFT JOIN Referees R on F.RefereeID = R.RefereeID
                             LEFT JOIN FightResults FR on F.FightID = FR.FightID
                             LEFT JOIN ResultTypes RT on FR.ResultTypeID = RT.ResultTypeID
-                            WHERE FA.AthleteID = ?
+                            WHERE FA.AthleteID = ? 
+                            LIMIT $start, $limit
                             ";
             $query = $this->db->prepare($query);
             $query->execute([$this->athleteId]);
@@ -149,7 +153,7 @@ class Athlete
      *
      * @param int $limit the number of athletes to return
      * @param int $start first record to return from
-     * @return array|false
+     * @return array|false list of athletes
      */
     public function getAll(int $limit = 5, int $start = 0): array
     {
@@ -170,7 +174,7 @@ class Athlete
      * Return a number of random athletes - used for feature athletes.
      *
      * @param int $limit number of athletes to return (Default = 3)
-     * @return array|false
+     * @return array|false list of random athletes with aggregate stats
      */
     public function getRandom(int $limit = 3): array
     {
@@ -210,7 +214,7 @@ class Athlete
     /**
      * Retrieves the total records in the database.
      *
-     * @return int total number of records
+     * @return int total number of athlete records
      */
     public function getTotal(): int
     {
@@ -218,15 +222,28 @@ class Athlete
         return $query->rowCount();
     }
 
+
     /**
-     * @param array|null $data
-     * @return int
+     * Retrieves the total number of fights an athlete has competed in.
+     *
+     * @return int total number of fights a specified athlete has had
      */
-    public function create(?array $data): int
+    public function getAthleteTotalFights(int $id): int
     {
-        if (!is_null($data)) {
-            $this->processData($data);
-        }
+        $query = $this->db->query("SELECT * FROM FightAthletes WHERE AthleteID=$id");
+        return $query->rowCount();
+    }
+
+    /**
+     * Create a new athlete entry in the database
+     *
+     * @param array|null $data should contain AthleteName, AthleteHeightInCM, AthleteReachInCM, AthleteStanceID, AthleteDOB
+     * @return int number of records created
+     */
+    public function create(array $data): int
+    {
+        $this->processData($data);
+        $this->validateData();
 
         $query = "INSERT INTO Athletes 
                     (AthleteName, AthleteHeightInCM, AthleteReachInCM, AthleteStanceID, AthleteDOB)
@@ -240,13 +257,17 @@ class Athlete
         return $query->rowCount();
     }
 
-    public function update(int $id, ?array $data = null): int
+    /**
+     * Updates database record for the specified athlete.
+     *
+     * @param int $id the athlete id
+     * @param array $data should contain AthleteName, AthleteHeightInCM, AthleteReachInCM, AthleteStanceID, AthleteDOB
+     * @return int number of records updated
+     */
+    public function update(int $id, array $data): int
     {
         $this->setAthleteId($id);
-
-        if (!is_null($data)) {
-            $this->processData($data);
-        }
+        $this->processData($data);
         $this->validateData();
 
         $query = "UPDATE 
@@ -266,6 +287,12 @@ class Athlete
         return $query->rowCount();
     }
 
+    /**
+     * Delete the specified record from the database.
+     *
+     * @param int $id of the record to be deleted
+     * @return int the number of rows deleted
+     */
     public function delete(int $id): int
     {
         $this->setAthleteId($id);
@@ -278,20 +305,24 @@ class Athlete
         return $query->rowCount();
     }
 
-    // utility functions
+    /**
+     * Extracts inputs from data array and calls setters. If any data is not in the expected format
+     * exceptions will be thrown from the relevant setter.
+     *
+     * @param array $data
+     */
     private function processData(array $data): void
     {
-        try {
-            $this->setDob($data['AthleteDOB']);
-            $this->setName($data['AthleteName']);
-            $this->setStanceId($data['AthleteStanceID']);
-            $this->setReach($data['AthleteReachInCM']);
-            $this->setHeight($data['AthleteHeightInCM']);
-        } catch (Exception | TypeError $exception) {
-            exit($exception->getMessage());
-        }
+        $this->setDob($data['AthleteDOB'] ?? '');
+        $this->setName($data['AthleteName'] ?? '');
+        $this->setStanceId($data['AthleteStanceID'] ?? 0);
+        $this->setReach($data['AthleteReachInCM'] ?? 0);
+        $this->setHeight($data['AthleteHeightInCM'] ?? 0);
     }
 
+    /**
+     * Checks that all record fields have been populated. If not, throws InvalidArgumentException.
+     */
     private function validateData(): void
     {
         if (is_null($this->name) || is_null($this->height) || is_null($this->reach) || is_null($this->stanceId)
@@ -316,10 +347,10 @@ class Athlete
     public function setAthleteId(int $athleteId): void
     {
         if ($athleteId <= 0) {
-            $this->athleteId = -1;
-        } else {
-            $this->athleteId = $athleteId;
+            throw new InvalidArgumentException("Invalid value for AthleteID. ");
         }
+
+        $this->athleteId = $athleteId;
     }
 
     /**
@@ -336,8 +367,8 @@ class Athlete
     public function setName(?string $name): void
     {
         if (strlen($name) < self::NAME_MIN_LENGTH || strlen($name) > self::NAME_MAX_LENGTH) {
-            throw new InvalidArgumentException("Name length must be between " . self::NAME_MIN_LENGTH . "-" .
-                self::NAME_MAX_LENGTH . " characters");
+            throw new InvalidArgumentException("Invalid value for AthleteName. " .
+                "Name length must be between " . self::NAME_MIN_LENGTH . "-" . self::NAME_MAX_LENGTH . " characters");
         }
 
         $this->name = $name;
@@ -357,8 +388,8 @@ class Athlete
     public function setHeight(?float $height): void
     {
         if ($height < self::HEIGHT_MIN || $height > self::HEIGHT_MAX) {
-            throw new InvalidArgumentException("Height must be between " . self::HEIGHT_MIN . "-" .
-                self::HEIGHT_MAX . " cm");
+            throw new InvalidArgumentException("Invalid value for AthleteHeightInCM. " .
+                "Height must be between " . self::HEIGHT_MIN . "-" . self::HEIGHT_MAX . " cm");
         }
         $this->height = floatval($height);
     }
@@ -377,8 +408,8 @@ class Athlete
     public function setReach(?float $reach): void
     {
         if ($reach < self::REACH_MIN || $reach > self::REACH_MAX) {
-            throw new InvalidArgumentException("Reach must be between " . self::REACH_MIN . "-" .
-                self::REACH_MAX . " cm");
+            throw new InvalidArgumentException("Invalid value for AthleteReachInCM. " .
+                "Reach must be between " . self::REACH_MIN . "-" . self::REACH_MAX . " cm");
         }
         $this->reach = floatval($reach);
     }
@@ -396,6 +427,15 @@ class Athlete
      */
     public function setStanceId(?int $stanceId): void
     {
+        if ($stanceId <= 0) {
+            throw new InvalidArgumentException("Invalid value for StanceID.");
+        }
+        // make sure record exists
+        $stance = (new AthleteStance($this->db))->getOne($stanceId);
+        if (!$stance) {
+            throw new InvalidArgumentException("No record exists with the specified StanceID");
+        }
+
         $this->stanceId = intval($stanceId);
     }
 
@@ -413,7 +453,7 @@ class Athlete
     public function setDob(?string $dob): void
     {
         if (!strtotime($dob)) {
-            throw new InvalidArgumentException("Invalid date for DOB");
+            throw new InvalidArgumentException("Invalid value for AthleteDOB.");
         }
 
         $this->dob = date("Y-m-d", strtotime($dob));
@@ -428,32 +468,3 @@ class Athlete
     }
 
 }
-
-$sql = " 
-SELECT 
-	A.AthleteID,
-	SUM(FA.stats_strikesThrown) AS TotalStrikesThrown,
-	SUM(FA.stats_strikesLanded) AS TotalStrikesLanded,
-	SUM(FA.stats_significantStrikesThrown) AS TotalSignificantStrikesThrown,
-	SUM(FA.stats_significantStrikesLanded) AS TotalSignificantStrikesLanded,
-	SUM(FA.stats_takedownsThrown) AS TotalTakedownsThrown,
-	SUM(FA.stats_takedownsLanded) AS TotalTakedownsLanded,
-	SUM(FA.stats_submissionAttempts) AS TotalSubmissionAttemps,
-	SUM(FA.stats_knockDowns) AS TotalKnockdowns,
-	SUM(FA.stats_positionReversals) AS TotalPositionReversals,
-    COUNT(F.FightID) AS TotalFights,
-    SUM(IF(FR.WinnerAthleteID=A.AthleteID, 1, 0)) AS TotalWins,
-    SUM(IF(RT.ResultDescription='Draw', 1, 0)) AS TotalDraws,
-    SUM(IF(RT.ResultDescription='Decision%', 1, 0)) AS TotalDecisionWins,
-    SUM(IF(RT.ResultDescription='Submission', 1, 0)) AS TotalSubmissions
-	
-
-FROM Fights F 
-LEFT JOIN FightAthletes FA on F.FightID = FA.FightID
-LEFT JOIN Athletes A on FA.AthleteID = A.AthleteID
-LEFT JOIN WeightClasses WC on F.WeightClassID = WC.WeightClassID
-LEFT JOIN Referees R on F.RefereeID = R.RefereeID
-LEFT JOIN FightResults FR on F.FightID = FR.FightID
-LEFT JOIN ResultTypes RT on FR.ResultTypeID = RT.ResultTypeID
-WHERE A.AthleteID = 2673
-";

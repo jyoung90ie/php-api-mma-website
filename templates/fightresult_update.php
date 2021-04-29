@@ -275,8 +275,9 @@ $fightUrl = '?page=fight&id=' . $fightId;
                 $fieldDisplayName = ucwords(join(' ', preg_split('/(?=[A-Z])/', $fieldNameNoPrefix)));
 
                 for ($athlete = 0; $athlete < $numOfAthletes; $athlete++) {
+                    $athleteFieldName = $fieldName . $athlete;
                     $fightAthlete = $fightAthleteData[$athlete];
-                    $fieldValue = $fightAthlete[$fieldName];
+                    $fieldValue = $_POST[$athleteFieldName] ?? $fightAthlete[$fieldName];
 
                     // output a header row before data points begin
                     if ($athlete == 0 && $dataField == 0) {
@@ -312,11 +313,11 @@ $fightUrl = '?page=fight&id=' . $fightId;
             </div>';
                     }
 
-                    $errorClass = isset($validationErrors[$fieldName . $athlete]) ? ' field-error' : '';
+                    $errorClass = isset($validationErrors[$athleteFieldName]) ? ' field-error' : '';
 
                     // output input field to capture athlete data
                     echo '<div class="col-3 col-md-4 col-lg-3">
-                <input type="number" class="form-control' . $errorClass . '" name="' . $fieldName . $athlete . '" value="' . $fieldValue . '" min="0" max="1000">
+                <input type="number" class="form-control' . $errorClass . '" name="' . $athleteFieldName . '" value="' . $fieldValue . '" min="0" max="1000">
             </div>';
 
                     // for last athlete close the row div tag

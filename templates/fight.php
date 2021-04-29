@@ -23,6 +23,7 @@ $apiRequest = new APIRequest(API_URL, $apiModule, API_KEY, $id, $queryString);
 $results = $apiRequest->fetchApiData();
 
 if (isset($results['Error']) || !$results) {
+    HelperFunctions::addNotification($results['Error']);
     header("Location: ?page=events");
 }
 

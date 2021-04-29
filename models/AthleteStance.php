@@ -2,17 +2,16 @@
 
 namespace models;
 
-use Exception;
 use InvalidArgumentException;
-use PDO;
-use PDOException;
 
 class AthleteStance
 {
 
-    private $id = null;
-    private $description = null;
+    const PERMISSION_AREA = 'ATHLETES';
+    private $stanceId = null;
+    private $stanceDescription = null;
     private $results;
+
     private $db;
 
     public function __construct($db)
@@ -20,119 +19,148 @@ class AthleteStance
         $this->db = $db;
     }
 
+    /**
+     * Returns data on specified athlete stance.
+     *
+     * @param int $id the athlete stance id
+     * @return array|false single athlete stance if successful
+     */
     public function getOne(int $id)
     {
-        $this->setId($id);
+        $this->setStanceId($id);
 
         $query = "SELECT * FROM AthleteStances WHERE AthleteStanceID=?";
+
         $query = $this->db->prepare($query);
-        $query->execute([$this->id]);
-
-
+        $query->execute([$this->stanceId]);
 
         if ($query->rowCount() > 0) {
+
             $result = $query->fetch();
-            $this->description = $result['StanceDescription'];
 
-        } else {
-            $this->results = null;
+            $this->stanceDescription = $result['StanceDescription'];
+
+            return $result;
         }
-
-        return $this->results;
-    }
-
-    public function getAll()
-    {
-        $query = "SELECT * FROM AthleteStances";
-        $query = $this->db->query($query);
-
-        if ($query->rowCount() > 0) {
-            $results = $query->fetchAll();
-
-            $this->results = $results;
-
-            return $results;
-        } else {
-            $this->results = null;
-        }
-
         return false;
     }
 
-
-    public function create(?string $description = null): int
+    /**
+     * Returns a list of stance descriptions in ascending order - results are paginated by default.
+     *
+     * @param int $limit the number of records to return
+     * @param int $start first record to return
+     * @return mixed list of stances if successful, otherwise, return false
+     */
+    public function getAll(int $limit = 5, int $start = 0)
     {
-        if (!is_null($description)) {
-            $this->setDescription($description);
+        $query = "SELECT * FROM AthleteStances ORDER BY StanceDescription LIMIT $start, $limit;";
+        $query = $this->db->query($query);
+
+        if ($query->rowCount() > 0) {
+            $result = $query->fetchAll();
+
+            $this->results = $result;
+
+            return $result;
         }
-        $this->validateData();
-
-        $query = "INSERT INTO AthleteStances (StanceDescription)
-                    VALUES (?);";
-
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->description]);
-
-            $this->id = $this->db->lastInsertId();
-
-            return $query->rowCount();
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
-        }
+        return false;
     }
 
-    public function update(int $id, ?string $description = null): int
+    /**
+     * Retrieves the total records in the database.
+     *
+     * @return int total number of stance records
+     */
+    public function getTotal(): int
     {
-        $this->setId($id);
-
-        if (!is_null($description)) {
-            $this->setDescription($description);
-        }
-
-        $this->validateData();
-
-        $query = "UPDATE AthleteStances SET StanceDescription=?
-                WHERE AthleteStanceID=?";
-
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->description, $this->id]);
-
-            return $query->rowCount();
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
-        }
+        $query = $this->db->query("SELECT * FROM AthleteStances");
+        return $query->rowCount();
     }
 
-    public function delete(int $id): bool
+    /**
+     * Create a new athlete stance record in the database
+     *
+     * @param array|null $data should contain StanceDescription
+     * @return int number of records created
+     */
+    public function create(array $data): int
     {
-        $this->setId($id);
+        $this->processData($data);
+        $this->validateData();
+
+        $query = "INSERT INTO AthleteStances (StanceDescription) VALUES (?);";
+
+        $query = $this->db->prepare($query);
+        $query->execute([$this->stanceDescription]);
+
+        $this->stanceId = $this->db->lastInsertId();
+
+        return $query->rowCount();
+    }
+
+    /**
+     * Updates database record for the specified athlete stance.
+     *
+     * @param int $id the athlete stance id
+     * @param array $data should contain StanceDescription
+     * @return int number of records updated
+     */
+    public function update(int $id, array $data): int
+    {
+        $this->setStanceId($id);
+        $this->processData($data);
+        $this->validateData();
+
+        $query = "UPDATE AthleteStances 
+                    SET 
+                        StanceDescription = ?
+                    WHERE 
+                        AthleteStanceID = ?";
+
+        $query = $this->db->prepare($query);
+        $query->execute([$this->stanceDescription, $this->stanceId]);
+
+        return $query->rowCount();
+    }
+
+    /**
+     * Delete the specified record from the database.
+     *
+     * @param int $id of the record to be deleted
+     * @return int the number of rows deleted
+     */
+    public function delete(int $id): int
+    {
+        $this->setStanceId($id);
 
         $query = "DELETE FROM AthleteStances WHERE AthleteStanceID=?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->id]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->stanceId]);
 
-            return $query->rowCount();
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
     }
 
-    // utility functions
+    /**
+     * Extracts inputs from data array and calls setters. If any data is not in the expected format
+     * exceptions will be thrown from the relevant setter.
+     *
+     * @param array $data
+     */
+    private function processData(array $data)
+    {
+        $this->setStanceDescription($data['StanceDescription'] ?? '');
+    }
+
+    /**
+     * Checks that all record fields have been populated. If not, throws
+     * InvalidArgumentException.
+     */
     private function validateData(): void
     {
-        if (is_null($this->description)) {
+        if (is_null($this->stanceDescription)) {
             throw new InvalidArgumentException("All object variables must have a value");
-        }
-    }
-
-    private function validateIdSet(): void
-    {
-        if (!isset($this->id)) {
-            throw new InvalidArgumentException("Object Id has no value");
         }
     }
 
@@ -141,38 +169,44 @@ class AthleteStance
     /**
      * @return int
      */
-    public function getId(): ?int
+    public function getStanceId(): ?int
     {
-        return $this->id;
+        return $this->stanceId;
     }
 
     /**
-     * @param int $id
+     * @param int $stanceId
      */
-    public function setId(int $id): void
+    public function setStanceId(int $stanceId): void
     {
-        if ($id <= 0) {
-            throw new InvalidArgumentException("Invalid Athlete Stance ID");
+        if ($stanceId <= 0) {
+            throw new InvalidArgumentException("Invalid AthleteStanceID");
         }
-        $this->id = $id;
+        $this->stanceId = $stanceId;
     }
 
     /**
      * @return string
      */
-    public function getDescription(): ?string
+    public function getStanceDescription(): ?string
     {
-        return $this->description;
+        return $this->stanceDescription;
     }
 
     /**
-     * @param string $description
+     * @param string $stanceDescription
      */
-    public function setDescription(string $description): void
+    public function setStanceDescription(string $stanceDescription): void
     {
-        $this->description = $description;
+        if (empty($stanceDescription)) {
+            throw new InvalidArgumentException('StanceDescription must have a value');
+        }
+        $this->stanceDescription = $stanceDescription;
     }
 
+    /**
+     * @return mixed
+     */
     public function getResults()
     {
         return $this->results;

@@ -32,9 +32,15 @@ class Fight
         $this->db = $db;
     }
 
-    public function getOne(int $id)
+    /**
+     * Returns data for specified fight, including fight athletes.
+     *
+     * @param int $fightId the fight id
+     * @return array|false single fight with fight athletes and accompanying fight stats.
+     */
+    public function getOne(int $fightId)
     {
-        $this->setFightId($id);
+        $this->setFightId($fightId);
 
         $query = "SELECT 
                         F.FightID,
@@ -56,8 +62,8 @@ class Fight
                     LEFT JOIN Referees R ON R.RefereeID = F.RefereeID
                     LEFT JOIN FightResults FR ON FR.FightID = F.FightID
                     LEFT JOIN FightAthletes FA ON FA.FightID = F.FightID
-                    LEFT JOIN Athletes A on FA.AthleteID = A.AthleteID
-                    LEFT JOIN Athletes WA on FA.AthleteID = FR.WinnerAthleteID
+                    LEFT JOIN Athletes A on A.AthleteID = FA.AthleteID
+                    LEFT JOIN Athletes WA on WA.AthleteID = FR.WinnerAthleteID
                     LEFT JOIN ResultTypes RT on RT.ResultTypeID = FR.ResultTypeID
                     WHERE F.FightID = ?";
 
@@ -113,12 +119,19 @@ class Fight
         return false;
     }
 
+    /**
+     * Return list of fights - results are limited to 5 records by default.
+     *
+     * @param int $limit the number of records to return
+     * @param int $start first record to return from
+     * @return array|false list of fights with relevant data points such as winner
+     */
     public function getAll(int $limit, int $start): array
     {
-        $query = "SELECT 
+        $query = "SELECT
                         F.FightID,
                         F.EventID,
-                        E.EventDate, 
+                        E.EventDate,
                         E.EventLocation,
                         F.TitleBout,
                         WC.WeightClassID,
@@ -126,20 +139,19 @@ class Fight
                         F.NumOfRounds,
                         R.RefereeID,
                         R.RefereeName,
-                        RT.ResultDescription AS 'Outcome', 
-                        WA.AthleteName As 'Winner',
-                    FROM 
+                        RT.ResultDescription AS 'Outcome',
+                        WA.AthleteName As 'Winner'
+                    FROM
                         Fights F
                     LEFT JOIN Events E ON E.EventID = F.EventID
                     LEFT JOIN WeightClasses WC on WC.WeightClassID = F.WeightClassID
                     LEFT JOIN Referees R ON R.RefereeID = F.RefereeID
                     LEFT JOIN FightResults FR ON FR.FightID = F.FightID
-                    LEFT JOIN FightAthletes FA ON FA.FightID = F.FightID
-                    LEFT JOIN Athletes WA on FA.AthleteID = FR.WinnerAthleteID
+                    LEFT JOIN Athletes WA on WA.AthleteID = FR.WinnerAthleteID
                     LEFT JOIN ResultTypes RT on RT.ResultTypeID = FR.ResultTypeID
-                    LIMIT $start, $limit 
+                    ORDER BY FightID ASC
+                    LIMIT $start, $limit
                 ";
-
 
         $query = $this->db->query($query);
         $result = $query->fetchAll();
@@ -160,15 +172,15 @@ class Fight
     }
 
     /**
-     * @param array|null $data
-     * @return array|false
+     * Create a new fight entry in the database and create records in fight athletes for recording fight stats.
+     *
+     * @param array|null $data should contain EventID, RefereeID, TitleBout, WeightClassID,
+     *  NumOfRounds, AthleteID1, AthleteID2
+     * @return int number of records created
      */
     public function create(array $data = null)
     {
-        if (!is_null($data)) {
-            $this->processData($data);
-        }
-
+        $this->processData($data);
         $this->validateData();
 
         // start sql transaction
@@ -191,55 +203,60 @@ class Fight
 
         if ($query->rowCount() > 0) {
 
+            // add new fight id to result
             $result['FightID'] = $this->db->lastInsertId();
 
-            if (isset($this->athleteId1) && isset($this->athleteId2)) {
-                // create fight athletes records
-                $fightAthleteQ = "INSERT INTO FightAthletes 
+            // create fight athletes records
+            $fightAthleteQ = "INSERT INTO FightAthletes 
                                     (FightID, AthleteID)
                                 VALUES
                                     (?, ?),
                                     (?, ?)";
 
-                $fightAthleteQ = $this->db->prepare($fightAthleteQ);
-                $fightAthleteQ->execute([
-                    $result['FightID'], $this->athleteId1,
-                    $result['FightID'], $this->athleteId2
-                ]);
+            $fightAthleteQ = $this->db->prepare($fightAthleteQ);
+            $fightAthleteQ->execute([
+                $result['FightID'], $this->athleteId1,
+                $result['FightID'], $this->athleteId2
+            ]);
 
-                if ($fightAthleteQ->rowCount() == 2) {
-                    // everything went as expected, return result
-                    $this->db->commit();
-                    return $fightAthleteQ->rowCount();
-                }
-
-                // something went wrong - revert
-                $this->db->rollBack();
+            if ($fightAthleteQ->rowCount() == 2) {
+                // everything went as expected, return result
+                $this->db->commit();
+                return $fightAthleteQ->rowCount();
             }
+
+            // something went wrong - revert
+            $this->db->rollBack();
         }
+
         return false;
     }
 
-    public function update(int $id, array $data = null): int
+    /**
+     * Updates database record for the specified fight AND the relevant records within FightAthletes table.
+     * The data passed through MUST include entries for FightAthleteID1 and FightAthleteID2.
+     *
+     * @param int $fightId the fight id
+     * @param array|null $data should contain EventID, RefereeID, TitleBout, WeightClassID,
+     *  NumOfRounds, FightAthleteID1, FightAthleteID
+     * @return int number of records updated
+     */
+    public function update(int $fightId, array $data = null): int
     {
-        $this->setFightId($id);
-
-        if (!is_null($data)) {
-            $this->processData($data);
-        }
-
+        $this->setFightId($fightId);
+        $this->processData($data);
         $this->validateData();
 
         if (isset($data['FightAthleteID1']) && is_numeric($data['FightAthleteID1'])) {
             $this->fightAthleteId1 = intval($data['FightAthleteID1']);
         } else {
-            throw new InvalidArgumentException('FightAthleteID1 is invalid');
+            throw new InvalidArgumentException('Invalid value for FightAthleteID1');
         }
 
         if (isset($data['FightAthleteID2']) && is_numeric($data['FightAthleteID2'])) {
             $this->fightAthleteId2 = intval($data['FightAthleteID2']);
         } else {
-            throw new InvalidArgumentException('FightAthleteID2 is invalid');
+            throw new InvalidArgumentException('Invalid value for FightAthleteID2');
         }
 
 
@@ -302,13 +319,12 @@ class Fight
      *  FightAthletes
      *  Fights
      *
-     * @param int $id - the FightID to be deleted
+     * @param int $fightId - the FightID to be deleted
      * @return bool - true if successful
      */
-    public function delete(int $id): bool
+    public function delete(int $fightId): bool
     {
-        $this->setFightId($id);
-        $this->validateIdSet();
+        $this->setFightId($fightId);
 
         $this->db->beginTransaction();
 
@@ -338,30 +354,28 @@ class Fight
         return false;
     }
 
-// utility functions
+    /**
+     * Extracts inputs from data array and calls setters. If any data is not in the expected format
+     * exceptions will be thrown from the relevant setter.
+     *
+     * @param array $data
+     */
     private function processData(array $data): void
     {
-        $this->setEventId($data['EventID']);
-        $this->setRefereeId($data['RefereeID']);
-        $this->setTitleBout($data['TitleBout']);
-        $this->setWeightClassId($data['WeightClassID']);
-        $this->setNumOfRounds($data['NumOfRounds']);
-
-        if (isset($data['AthleteID1']) && is_numeric($data['AthleteID1'])) {
-            $this->athleteId1 = intval($data['AthleteID1']);
-        } else {
-            throw new InvalidArgumentException('AthleteID1 is invalid');
-        }
-
-        if (isset($data['AthleteID2']) && is_numeric($data['AthleteID2'])) {
-            $this->athleteId2 = intval($data['AthleteID2']);
-        } else {
-            throw new InvalidArgumentException('AthleteID2 is invalid');
-        }
+        $this->setEventId($data['EventID'] ?? 0);
+        $this->setRefereeId($data['RefereeID'] ?? 0);
+        $this->setTitleBout($data['TitleBout'] ?? -1);
+        $this->setWeightClassId($data['WeightClassID'] ?? 0);
+        $this->setNumOfRounds($data['NumOfRounds'] ?? 0);
+        $this->setAthleteId1($data['AthleteID1'] ?? 0);
+        $this->setAthleteId2($data['AthleteID2'] ?? 0);
     }
 
-    private
-    function validateData(): void
+    /**
+     * Checks that all record fields have been populated. If not, throws
+     * InvalidArgumentException.
+     */
+    private function validateData(): void
     {
         if (is_null($this->eventId) || is_null($this->refereeId) || is_null($this->titleBout) || is_null($this->weightClassId)
             || is_null($this->numOfRounds) || is_null($this->athleteId1) || is_null($this->athleteId2)) {
@@ -369,22 +383,12 @@ class Fight
         }
     }
 
-    private
-    function validateIdSet(): void
-    {
-        if (!isset($this->fightId)) {
-            throw new InvalidArgumentException("Object Id has no value");
-        }
-    }
-
-
 // getters and setters
 
     /**
      * @return int|null
      */
-    public
-    function getFightId(): ?int
+    public function getFightId(): ?int
     {
         return $this->fightId;
     }
@@ -392,20 +396,19 @@ class Fight
     /**
      * @param int|null $fightId
      */
-    public
-    function setFightId(?int $fightId): void
+    public function setFightId(?int $fightId): void
     {
         if ($fightId <= 0) {
-            throw new InvalidArgumentException("Invalid ID");
+            throw new InvalidArgumentException("Invalid value for FightID");
         }
+
         $this->fightId = intval($fightId);
     }
 
     /**
      * @return int|null
      */
-    public
-    function getEventId(): ?int
+    public function getEventId(): ?int
     {
         return $this->eventId;
     }
@@ -413,11 +416,16 @@ class Fight
     /**
      * @param int|null $eventId
      */
-    public
-    function setEventId(?int $eventId): void
+    public function setEventId(?int $eventId): void
     {
         if ($eventId <= 0) {
-            throw new InvalidArgumentException("Invalid Event ID");
+            throw new InvalidArgumentException("Invalid value for EventID");
+        }
+
+        // make sure record exists
+        $event = (new Event($this->db))->getOne($eventId);
+        if (!$event) {
+            throw new InvalidArgumentException("No record exists with the specified EventID");
         }
 
         $this->eventId = intval($eventId);
@@ -426,8 +434,7 @@ class Fight
     /**
      * @return int|null
      */
-    public
-    function getRefereeId(): ?int
+    public function getRefereeId(): ?int
     {
         return $this->refereeId;
     }
@@ -435,11 +442,16 @@ class Fight
     /**
      * @param int|null $refereeId
      */
-    public
-    function setRefereeId(?int $refereeId): void
+    public function setRefereeId(?int $refereeId): void
     {
         if ($refereeId <= 0) {
-            throw new InvalidArgumentException("Invalid Referee ID");
+            throw new InvalidArgumentException("Invalid value for RefereeID");
+        }
+
+        // make sure record exists
+        $referee = (new Referee($this->db))->getOne($refereeId);
+        if (!$referee) {
+            throw new InvalidArgumentException("No record exists with the specified RefereeID");
         }
 
         $this->refereeId = intval($refereeId);
@@ -448,8 +460,7 @@ class Fight
     /**
      * @return int|null
      */
-    public
-    function getTitleBout(): ?int
+    public function getTitleBout(): ?int
     {
         return $this->titleBout;
     }
@@ -457,9 +468,12 @@ class Fight
     /**
      * @param bool|null $titleBout
      */
-    public
-    function setTitleBout(?bool $titleBout): void
+    public function setTitleBout(?bool $titleBout): void
     {
+        if ($titleBout < 0) {
+            throw new InvalidArgumentException('Invalid value for TitleBout');
+        }
+
         if ($titleBout) {
             $this->titleBout = 1;
         } else {
@@ -470,8 +484,7 @@ class Fight
     /**
      * @return int|null
      */
-    public
-    function getWeightClassId(): ?int
+    public function getWeightClassId(): ?int
     {
         return $this->weightClassId;
     }
@@ -479,11 +492,16 @@ class Fight
     /**
      * @param int|null $weightClassId
      */
-    public
-    function setWeightClassId(?int $weightClassId): void
+    public function setWeightClassId(?int $weightClassId): void
     {
         if ($weightClassId <= 0) {
-            throw new InvalidArgumentException("Invalid Weight Class ID");
+            throw new InvalidArgumentException("Invalid value for WeightClassID");
+        }
+
+        // make sure record exists
+        $weightClass = (new WeightClass($this->db))->getOne($weightClassId);
+        if (!$weightClass) {
+            throw new InvalidArgumentException("No record exists with the specified WeightClassID");
         }
 
         $this->weightClassId = $weightClassId;
@@ -492,8 +510,7 @@ class Fight
     /**
      * @return int|null
      */
-    public
-    function getNumOfRounds(): ?int
+    public function getNumOfRounds(): ?int
     {
         return $this->numOfRounds;
     }
@@ -501,12 +518,11 @@ class Fight
     /**
      * @param int|null $numOfRounds
      */
-    public
-    function setNumOfRounds(?int $numOfRounds): void
+    public function setNumOfRounds(?int $numOfRounds): void
     {
         if ($numOfRounds < self::ROUNDS_MIN || $numOfRounds > self::ROUNDS_MAX) {
-            throw new InvalidArgumentException("Number of rounds must be between " . self::ROUNDS_MIN . "-" .
-                self::ROUNDS_MAX);
+            throw new InvalidArgumentException("Invalid value for NumOfRounds. " .
+                "Number of rounds must be between " . self::ROUNDS_MIN . "-" . self::ROUNDS_MAX);
         }
 
         $this->numOfRounds = $numOfRounds;
@@ -515,8 +531,7 @@ class Fight
     /**
      * @return null
      */
-    public
-    function getResults()
+    public function getResults()
     {
         return $this->results;
     }
@@ -524,26 +539,7 @@ class Fight
     /**
      * @return mixed
      */
-    public
-    function getAthleteId2()
-    {
-        return $this->athleteId2;
-    }
-
-    /**
-     * @param mixed $athleteId2
-     */
-    public
-    function setAthleteId2($athleteId2): void
-    {
-        $this->athleteId2 = $athleteId2;
-    }
-
-    /**
-     * @return mixed
-     */
-    public
-    function getAthleteId1()
+    public function getAthleteId1()
     {
         return $this->athleteId1;
     }
@@ -554,7 +550,42 @@ class Fight
     public
     function setAthleteId1($athleteId1): void
     {
+        if (!is_numeric($athleteId1) || $athleteId1 <= 0) {
+            throw new InvalidArgumentException('Invalid value for AthleteID1');
+        }
+        // make sure record exists
+        $athlete = (new Athlete($this->db))->getOne($athleteId1);
+        if (!$athlete) {
+            throw new InvalidArgumentException("No record exists with the specified AthleteID1");
+        }
+
         $this->athleteId1 = $athleteId1;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getAthleteId2()
+    {
+        return $this->athleteId2;
+    }
+
+    /**
+     * @param mixed $athleteId2
+     */
+    public function setAthleteId2($athleteId2): void
+    {
+        if (!is_numeric($athleteId2) || $athleteId2 <= 0) {
+            throw new InvalidArgumentException('Invalid value for AthleteID2');
+        }
+
+        // make sure record exists
+        $athlete = (new Athlete($this->db))->getOne($athleteId2);
+        if (!$athlete) {
+            throw new InvalidArgumentException("No record exists with the specified AthleteID2");
+        }
+
+        $this->athleteId2 = $athleteId2;
     }
 
 

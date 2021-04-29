@@ -5,6 +5,10 @@ namespace models;
 use InvalidArgumentException;
 use PDOException;
 
+/**
+ * Class RolePermission
+ * @package models
+ */
 class RolePermission
 {
     const TABLE = "RolePermissions";
@@ -21,27 +25,36 @@ class RolePermission
         $this->db = $db;
     }
 
+    /**
+     * Retrieve all role permission records.
+     *
+     * @return mixed database results
+     */
     public function getAll()
     {
         $query = "SELECT * FROM " . self::TABLE;
-        try {
-            $query = $this->db->query($query);
+        $query = $this->db->query($query);
 
-            $result = $query->fetchAll();
-            $this->results = $result;
+        $result = $query->fetchAll();
+        $this->results = $result;
 
-            return $result;
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
+        return $result;
     }
 
-
-    public function create(): bool
+    /**
+     * Create new role permission records. This creates multiple records for each role, dependent on the number of
+     * permissions the role has assigned.
+     *
+     * @param array $data this should contain an array for each permission,
+     *  e.g. [ [RoleID=1, Permission=1], [RoleID=1, PermissionID=2], ..., [RoleID=1, PermissionID=N] ]
+     * @return int number of records created
+     */
+    public function create(array $data): int
     {
+        $this->setPermissions($data);
+        $this->setRoleId($data[0]['RoleID'] ?? '');
 
         $insert_values = "";
-
         // build insert values
         foreach ($this->permissions as $permission) {
             $insert_values .= "($this->roleId, $permission), ";
@@ -50,69 +63,42 @@ class RolePermission
         // remove the last comma
         $insert_values = rtrim($insert_values, ', ');
 
-        $query = "INSERT INTO " . self::TABLE . " (RoleID, PermissionID) VALUES $insert_values";
+        $query = "INSERT INTO RolePermissions
+                    (RoleID, PermissionID) 
+                VALUES $insert_values";
+        $query = $this->db->query($query);
 
-        try {
-            $query = $this->db->query($query);
-
-            return $query->rowCount();
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
     }
 
-    public function update(): bool
+    /**
+     * Placeholder function so that CRUDController can handle any requests.
+     *
+     * @param int|null $roleId
+     * @param array|null $data
+     * @return array
+     */
+    public function update(?int $roleId, ?array $data): array
     {
-        $this->validateData();
-        $this->validateIdSet();
-
-        $query = "UPDATE " . self::TABLE . " 
-                SET 
-                    RoleID = ?, 
-                    PermissionID = ?
-                WHERE 
-                    RoleID=? AND PermissionID=?";
-
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->roleId, $this->permissions, $this->roleId, $this->permissionId]);
-
-            return $query->rowCount();
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
+        return ['Error' => 'It is not possible to update a RolePermission.'];
     }
 
-    public function delete(): bool
+    /**
+     * Delete all records from RolePermissions table which have the RoleID specified.
+     *
+     * @param int $roleId to remove all associated records from RolePermissions
+     * @return int number of rows deleted
+     */
+    public function delete(int $roleId): int
     {
-        $this->validateIdSet();
+        $this->setRoleId($roleId);
 
-        $query_counter = 0;
+        $query = "DELETE FROM RolePermissions WHERE RoleId = ?";
 
+        $query = $this->db->prepare($query);
+        $query->execute([$this->roleId]);
 
-        foreach ($this->permissions as $permission) {
-            $query = "DELETE FROM " . self::TABLE . " WHERE RoleID=? AND PermissionID=?";
-            $query = $this->db->prepare($query);
-            $query->execute([$this->roleId, $permission]);
-
-            if ($query->rowCount() > 0) {
-                $query_counter++;
-            }
-        }
-
-        if ($query_counter == sizeof($this->permissions)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    // utility functions
-    private function validateData(): void
-    {
-        if (is_null($this->roleId) || is_null($this->permissions)) {
-            throw new InvalidArgumentException("All object variables must have a value");
-        }
+        return $query->rowCount();
     }
 
     private function validateIdSet(): void
@@ -158,7 +144,7 @@ class RolePermission
     {
         foreach ($permissions as $permission) {
             if (!is_int($permission) || $permission <= 0) {
-                throw new InvalidArgumentException("Invalid Permission ID");
+                throw new InvalidArgumentException("Invalid value for PermissionID");
             }
         }
         $this->permissions = $permissions;

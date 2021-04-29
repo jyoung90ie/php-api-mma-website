@@ -3,7 +3,6 @@
 namespace models;
 
 use InvalidArgumentException;
-use PDOException;
 
 class WeightClass
 {
@@ -11,10 +10,10 @@ class WeightClass
     const WEIGHT_IN_LBS_MIN = 100;
     const WEIGHT_IN_LBS_MAX = 500;
 
-    private $id = null;
-    private $weight_class = null;
-    private $min_weight = null;
-    private $max_weight = null;
+    private $weightClassId = null;
+    private $weightClass = null;
+    private $minWeightInLB = null;
+    private $maxWeightInLB = null;
     private $results;
 
     private $db;
@@ -24,27 +23,33 @@ class WeightClass
         $this->db = $db;
     }
 
+    /**
+     * Retrieve single weight class record
+     * @param int $id weight class id
+     * @return mixed database results or false
+     */
     public function getOne(int $id)
     {
-        $this->setId($id);
+        $this->setWeightClassId($id);
 
         $query = "SELECT * FROM WeightClasses WHERE WeightClassID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->id]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->weightClassId]);
 
+        $rowCount = $query->rowCount();
+        if ($rowCount > 0) {
             $result = $query->fetch();
             $this->results = $result;
 
-            $this->weight_class = $result['WeightClass'];
-            $this->min_weight = $result['MinWeightInLB'];
-            $this->max_weight = $result['MaxWeightInLB'];
+            $this->weightClass = $result['WeightClass'];
+            $this->minWeightInLB = $result['MinWeightInLB'];
+            $this->maxWeightInLB = $result['MaxWeightInLB'];
 
             return $result;
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
         }
+
+        return false;
     }
 
     /**
@@ -54,21 +59,17 @@ class WeightClass
      */
     public function getAll(): array
     {
-        $query = "SELECT * FROM WeightClasses ORDER BY MaxWeightInLB ASC";
-        try {
-            $query = $this->db->query($query);
+        $query = "SELECT * FROM WeightClasses ORDER BY MaxWeightInLB";
+        $query = $this->db->query($query);
 
-            if ($query->rowCount() > 0) {
+        if ($query->rowCount() > 0) {
 
-                $result = $query->fetchAll();
-                $this->results = $result;
+            $result = $query->fetchAll();
+            $this->results = $result;
 
-                return $result;
-            }
-            return false;
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
+            return $result;
         }
+        return false;
     }
 
     /**
@@ -83,28 +84,33 @@ class WeightClass
     }
 
 
-    public function create(): int
+    public function create(array $data): int
     {
+        $this->processData($data);
         $this->validateData();
 
         $query = "INSERT INTO WeightClasses 
                     (WeightClass, MinWeightInLB, MaxWeightInLB)
                     VALUES (?, ?, ?);";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->weight_class, $this->min_weight, $this->max_weight]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->weightClass, $this->minWeightInLB, $this->maxWeightInLB]);
 
-            return $query->rowCount();
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
     }
 
-    public function update(): int
+    /**
+     * Update single weight class record.
+     *
+     * @param int $weightClassId weight class id
+     * @param array $data must contain WeightClass, MinWeightInLB, and MaxWeightInLB
+     * @return int the number of rows updated
+     */
+    public function update(int $weightClassId, array $data): int
     {
+        $this->setWeightClassId($weightClassId);
+        $this->processData($data);
         $this->validateData();
-        $this->validateIdSet();
 
         $query = "UPDATE WeightClasses 
                     SET 
@@ -114,128 +120,128 @@ class WeightClass
                     WHERE 
                         WeightClassID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->weight_class, $this->min_weight, $this->max_weight, $this->id]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->weightClass, $this->minWeightInLB, $this->maxWeightInLB, $this->weightClassId]);
 
-            return $query->rowCount();
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
     }
 
-    public function delete(): bool
+    public function delete(int $weightClassId): bool
     {
-        $this->validateIdSet();
-
+        $this->setWeightClassId($weightClassId);
         $query = "DELETE FROM WeightClasses WHERE WeightClassID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->id]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->weightClassId]);
 
-            return $query->rowCount();
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
+
     }
 
-    // utility functions
+// utility functions
     private function validateData(): void
     {
-        if (is_null($this->weight_class) || is_null($this->min_weight) || is_null($this->max_weight)) {
+        if (is_null($this->weightClass) || is_null($this->minWeightInLB) || is_null($this->maxWeightInLB)) {
             throw new InvalidArgumentException("All object variables must have a value");
         }
     }
 
-    private function validateIdSet(): void
+    private function processData(array $data): void
     {
-        if (!isset($this->id)) {
-            throw new InvalidArgumentException("Object Id has no value");
-        }
+        $this->setWeightClass($data['WeightClass'] ?? '');
+        $this->setMinWeightInLB($data['MinWeightInLB'] ?? 0);
+        $this->setMaxWeightInLB($data['MaxWeightInLB'] ?? 0);
     }
 
-    // getters and setters
+// getters and setters
 
     /**
      * @return int
      */
-    public function getId(): ?int
+    public
+    function getWeightClassId(): ?int
     {
-        return $this->id;
+        return $this->weightClassId;
     }
 
     /**
      * @param int $id
      */
-    public function setId(int $id): void
+    public
+    function setWeightClassId(int $id): void
     {
         if ($id <= 0) {
             throw new InvalidArgumentException("Invalid Weight Class ID");
         }
-        $this->id = $id;
+        $this->weightClassId = $id;
     }
 
     /**
      * @return string
      */
-    public function getWeightClass(): ?string
+    public function getWeightClass(): string
     {
-        return $this->weight_class;
+        return $this->weightClass;
     }
 
     /**
-     * @param string $weight_class
+     * @param string $weightClass
      */
-    public function setWeightClass(string $weight_class): void
+    public function setWeightClass(string $weightClass): void
     {
-        $this->weight_class = $weight_class;
+        if (empty($weightClass)) {
+            throw new InvalidArgumentException('Invalid value for WeightClass');
+        }
+        $this->weightClass = $weightClass;
     }
 
     /**
      * @return int|null
      */
-    public function getMinWeight(): ?int
+    public function getMinWeightInLB(): int
     {
-        return $this->min_weight;
+        return $this->minWeightInLB;
     }
 
     /**
-     * @param int $min_weight
+     * @param int $minWeightInLB
      */
-    public function setMinWeight(int $min_weight): void
+    public function setMinWeightInLB(int $minWeightInLB): void
     {
-        if (self::WEIGHT_IN_LBS_MIN > $min_weight) {
-            throw new InvalidArgumentException("Minimum weight must be at least " . self::WEIGHT_IN_LBS_MIN);
+        if (self::WEIGHT_IN_LBS_MIN > $minWeightInLB) {
+            throw new InvalidArgumentException("Invalid value for MinWeightInLB. Minimum weight must be at least " . self::WEIGHT_IN_LBS_MIN);
         }
 
-        $this->min_weight = $min_weight;
+        $this->minWeightInLB = $minWeightInLB;
     }
 
     /**
      * @return int|null
      */
-    public function getMaxWeight(): ?int
+    public
+    function getMaxWeightInLB(): ?int
     {
-        return $this->max_weight;
+        return $this->maxWeightInLB;
     }
 
     /**
-     * @param int $max_weight
+     * @param int $maxWeightInLB
      */
-    public function setMaxWeight(int $max_weight): void
+    public
+    function setMaxWeightInLB(int $maxWeightInLB): void
     {
-        if (self::WEIGHT_IN_LBS_MAX < $max_weight) {
-            throw new InvalidArgumentException("Maximum weight must not exceed " . self::WEIGHT_IN_LBS_MAX);
+        if ($maxWeightInLB < $this->minWeightInLB || $maxWeightInLB > self::WEIGHT_IN_LBS_MAX) {
+            throw new InvalidArgumentException("Invalid value for MaxWeightInLB. Maximum weight must be between " .
+                $this->minWeightInLB . "-" . self::WEIGHT_IN_LBS_MAX . " pounds");
         }
-
-        $this->max_weight = $max_weight;
+        $this->maxWeightInLB = $maxWeightInLB;
     }
 
     /**
      * @return mixed
      */
-    public function getResults()
+    public
+    function getResults()
     {
         return $this->results;
     }

@@ -40,7 +40,7 @@ class AthleteStanceTest extends TestCase
 
     public function testDataStartsAsNull()
     {
-        self::assertNull($this->stance->getId());
+        self::assertNull($this->stance->getStanceId());
         self::assertNull($this->stance->getDescription());
     }
 
@@ -54,7 +54,7 @@ class AthleteStanceTest extends TestCase
         // check that query ran successfully
         self::assertTrue($create_query);
         // check the object now has an id
-        $id = $this->stance->getId();
+        $id = $this->stance->getStanceId();
         self::assertNotNull($id);
 
         // delete object
@@ -70,7 +70,7 @@ class AthleteStanceTest extends TestCase
 
         $data = $result->fetch_assoc();
 
-        self::assertEquals($data['AthleteStanceID'], $this->stance->getId());
+        self::assertEquals($data['AthleteStanceID'], $this->stance->getStanceId());
         self::assertEquals($data['StanceDescription'], $this->stance->getDescription());
     }
 
@@ -98,7 +98,7 @@ class AthleteStanceTest extends TestCase
         $new_stance->setDescription($this->descriptionValid);
         $new_stance->create();
 
-        $new_event_id = $new_stance->getId();
+        $new_event_id = $new_stance->getStanceId();
 
         // use existing object
         $new_description = "newValidStanceDescription";
@@ -113,7 +113,7 @@ class AthleteStanceTest extends TestCase
         // set another object to retrieve data for new_athlete to compare
         $this->stance->getOne($new_event_id);
 
-        self::assertEquals($new_stance->getId(), $this->stance->getId());
+        self::assertEquals($new_stance->getStanceId(), $this->stance->getStanceId());
         self::assertEquals($new_stance->getDescription(), $this->stance->getDescription());
 
         // delete from db
@@ -128,14 +128,14 @@ class AthleteStanceTest extends TestCase
 
     public function testGetSetIdValid()
     {
-        $this->stance->setId($this->idValid);
-        self::assertEquals($this->idValid, $this->stance->getId());
+        $this->stance->setStanceId($this->idValid);
+        self::assertEquals($this->idValid, $this->stance->getStanceId());
     }
 
     public function testSetIdInvalid()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->stance->setId($this->idInvalid);
+        $this->stance->setStanceId($this->idInvalid);
     }
 
 }

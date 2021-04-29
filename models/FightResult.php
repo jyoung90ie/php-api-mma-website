@@ -22,19 +22,25 @@ class FightResult
         $this->db = $db;
     }
 
+    /**
+     * Returns the fight results for the specified fight.
+     *
+     * @param int $fightId the fight id
+     * @return array|false fight result data if successful, otherwise false.
+     */
     public function getOne(int $fightId)
     {
-        $this->setFightResultId($fightId);
+        $this->setFightId($fightId);
 
         $query = "SELECT * FROM FightResults WHERE FightID = ?";
 
         $query = $this->db->prepare($query);
-        $query->execute([$this->fightResultId]);
+        $query->execute([$this->fightId]);
 
         if ($query->rowCount() > 0) {
             $result = $query->fetch();
 
-            $this->fightId = $result['FightID'];
+            $this->fightResultId = $result['FightResultID'];
             $this->resultTypeId = $result['ResultTypeID'];
             $this->winnerId = $result['WinnerAthleteID'];
 
@@ -45,32 +51,8 @@ class FightResult
 
     }
 
-    public function getByFight(int $fightId)
-    {
-        if (!is_numeric($fightId)) {
-            throw new InvalidArgumentException("Invalid Fight ID");
-        }
-
-        $this->setFightId($fightId);
-
-        $query = "SELECT * FROM FightResults WHERE FightID = ?";
-
-        $query = $this->db->prepare($query);
-        $query->execute([$this->fightId]);
-
-        $result = $query->fetch();
-
-        $this->fightResultId = $result['FightResultID'];
-        $this->resultTypeId = $result['ResultTypeID'];
-        $this->winnerId = $result['WinnerAthleteID'];
-
-        $this->results = $result;
-
-        return $result;
-    }
-
     /**
-     * Return list of fight results sorted by ID in descending order - results are limited to 5 records by default.
+     * Return list of fight results sorted by FightResultID in descending order - results are limited to 5 records by default.
      *
      * @param int $limit the number of athletes to return
      * @param int $start first record to return from
@@ -102,9 +84,15 @@ class FightResult
         return $query->rowCount();
     }
 
-
-    public function create(array $data): bool
+    /**
+     * Create a new fight result entry in the database.
+     *
+     * @param array $data should contain FightID, ResultTypeID, WinnerAthleteID, WinRound and WinRoundTime
+     * @return int number of records created
+     */
+    public function create(array $data): int
     {
+        $this->setFightId($data['FightID'] ?? 0); // needs to be called separately due to update taking it as a parameter
         $this->processData($data);
         $this->validateData();
 
@@ -113,18 +101,31 @@ class FightResult
                     VALUES (?, ?, ?, ?, ?);";
 
         $query = $this->db->prepare($query);
-        $query->execute([$this->fightId, $this->resultTypeId, $this->winnerId, $this->winRound, $this->winRoundTime]);
+        $query->execute([
+            $this->fightId,
+            $this->resultTypeId,
+            $this->winnerId,
+            $this->winRound,
+            $this->winRoundTime
+        ]);
 
-        if ($query->rowCount() > 0) {
+        $rowCount = $query->rowCount();
+
+        if ($rowCount > 0) {
             $this->fightResultId = $this->db->lastInsertId();
 
-            return $query->rowCount();
         }
-
-        return false;
+        return $rowCount;
     }
 
-    public function update(int $fightId, array $data): bool
+    /**
+     * Updates the fight result record for the specified fight.
+     *
+     * @param int $fightId that corresponds to the fight result to be updated
+     * @param array $data should contain FightID, ResultTypeID, WinnerAthleteID, WinRound and WinRoundTime
+     * @return int number of records updated
+     */
+    public function update(int $fightId, array $data): int
     {
         $this->setFightId($fightId);
         $this->processData($data);
@@ -151,9 +152,14 @@ class FightResult
         return $query->rowCount();
     }
 
-    public function delete(int $id): bool
+    /**
+     * Deletes the fight result record for the specified id
+     * @param int $fightResultId the id of the specific result to be deleted
+     * @return int number of records deleted
+     */
+    public function delete(int $fightResultId): int
     {
-        $this->setFightResultId($id);
+        $this->setFightResultId($fightResultId);
 
         $query = "DELETE FROM FightResults WHERE FightResultID=$this->fightResultId";
 
@@ -164,23 +170,26 @@ class FightResult
     }
 
     // utility functions
+    /**
+     * Extracts inputs from data array and calls setters. If any data is not in the expected format
+     * exceptions will be thrown from the relevant setter.
+     *
+     * @param array $data
+     */
+    function processData(array $data): void
+    {
+        $this->setWinnerId($data['WinnerAthleteID'] ?? 0);
+        $this->setResultTypeId($data['ResultTypeID'] ?? 0);
+        $this->setWinRound($data['WinRound'] ?? -1);
+        $this->setWinRoundTime($data['WinRoundTime'] ?? '');
+    }
+
     private function validateData(): void
     {
         if (is_null($this->fightId) || is_null($this->resultTypeId) || is_null($this->winnerId)
             || is_null($this->winRoundTime) || is_null($this->winRound)) {
             throw new InvalidArgumentException("All object variables must have a value");
         }
-    }
-
-    function processData(array $data): void
-    {
-        if (isset($data['FightID'])) {
-            $this->setFightId($data['FightID']);
-        }
-        $this->setWinnerId($data['WinnerAthleteID']);
-        $this->setResultTypeId($data['ResultTypeID']);
-        $this->setWinRound($data['WinRound']);
-        $this->setWinRoundTime($data['WinRoundTime']);
     }
 
     // getters and setters
@@ -199,7 +208,7 @@ class FightResult
     public function setFightResultId(int $fightResultId): void
     {
         if ($fightResultId <= 0) {
-            throw new InvalidArgumentException("Invalid ID");
+            throw new InvalidArgumentException("Invalid value for FightResultID");
         }
         $this->fightResultId = $fightResultId;
     }
@@ -218,7 +227,13 @@ class FightResult
     public function setFightId(int $fightId): void
     {
         if ($fightId <= 0) {
-            throw new InvalidArgumentException("Invalid Fight ID");
+            throw new InvalidArgumentException("Invalid value for FightID");
+        }
+
+        // make sure fight exists
+        $fight = (new Fight($this->db))->getOne($fightId);
+        if (!$fight) {
+            throw new InvalidArgumentException("No record exists with the specified FightID");
         }
 
         $this->fightId = $fightId;
@@ -238,7 +253,13 @@ class FightResult
     public function setResultTypeId(int $resultTypeId): void
     {
         if ($resultTypeId <= 0) {
-            throw new InvalidArgumentException("Invalid Result Type ID");
+            throw new InvalidArgumentException("Invalid value for ResultTypeID");
+        }
+
+        // make sure record exists
+        $resultType = (new ResultType($this->db))->getOne($resultTypeId);
+        if (!$resultType) {
+            throw new InvalidArgumentException("No record exists with the specified ResultTypeID");
         }
 
         $this->resultTypeId = $resultTypeId;
@@ -258,7 +279,13 @@ class FightResult
     public function setWinnerId(int $winnerId): void
     {
         if ($winnerId <= 0) {
-            throw new InvalidArgumentException("Invalid winner Athlete ID");
+            throw new InvalidArgumentException("Invalid value for WinnerAthleteID");
+        }
+
+        // make sure record exists
+        $athlete = (new Athlete($this->db))->getOne($winnerId);
+        if (!$athlete) {
+            throw new InvalidArgumentException("No record exists with the specified WinnerAthleteID");
         }
 
         $this->winnerId = $winnerId;
@@ -281,12 +308,13 @@ class FightResult
     }
 
     /**
-     * @param null $winRoundTime
+     * @param string $winRoundTime
      */
-    public function setWinRoundTime($winRoundTime): void
+    public function setWinRoundTime(string $winRoundTime): void
     {
-        if (!isset($winRoundTime)) {
-            throw new InvalidArgumentException("Win Round Time must have a value in the format MM:SS");
+        if (!isset($winRoundTime) || empty($winRoundTime) ||
+            !preg_match('/(^[0]?[0-5][:][0-5][0-9])/', $winRoundTime)) {
+            throw new InvalidArgumentException("Invalid value for WinRoundTime - must have a value in the format M:SS");
         }
         $this->winRoundTime = $winRoundTime;
     }
@@ -300,12 +328,12 @@ class FightResult
     }
 
     /**
-     * @param null $winRound
+     * @param int $winRound
      */
-    public function setWinRound($winRound): void
+    public function setWinRound(int $winRound): void
     {
-        if (!is_numeric($winRound) || ($winRound > 5 && $winRound < 1)) {
-            throw new InvalidArgumentException("Win Round must be a number between 1 and 5");
+        if (!is_numeric($winRound) || $winRound > 5 || $winRound < 1) {
+            throw new InvalidArgumentException("Invalid value for WinRound - must be a number between 1 and 5");
         }
         $this->winRound = intval($winRound);
     }

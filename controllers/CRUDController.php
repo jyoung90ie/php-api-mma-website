@@ -10,7 +10,10 @@ use models\User;
 use PDOException;
 use TypeError;
 
-
+/**
+ * Class CRUDController
+ * @package controllers
+ */
 class CRUDController
 {
     const HTTP_SUCCESS = 'HTTP/1.1 200 OK';
@@ -51,15 +54,12 @@ class CRUDController
      */
     public function process_request()
     {
-
         try {
             switch ($this->requestMethod) {
                 case 'POST':
-                    // create
                     $response = $this->handlePost();
                     break;
                 case 'GET':
-                    // read
                     if (!is_null($this->moduleId)) {
                         $response = $this->getOne($this->moduleId);
                     } else {
@@ -67,11 +67,11 @@ class CRUDController
                     }
                     break;
                 case 'PUT':
-                    // update
+                    $this->validateModuleId();
                     $response = $this->update($this->moduleId);
                     break;
                 case 'DELETE':
-                    // delete
+                    $this->validateModuleId();
                     $response = $this->delete($this->moduleId);
                     break;
                 default:
@@ -82,14 +82,24 @@ class CRUDController
             if (isset($response['body']) && $response['body']) {
                 echo json_encode($response['body']);
             }
-        } catch (PDOException | Exception | TypeError $exception) {
-            exit(json_encode(['Error' => $exception->getMessage()]));
+        } catch (PDOException $exception) {
+            $exceptionError = 'There was a problem processing the request in the database.';
+        } catch (TypeError $exception) {
+            $exceptionError = 'The format of the data is invalid - please review and try again';
+        } catch (Exception $exception) {
+            $exceptionError = $exception->getMessage();
+        } finally {
+            if (isset($exceptionError)) {
+                exit(json_encode(['Error' => $exceptionError]));
+            }
         }
     }
 
     /**
      * Return a list of module data for displaying. Pagination is included, limiting the maximum results per request to
-     * that set in the constant MAX_RECORDS.
+     * that set in the constant MAX_RECORDS. NOTE: This can be override by passing in the following queryStrings:
+     *
+     *  queryStrings: ['limit' => 9999, 'limitOverride' => true]
      *
      * The permissions for the user making the request will be checked prior to execution.
      *
@@ -103,6 +113,7 @@ class CRUDController
 
         $limit = self::MAX_RECORDS;
         $start = 0;
+
 
         // setup pagination
         if (isset($this->queryStrings['limit'])) {
@@ -161,6 +172,43 @@ class CRUDController
 
         if ($this->module instanceof FightAthlete) {
             $result = $this->module->getByFightId($id);
+        } elseif ($this->module instanceof Athlete) {
+            $limit = self::MAX_RECORDS;
+            $start = 0;
+
+            if (isset($this->queryStrings['limit'])) {
+                $limit = $this->queryStrings['limit'];
+
+                // if systemOverride is not set, then apply default limitations
+                if (!isset($this->queryStrings['limitOverride'])) {
+                    $limit = ($limit < self::MAX_RECORDS ? $limit : self::MAX_RECORDS);
+                }
+            }
+
+            if (isset($this->queryStrings['start'])) {
+                $start = $this->queryStrings['start'];
+                $start = ($start > 0 ? $start : 0);
+            }
+
+            $result = $this->module->getOne($id, $limit, $start);
+
+            $currentResults = 0;
+            $data = [];
+
+            // make sure there are results first
+            if ($result) {
+                $currentResults = sizeof($result['Fights']);
+                $data = $result;
+            }
+
+            $response['status_code_header'] = self::HTTP_SUCCESS;
+
+            $response['body']['totalResults'] = $this->module->getAthleteTotalFights($id);
+            $response['body']['resultsPerPage'] = $limit;
+            $response['body']['currentResults'] = $currentResults;
+            $response['body']['links'] = $this->createLinks($start, $limit, $currentResults);
+            $response['body']['data'] = $data;
+            return $response;
         } else {
             $result = $this->module->getOne($id);
         }
@@ -216,6 +264,11 @@ class CRUDController
     }
 
 
+    /**
+     * Handle and return the result of the search.
+     *
+     * @return array result of search
+     */
     private function search(): array
     {
         $searchTerm = json_decode(file_get_contents('php://input'), true);
@@ -223,7 +276,7 @@ class CRUDController
         $result = $this->module->searchByAthleteName($searchTerm);
 
         if (!$result) {
-            return $this->badRequest();
+            $result = ['Error' => 'No results found'];
         }
 
         $response['status_code_header'] = self::HTTP_SUCCESS;
@@ -281,6 +334,16 @@ class CRUDController
         $response['status_code_header'] = self::HTTP_SUCCESS_NO_CONTENT;
 
         return $response;
+    }
+
+    /**
+     * Check that moduleId has a value and it is an integer, otherwise throw InvalidArgumentException.
+     */
+    private function validateModuleId()
+    {
+        if (!isset($this->moduleId) || !is_numeric($this->moduleId)) {
+            throw new \InvalidArgumentException('Invalid ID provided as part of request');
+        }
     }
 
     /**
@@ -365,7 +428,7 @@ class CRUDController
     private function badRequest(): array
     {
         $response['status_code_header'] = self::HTTP_BAD_REQUEST;
-        $response['body'] = ['Error' => 'There was a problem with the  request - check the data.'];
+        $response['body'] = ['Error' => 'There was a problem with the request - check the data.'];
         return $response;
     }
 

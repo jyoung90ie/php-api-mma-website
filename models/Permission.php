@@ -28,16 +28,22 @@ class Permission
         $this->db = $db;
     }
 
+    /**
+     * Retrieve single permission record from the database.
+     *
+     * @param int $id permission id
+     * @return mixed database record or false
+     */
     public function getOne(int $id)
     {
         $this->setPermissionId($id);
 
         $query = "SELECT * FROM Permissions WHERE PermissionID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$id]);
+        $query = $this->db->prepare($query);
+        $query->execute([$id]);
 
+        if ($query->rowCount() > 0) {
             $result = $query->fetch();
             $this->results = $result;
 
@@ -46,51 +52,61 @@ class Permission
             $this->description = $result['PermissionDescription'];
 
             return $result;
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
         }
+        return false;
     }
 
 
+    /**
+     * Retrieve all permission records.
+     *
+     * @return mixed
+     */
     public function getAll()
     {
         $query = "SELECT * FROM Permissions";
-        try {
-            $query = $this->db->query($query);
+        $query = $this->db->query($query);
 
-            $result = $query->fetchAll();
-            $this->results = $result;
-            return $result;
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
+        $result = $query->fetchAll();
+        $this->results = $result;
+        return $result;
     }
 
-
-    public function create(): int
+    /**
+     * Create new permission record.
+     *
+     * @param array $data must contain PermissionArea, PermissionType, and PermissionDescription
+     * @return int number of records created
+     */
+    public function create(array $data): int
     {
+        $this->processData($data);
         $this->validateData();
 
         $query = "INSERT INTO Permissions
                     (PermissionArea, PermissionType, PermissionDescription) 
                     VALUES (?, ?, ?);";
 
-        try {
-            $query = $this->db->prepare($query);
-            $this->permissionId = $this->db->lastInsertId();
+        $query = $this->db->prepare($query);
+        $this->permissionId = $this->db->lastInsertId();
 
-            $query->execute([$this->area, $this->type, $this->description]);
+        $query->execute([$this->area, $this->type, $this->description]);
 
-            return $query->rowCount();
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
     }
 
-    public function update(): int
+    /**
+     * Update an existing permission record.
+     *
+     * @param int $id permission id
+     * @param array $data must contain PermissionArea, PermissionType, and PermissionDescription
+     * @return int number of records updated
+     */
+    public function update(int $id, array $data): int
     {
+        $this->setPermissionId($id);
+        $this->processData($data);
         $this->validateData();
-        $this->validateIdSet();
 
         $query = "UPDATE Permissions
                     SET 
@@ -100,48 +116,52 @@ class Permission
                     WHERE 
                         PermissionID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->description, $this->area, $this->type, $this->permissionId]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->description, $this->area, $this->type, $this->permissionId]);
 
-            return $query->rowCount();
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
     }
 
-    public function delete(): int
+    /**
+     * Delete a single permission record.
+     *
+     * @param int $id permission id
+     * @return int number of records deleted
+     */
+    public function delete(int $id): int
     {
-        $this->validateIdSet();
+        $this->setPermissionId($id);
 
         $query = "DELETE FROM Permissions WHERE PermissionID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->permissionId]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->permissionId]);
 
-            return $query->rowCount();
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
     }
 
-    // utility functions
+    /**
+     * Extracts inputs from data array and calls setters. If any data is not in the expected format
+     * exceptions will be thrown from the relevant setter.
+     *
+     * @param array $data
+     */
+    private function processData(array $data): void
+    {
+        $this->setDescription($data['PermissionDescription'] ?? '');
+        $this->setType($data['PermissionType'] ?? '');
+        $this->setArea($data['PermissionArea'] ?? '');
+    }
+
+    /**
+     * Checks that all record fields have been populated. If not, throws InvalidArgumentException.
+     */
     private function validateData(): void
     {
         if (is_null($this->description) || is_null($this->area) || is_null($this->type)) {
             throw new InvalidArgumentException("All object variables must have a value");
         }
     }
-
-    private function validateIdSet(): void
-    {
-        if (!isset($this->permissionId)) {
-            throw new InvalidArgumentException("Object Id has no value");
-        }
-    }
-
-    // getters and setters
 
     /**
      * @return int
@@ -157,7 +177,7 @@ class Permission
     public function setPermissionId(int $permissionId): void
     {
         if ($permissionId <= 0) {
-            throw new InvalidArgumentException("Invalid ID");
+            throw new InvalidArgumentException("Invalid PermissionID");
         }
         $this->permissionId = $permissionId;
     }
@@ -176,8 +196,8 @@ class Permission
     public function setArea(?string $area): void
     {
         if (!in_array($area, self::AREAS)) {
-            throw new InvalidArgumentException("Permission Area must be one of the following: " .
-                implode(",", self::AREAS));
+            throw new InvalidArgumentException("Invalid value for PermissionArea. " .
+                "Permission Area must be one of the following: " . implode(",", self::AREAS));
         }
         $this->area = $area;
     }
@@ -196,8 +216,8 @@ class Permission
     public function setType(?string $type): void
     {
         if (!in_array($type, self::TYPES)) {
-            throw new InvalidArgumentException("Permission Type must be one of the following: " .
-                implode(",", self::TYPES));
+            throw new InvalidArgumentException("Invalid value for PermissionType. " .
+                "Permission Type must be one of the following: " . implode(",", self::TYPES));
         }
         $this->type = $type;
     }
@@ -217,8 +237,8 @@ class Permission
     public function setDescription(string $description): void
     {
         if (strlen($description) < self::DESCRIPTION_MIN || strlen($description) > self::DESCRIPTION_MAX) {
-            throw new InvalidArgumentException("Password must be between " . self::DESCRIPTION_MIN . "-" .
-                self::DESCRIPTION_MAX . " characters long");
+            throw new InvalidArgumentException("Invalid value for PermissionDescription. " .
+                "Description must be between " . self::DESCRIPTION_MIN . "-" . self::DESCRIPTION_MAX . " characters long");
         }
         $this->description = $description;
     }

@@ -33,10 +33,10 @@ class FightAthlete
     }
 
     /**
-     * Return the fight athlete record
+     * Return the specified fight athlete record
      *
      * @param int $fightAthleteId for the records you wish to return
-     * @return false
+     * @return mixed return fightAthlete record if successful, otherwise false
      */
     public function getOne(int $fightAthleteId)
     {
@@ -62,11 +62,12 @@ class FightAthlete
 
         return false;
     }
+
     /**
-     * Return the fight athlete records for the associated fight
+     * Return the fight athlete records for the associated fightId
      *
      * @param int $fightId for the records you wish to return
-     * @return false
+     * @return mixed return fightAthlete records associated with fightId if successful, otherwise false
      */
     public function getByFightId(int $fightId)
     {
@@ -101,7 +102,7 @@ class FightAthlete
      *
      * @param int $limit the number of records to return
      * @param int $start first record to return from
-     * @return array|false
+     * @return array|false all fight athletes (limited to pagination amount)
      */
     public function getAll(int $limit = 5, int $start = 0): array
     {
@@ -132,14 +133,13 @@ class FightAthlete
     /**
      * Creates a new fight athlete and stores it in the database.
      *
-     * @param array|null $data
+     * @param array|null $data must contain FightID and AthleteID
      * @return int
      */
-    public function create(?array $data): int
+    public function create(array $data): int
     {
-        if (!is_null($data)) {
-            $this->processData($data);
-        }
+        $this->processData($data);
+        $this->validateData();
 
         $query = "INSERT INTO FightAthletes 
                     (FightID, AthleteID)
@@ -160,6 +160,16 @@ class FightAthlete
         return $query->rowCount();
     }
 
+    /**
+     * Updates specified fightAthlete record. This loops through the data array and ensures that the fields specified
+     * in the instance var dataFields all exist, and are valid numbers greater than or equal to zero.
+     *
+     * If any fields are missing or invalid, an InvalidArgumentException is thrown.
+     *
+     * @param int $fightAthleteId for the record for the record to be updated
+     * @param array $data must contain all fields specified in dataFields instance var.
+     * @return int number of records updated
+     */
     public function update(int $fightAthleteId, array $data): int
     {
         $this->setFightAthleteId($fightAthleteId);
@@ -188,13 +198,11 @@ class FightAthlete
         $updateFields = "";
         foreach ($this->dataFields as $field) {
             $updateFields .= "$field=:$field, ";
-            $params[':'.$field] = $data[$field];
+            $params[':' . $field] = $data[$field];
         }
 
         // remove trailing comma
         $updateFields = rtrim($updateFields, ', ');
-
-//        throw new InvalidArgumentException($updateFields);
 
         $query = "UPDATE 
                         FightAthletes
@@ -204,13 +212,18 @@ class FightAthlete
                         FightAthleteID=:fightAthleteId";
 
         $query = $this->db->prepare($query);
-
         $query->execute($params);
 
         return $query->rowCount();
     }
 
-    public function delete(int $fightAthleteId): bool
+    /**
+     * Delete the specified record from the database.
+     *
+     * @param int $fightAthleteId of the record to be deleted
+     * @return int the number of rows deleted
+     */
+    public function delete(int $fightAthleteId): int
     {
         $this->setFightAthleteId($fightAthleteId);
 
@@ -233,13 +246,17 @@ class FightAthlete
     }
 
     /**
-     * @param array $data
-     * @param false $update set to true if this is being run for update query
+     * Extracts inputs from data array and calls setters. If any data is not in the expected format
+     * exceptions will be thrown from the relevant setter.
+     *
+     * NOTE: This is only called for create() function. The update() function validates data internally.
+     *
+     * @param array $data must contain FightID and AthleteID
      */
-    private function processData(array $data, $update = false): void
+    private function processData(array $data): void
     {
-        $this->setFightId($data['FightID']);
-        $this->setAthleteId($data['AthleteID']);
+        $this->setFightId($data['FightID'] ?? 0);
+        $this->setAthleteId($data['AthleteID'] ?? 0);
     }
 
     // getters and setters
@@ -258,8 +275,9 @@ class FightAthlete
     public function setFightAthleteId(int $fightAthleteId): void
     {
         if ($fightAthleteId <= 0) {
-            throw new InvalidArgumentException("Invalid ID");
+            throw new InvalidArgumentException("Invalid value for AthleteID");
         }
+
         $this->fightAthleteId = $fightAthleteId;
     }
 
@@ -277,8 +295,15 @@ class FightAthlete
     public function setFightId(string $fightId): void
     {
         if ($fightId <= 0) {
-            throw new InvalidArgumentException("Invalid Fight ID");
+            throw new InvalidArgumentException("Invalid value for FightID");
         }
+
+        // make sure fight exists
+        $fight = (new Fight($this->db))->getOne($fightId);
+        if (!$fight) {
+            throw new InvalidArgumentException("No record exists with the specified FightID");
+        }
+
         $this->fightId = $fightId;
     }
 
@@ -296,8 +321,15 @@ class FightAthlete
     public function setAthleteId(string $athleteId): void
     {
         if ($athleteId <= 0) {
-            throw new InvalidArgumentException("Invalid Athlete ID");
+            throw new InvalidArgumentException("Invalid value for AthleteID");
         }
+
+        // make sure record exists
+        $athlete = (new Athlete($this->db))->getOne($athleteId);
+        if (!$athlete) {
+            throw new InvalidArgumentException("No record exists with the specified AthleteID");
+        }
+
         $this->athleteId = $athleteId;
     }
 

@@ -21,7 +21,8 @@ $permissionModule = Athlete::PERMISSION_AREA;
 $id = intval($_GET['id']);
 
 $apiRequest = new APIRequest(API_URL, $apiModule, API_KEY, $id, $queryString);
-$athleteData = $apiRequest->fetchApiData();
+$allData = $apiRequest->fetchApiData();
+$athleteData = $allData['data'];
 
 if (isset($athleteData['Error']) || !$athleteData) {
     HelperFunctions::addNotification('Athlete does not exist');
@@ -32,7 +33,7 @@ $numOfFights = sizeof($athleteData['Fights']);
 
 
 // variables for back button
-$referrer = $_SERVER['HTTP_REFERER'];
+$referrer = $_SERVER['HTTP_REFERER'] ?? '';
 $backButtonUrl = '';
 
 if (stripos($referrer, 'search') !== false) {
@@ -119,7 +120,7 @@ if ($numOfFights > 0) {
     <main class="athlete-container container">
         <h1><?= $athleteData['AthleteName'] ?></h1>
         <div class="mb-5">
-            <a class="btn btn-more" href="<?= $backButtonUrl ?>"><?=$backButtonText ?></a>
+            <a class="btn btn-more" href="<?= $backButtonUrl ?>"><?= $backButtonText ?></a>
         </div>
         <div class="athlete-image">
             <img src="<?= $athleteData['AthleteImage'] ?>" alt="Image of <?= $athleteData['AthleteName'] ?>">
@@ -147,6 +148,12 @@ if ($numOfFights > 0) {
         </div>
         <h2>Fight Results</h2>
         <?php HelperFunctions::displayFights($athleteData, $permissionModule) ?>
+        <!-- Pagination -->
+        <nav aria-label="Athlete fights page navigation">
+            <ul class="pagination justify-content-center">
+                <?= $apiRequest->displayPagination(); ?>
+            </ul>
+        </nav>
         <?php
         }
         ?>

@@ -6,6 +6,10 @@ use Exception;
 use InvalidArgumentException;
 use PDOException;
 
+/**
+ * Class Role
+ * @package models
+ */
 class Role
 {
     const TABLE = "Roles";
@@ -21,66 +25,81 @@ class Role
         $this->db = $db;
     }
 
+    /**
+     * Retrieve single role record.
+     *
+     * @param int $id role id
+     * @return mixed database result or false
+     */
     public function getOne(int $id)
     {
-        // performs validation checks before setting
         $this->setRoleId($id);
 
         $query = "SELECT * FROM Roles WHERE RoleID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->roleId]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->roleId]);
 
-            if ($query->rowCount() > 0) {
-                return $query->fetch();
-            }
+        $rowCount = $query->rowCount();
 
-            return false;
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
+        if ($rowCount) {
+            return $query->fetch();
         }
+
+        return false;
     }
 
+    /**
+     * Retrieve all role records.
+     *
+     * @return mixed database records
+     */
     public function getAll()
     {
         $query = "SELECT * FROM Roles";
 
-        try {
-            $query = $this->db->query($query);
+        $query = $this->db->query($query);
 
-            $result = $query->fetchAll();
-            $this->results = $result;
+        $result = $query->fetchAll();
+        $this->results = $result;
 
-            return $result;
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
+        return $result;
     }
 
-
-    public function create(): int
+    /**
+     * Create new role record.
+     *
+     * @param array $data must contain RoleDescription
+     * @return int number of records created
+     */
+    public function create(array $data): int
     {
+        $this->setDescription($data['RoleDescription'] ?? '');
         $this->validateData();
 
         $query = "INSERT INTO Roles (RoleDescription) VALUES (?)";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->description]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->description]);
 
-            $this->roleId = $this->db->lastInsertId();
+        $this->roleId = $this->db->lastInsertId();
 
-            return $query->rowCount();
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
     }
 
-    public function update(): int
+    /**
+     * Update a single role record.
+     *
+     * @param int $id role id
+     * @param array $data must contain RoleDescription
+     * @return int number of rows updated
+     */
+    public function update(int $id, array $data): int
     {
+        $this->setRoleId($id);
+        $this->setDescription($data['RoleDescription'] ?? '');
+
         $this->validateData();
-        $this->validateIdSet();
 
         $query = "UPDATE 
                     Roles
@@ -89,44 +108,31 @@ class Role
                 WHERE 
                     RoleID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->description, $this->roleId]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->description, $this->roleId]);
 
-            return $query->rowCount();
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
     }
 
-    public function delete(): int
+    public function delete(int $id): int
     {
-        $this->validateIdSet();
+        $this->setRoleId($id);
 
         $query = "DELETE FROM Roles WHERE RoleID=?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->roleId]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->roleId]);
 
-            return $query->rowCount();
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
     }
 
-    // utility functions
+    /**
+     * Checks that all record fields have been populated. If not, throws InvalidArgumentException.
+     */
     private function validateData(): void
     {
         if (is_null($this->description)) {
             throw new InvalidArgumentException("All object variables must have a value");
-        }
-    }
-
-    private function validateIdSet(): void
-    {
-        if (!isset($this->roleId)) {
-            throw new InvalidArgumentException("Object Id has no value");
         }
     }
 
@@ -146,7 +152,7 @@ class Role
     public function setRoleId(int $roleId): void
     {
         if ($roleId <= 0) {
-            throw new InvalidArgumentException("Invalid ID");
+            throw new InvalidArgumentException("Invalid value for RoleID");
         }
         $this->roleId = $roleId;
     }
@@ -164,6 +170,9 @@ class Role
      */
     public function setDescription(string $description): void
     {
+        if (empty($description)) {
+            throw new InvalidArgumentException('Invalid value for RoleDescription');
+        }
         $this->description = $description;
     }
 

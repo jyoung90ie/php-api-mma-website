@@ -402,7 +402,7 @@ Event Listing Page
     margin-top: 5vh;
 }
 
-.events-container .page-item.active .page-link {
+.page-item.active .page-link {
     background-color: var(--color1);
     border-color: var(--color1);
 }

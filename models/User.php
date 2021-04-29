@@ -6,7 +6,6 @@ use Exception;
 use InvalidArgumentException;
 use PDO;
 use PDOException;
-use TypeError;
 
 class User
 {
@@ -48,39 +47,35 @@ class User
     public function getOne(int $userId)
     {
         $this->setUserId($userId);
-        try {
-            $query = "SELECT 
-                            UserID,
-                            UserName,
-                            UserEmail,
-                            UserFirstName,
-                            UserLastName,
-                            UserDOB,
-                            RoleID
-                        FROM 
-                            Users 
-                        WHERE 
-                            UserID=?";
-            $query = $this->db->prepare($query);
-            $query->execute([$this->userId]);
+        $query = "SELECT 
+                    UserID,
+                    UserName,
+                    UserEmail,
+                    UserFirstName,
+                    UserLastName,
+                    UserDOB,
+                    RoleID
+                FROM 
+                    Users 
+                WHERE 
+                    UserID=?";
+        $query = $this->db->prepare($query);
+        $query->execute([$this->userId]);
 
-            if ($query->rowCount() == 1) {
-                $result = $query->fetch();
+        if ($query->rowCount() == 1) {
+            $result = $query->fetch();
 
-                $this->username = $result['UserName'];
-                $this->email = $result['UserEmail'];
-                $this->firstName = $result['UserFirstName'];
-                $this->lastName = $result['UserLastName'];
-                $this->dob = $result['UserDOB'];
-                $this->roleId = $result['RoleID'];
+            $this->username = $result['UserName'];
+            $this->email = $result['UserEmail'];
+            $this->firstName = $result['UserFirstName'];
+            $this->lastName = $result['UserLastName'];
+            $this->dob = $result['UserDOB'];
+            $this->roleId = $result['RoleID'];
 
-                return $result;
-            }
-
-            return false;
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
+            return $result;
         }
+
+        return false;
     }
 
     /**
@@ -100,16 +95,12 @@ class User
                     RoleID
                 FROM 
                     Users";
-        try {
-            $query = $this->db->query($query);
+        $query = $this->db->query($query);
 
-            $result = $query->fetchAll();
-            $this->results = $result;
+        $result = $query->fetchAll();
+        $this->results = $result;
 
-            return $result;
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
-        }
+        return $result;
     }
 
     /**
@@ -128,12 +119,9 @@ class User
      * @param array|null $data - form data with all required database fields.
      * @return int number of rows impacted by the delete query: 1 if successful, 0 if not.
      */
-    public function create(?array $data): int
+    public function create(array $data): int
     {
-        if (!is_null($data)) {
-            $this->processData($data);
-        }
-
+        $this->processData($data);
         $this->validateData();
 
         // this is required because it is not checked as part of validateData
@@ -154,17 +142,17 @@ class User
                         (UserName, UserEmail, UserPassword, UserFirstName, UserLastName, UserDOB, RoleID)
                     VALUES (?, ?, ?, ?, ?, ?, ?);";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->username, $this->email, $this->password, $this->firstName,
-                $this->lastName, $this->dob, $this->roleId]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->username, $this->email, $this->password, $this->firstName,
+            $this->lastName, $this->dob, $this->roleId]);
 
+        $rowCount = $query->rowCount();
+
+        if ($rowCount > 0) {
             $this->userId = $this->db->lastInsertId();
-
-            return $query->rowCount();
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
         }
+
+        return $rowCount;
     }
 
     /**
@@ -175,18 +163,14 @@ class User
      */
     public function update(int $userId, array $data = null): int
     {
-        $this->setUserId($userId);
+        $this->setUserId($userId ?? 0);
+        $this->setUsername($data['UserName'] ?? '');
+        $this->setEmail($data['UserEmail'] ?? '');
+        $this->setFirstName($data['UserFirstName'] ?? '');
+        $this->setLastName($data['UserLastName'] ?? '');
+        $this->setDob($data['UserDOB'] ?? '');
+        $this->setRoleId($data['RoleID'] ?? 0);
 
-        if (!is_null($data)) {
-
-            $this->setUsername($data['UserName']);
-            $this->setEmail($data['UserEmail']);
-            $this->setFirstName($data['UserFirstName']);
-            $this->setLastName($data['UserLastName']);
-            $this->setDob($data['UserDOB']);
-            $this->setRoleId($data['RoleID']);
-
-        }
         $this->validateData();
 
         $query = "UPDATE Users 
@@ -200,15 +184,11 @@ class User
                 WHERE 
                     UserID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->username, $this->email, $this->firstName, $this->lastName, $this->dob,
-                $this->roleId, $this->userId]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->username, $this->email, $this->firstName, $this->lastName, $this->dob,
+            $this->roleId, $this->userId]);
 
-            return $query->rowCount();
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
     }
 
     /**
@@ -223,14 +203,10 @@ class User
 
         $query = "DELETE FROM Users WHERE UserID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->userId]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->userId]);
 
-            return $query->rowCount();
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
     }
 
     // utility functions
@@ -249,7 +225,7 @@ class User
         $this->setFirstName($data['UserFirstName'] ?? '');
         $this->setLastName($data['UserLastName'] ?? '');
         $this->setDob($data['UserDOB'] ?? '');
-        $this->setRoleId($data['RoleID'] ?? '');
+        $this->setRoleId($data['RoleID'] ?? 0);
     }
 
 
@@ -287,38 +263,35 @@ class User
     /**
      * Retrieves user permissions from the database based on the user's roleID. The result is stored in
      * the instance variable, permissions, in the format [Area=MODULE_NAME, Type=READ/CREATE/UPDATE/DELETE]
+     *
+     * Permissions are stored in instance var, $this->permissions
      */
     public function fetchPermissions(): void
     {
         $query = "SELECT * FROM RolePermissions WHERE RoleID=?";
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->roleId]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->roleId]);
 
-            if ($query->rowCount() > 0) {
+        if ($query->rowCount() > 0) {
 
-                $permissions = $this->db->query("SELECT * FROM Permissions");
-                $listPermissionsAll = $permissions->fetchAll(PDO::FETCH_CLASS);
+            $permissions = $this->db->query("SELECT * FROM Permissions");
+            $listPermissionsAll = $permissions->fetchAll(PDO::FETCH_CLASS);
 
-                // store user's permissions in instance array
-                $this->permissions = [];
+            // store user's permissions in instance array
+            $this->permissions = [];
 
-                while ($permission = $query->fetch()) {
-                    // array begins at 0, roleId's begin at 1
-                    foreach ($listPermissionsAll as $singlePermission) {
-                        if ($singlePermission->PermissionID == $permission['PermissionID']) {
-                            $area = $singlePermission->PermissionArea;
-                            $type = $singlePermission->PermissionType;
+            while ($permission = $query->fetch()) {
+                // array begins at 0, roleId's begin at 1
+                foreach ($listPermissionsAll as $singlePermission) {
+                    if ($singlePermission->PermissionID == $permission['PermissionID']) {
+                        $area = $singlePermission->PermissionArea;
+                        $type = $singlePermission->PermissionType;
 
-                            array_push($this->permissions, ['Area' => $area, 'Type' => $type]);
-                            break;
-                        }
+                        array_push($this->permissions, ['Area' => $area, 'Type' => $type]);
+                        break;
                     }
                 }
             }
-
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
         }
     }
 
@@ -331,19 +304,10 @@ class User
     public function checkUsernameExists(string $username): bool
     {
         $query = "SELECT * FROM Users WHERE UserName=?";
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$username]);
+        $query = $this->db->prepare($query);
+        $query->execute([$username]);
 
-
-            if ($query->rowCount() > 0) {
-                return true;
-            }
-
-            return false;
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
-        }
+        return ($query->rowCount() > 0);
     }
 
     /**
@@ -355,46 +319,38 @@ class User
     public function getUserByUserName(string $username)
     {
         $query = "SELECT UserID FROM Users WHERE UserName=?";
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$username]);
+        $query = $this->db->prepare($query);
+        $query->execute([$username]);
 
 
-            if ($query->rowCount() > 0) {
-                $result = $query->fetch();
-                return $this->getOne($result['UserID']);
-            }
-
-            return false;
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
+        if ($query->rowCount() > 0) {
+            $result = $query->fetch();
+            return $this->getOne($result['UserID']);
         }
+
+        return false;
     }
 
     /**
      * Returns the user associated with the ApiKey.
      *
      * @param string $apiKey
-     * @return false|mixed - PDO results if user exists, otherwise, return false
+     * @return false|mixed - database results if user exists, otherwise, return false
      */
     public function getUserByApiKey(string $apiKey)
     {
         $query = "SELECT UserID FROM ApiAccess WHERE ApiKey=?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$apiKey]);
+        $query = $this->db->prepare($query);
+        $query->execute([$apiKey]);
 
-            if ($query->rowCount() == 1) {
-                $result = $query->fetch();
-                $userId = intval($result['UserID']);
+        if ($query->rowCount() == 1) {
+            $result = $query->fetch();
+            $userId = intval($result['UserID']);
 
-                return $this->getOne($userId);
-            }
-            return false;
-        } catch (PDOException | Exception $exception) {
-            die($exception->getMessage());
+            return $this->getOne($userId);
         }
+        return false;
     }
 
     /**
@@ -459,6 +415,9 @@ class User
      */
     private function setUserId(?int $id): void
     {
+        if (!is_numeric($id) || $id <= 0) {
+            throw new InvalidArgumentException('Invalid value for UserID');
+        }
         $this->userId = $id;
     }
 
@@ -493,7 +452,7 @@ class User
     public function setUsername(?string $username): void
     {
         if (strlen($username) < self::USERNAME_MIN || strlen($username) > self::USERNAME_MAX) {
-            throw new InvalidArgumentException("Username must be between " . self::USERNAME_MIN . "-" .
+            throw new InvalidArgumentException("Invalid value for UserName. Username must be between " . self::USERNAME_MIN . "-" .
                 self::USERNAME_MAX . " characters long");
         }
         $this->username = $username;
@@ -513,7 +472,7 @@ class User
     public function setEmail(?string $email): void
     {
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new InvalidArgumentException("Invalid email address");
+            throw new InvalidArgumentException("Invalid value for UserEmail");
         }
 
         $this->email = strtolower($email);
@@ -533,7 +492,7 @@ class User
     public function setFirstName(?string $firstName): void
     {
         if (strlen($firstName) < self::NAME_MIN || strlen($firstName) > self::NAME_MAX) {
-            throw new InvalidArgumentException("First name must be between " . self::NAME_MIN . "-" .
+            throw new InvalidArgumentException("Invalid value for UserFirstName. First name must be between " . self::NAME_MIN . "-" .
                 self::NAME_MAX . " characters long");
         }
         $this->firstName = $firstName;
@@ -553,7 +512,7 @@ class User
     public function setLastName(?string $lastName): void
     {
         if (strlen($lastName) < self::NAME_MIN || strlen($lastName) > self::NAME_MAX) {
-            throw new InvalidArgumentException("Last name must be between " . self::NAME_MIN . "-" .
+            throw new InvalidArgumentException("Invalid value for UserLastName. Last name must be between " . self::NAME_MIN . "-" .
                 self::NAME_MAX . " characters long");
         }
         $this->lastName = $lastName;
@@ -573,7 +532,7 @@ class User
     public function setDob(?string $dob): void
     {
         if (!strtotime($dob)) {
-            throw new InvalidArgumentException("Invalid date for DOB");
+            throw new InvalidArgumentException("Invalid value for UserDOB");
         }
 
         $this->dob = date("Y-m-d", strtotime($dob));
@@ -594,7 +553,7 @@ class User
     public function setPassword(?string $password): void
     {
         if (strlen($password) < self::PASSWORD_MIN || strlen($password) > self::PASSWORD_MAX) {
-            throw new InvalidArgumentException("Password must be between " . self::PASSWORD_MIN . "-" .
+            throw new InvalidArgumentException("Invalid value for UserPassword. Password must be between " . self::PASSWORD_MIN . "-" .
                 self::PASSWORD_MAX . " characters long");
         }
         $this->password = password_hash($password, PASSWORD_DEFAULT);
@@ -616,7 +575,7 @@ class User
         // check roleId is valid
         $role = new Role($this->db);
         if ($role->getOne($roleId) === false) {
-            throw new InvalidArgumentException('Invalid Role ID');
+            throw new InvalidArgumentException('Invalid value for RoleID');
         }
         $this->roleId = $roleId;
     }

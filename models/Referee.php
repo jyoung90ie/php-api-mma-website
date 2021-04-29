@@ -8,8 +8,8 @@ use PDOException;
 class Referee
 {
     const PERMISSION_AREA = 'FIGHTS';
-    private $id = null;
-    private $name = null;
+    private $refereeId = null;
+    private $refereeName = null;
     private $results;
 
     private $db;
@@ -19,48 +19,54 @@ class Referee
         $this->db = $db;
     }
 
+    /**
+     * Return data for specified referee id.
+     *
+     * @param int $id
+     * @return false
+     */
     public function getOne(int $id)
     {
-        $this->setId($id);
+        $this->setRefereeId($id);
 
         $query = "SELECT * FROM Referees WHERE RefereeID=?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->id]);
+
+        $query = $this->db->prepare($query);
+        $query->execute([$this->refereeId]);
+
+        if ($query->rowCount() > 0) {
 
             $result = $query->fetch();
 
-            $this->name = $result['RefereeName'];
+            $this->refereeName = $result['RefereeName'];
 
-            return $query->rowCount();
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
+            return $result;
         }
+        return false;
+
     }
 
     /**
-     * Returns a list of Referee's alphabetically ordered by first name.
+     * Returns a list of Referee's alphabetically ordered by first name - results are paginated.
      *
+     * @param int $limit the number of records to return
+     * @param int $start first record to return from
      * @return mixed list of referees if successful, otherwise, return false
      */
-    public function getAll()
+    public function getAll(int $limit = 5, int $start = 0): array
     {
-        $query = "SELECT * FROM Referees ORDER BY RefereeName";
-        try {
-            $query = $this->db->query($query);
+        $query = "SELECT * FROM Referees ORDER BY RefereeName LIMIT $start, $limit";
+        $query = $this->db->query($query);
 
-            if ($query->rowCount() > 0) {
-                $result = $query->fetchAll();
+        if ($query->rowCount() > 0) {
+            $result = $query->fetchAll();
 
-                $this->results = $result;
+            $this->results = $result;
 
-                return $result;
-            }
-            return false;
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
+            return $result;
         }
+        return false;
     }
 
     /**
@@ -75,26 +81,26 @@ class Referee
     }
 
 
-    public function create(): bool
+    public function create(array $data): bool
     {
+        $this->processData($data);
         $this->validateData();
 
         $query = "INSERT INTO Referees (RefereeName) VALUES (?);";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->name]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->refereeName]);
 
-            return $query->rowCount();
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
+        $this->refereeId = $this->db->lastInsertId();
+
+        return $query->rowCount();
     }
 
-    public function update(): bool
+    public function update(int $id, array $data): bool
     {
+        $this->setRefereeId($id);
+        $this->processData($data);
         $this->validateData();
-        $this->validateIdSet();
 
         $query = "UPDATE Referees 
                     SET 
@@ -102,43 +108,42 @@ class Referee
                     WHERE 
                           RefereeID = ?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->name, $this->id]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->refereeName, $this->refereeId]);
 
-            return $query->rowCount();
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
     }
 
-    public function delete(): bool
+    public function delete(int $id): bool
     {
+        $this->setRefereeId($id);
+
         $this->validateIdSet();
 
         $query = "DELETE FROM Referees WHERE RefereeID=?";
 
-        try {
-            $query = $this->db->prepare($query);
-            $query->execute([$this->id]);
+        $query = $this->db->prepare($query);
+        $query->execute([$this->refereeId]);
 
-            return $query->rowCount();
-        } catch (PDOException $exception) {
-            die($exception->getMessage());
-        }
+        return $query->rowCount();
     }
 
     // utility functions
+    private function processData(array $data)
+    {
+        $this->setRefereeName($data['RefereeName'] ?? '');
+    }
+
     private function validateData(): void
     {
-        if (is_null($this->name)) {
+        if (is_null($this->refereeName)) {
             throw new InvalidArgumentException("All object variables must have a value");
         }
     }
 
     private function validateIdSet(): void
     {
-        if (!isset($this->id)) {
+        if (!isset($this->refereeId)) {
             throw new InvalidArgumentException("Object Id has no value");
         }
     }
@@ -148,36 +153,39 @@ class Referee
     /**
      * @return int
      */
-    public function getId(): ?int
+    public function getRefereeId(): ?int
     {
-        return $this->id;
+        return $this->refereeId;
     }
 
     /**
-     * @param int $id
+     * @param int $refereeId
      */
-    public function setId(int $id): void
+    public function setRefereeId(int $refereeId): void
     {
-        if ($id <= 0) {
-            throw new InvalidArgumentException("Invalid Referee ID");
+        if ($refereeId <= 0) {
+            throw new InvalidArgumentException("Invalid RefereeID");
         }
-        $this->id = $id;
+        $this->refereeId = $refereeId;
     }
 
     /**
      * @return string
      */
-    public function getName(): ?string
+    public function getRefereeName(): ?string
     {
-        return $this->name;
+        return $this->refereeName;
     }
 
     /**
-     * @param string $name
+     * @param string $refereeName
      */
-    public function setName(string $name): void
+    public function setRefereeName(string $refereeName): void
     {
-        $this->name = $name;
+        if (empty($refereeName)) {
+            throw new InvalidArgumentException('RefereeName must have a value');
+        }
+        $this->refereeName = $refereeName;
     }
 
     /**

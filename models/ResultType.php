@@ -17,6 +17,11 @@ class ResultType
         $this->db = $db;
     }
 
+    /**
+     * Return a single result type record from the database
+     * @param int $id result type id
+     * @return mixed database record or false
+     */
     public function getOne(int $id)
     {
         $this->setResultTypeId($id);
@@ -71,14 +76,13 @@ class ResultType
     /**
      * Creates a new result type and stores it in the database.
      *
-     * @param array|null $data
+     * @param array $data
      * @return int
      */
-    public function create(?array $data): int
+    public function create(array $data): int
     {
-        if (!is_null($data)) {
-            $this->processData($data);
-        }
+
+        $this->processData($data);
 
         $query = "INSERT INTO ResultTypes 
                     (ResultDescription)
@@ -93,13 +97,11 @@ class ResultType
         return $query->rowCount();
     }
 
-    public function update(int $id, ?array $data = null): int
+    public function update(int $id, array $data = null): int
     {
         $this->setResultTypeId($id);
+        $this->processData($data);
 
-        if (!is_null($data)) {
-            $this->processData($data);
-        }
         $this->validateData();
 
         $query = "UPDATE 
@@ -118,7 +120,6 @@ class ResultType
     public function delete(int $id): int
     {
         $this->setResultTypeId($id);
-
         $query = "DELETE FROM ResultTypes WHERE ResultTypeID = ?";
 
         $query = $this->db->prepare($query);
@@ -137,7 +138,7 @@ class ResultType
 
     private function processData(array $data): void
     {
-        $this->setResultDescription($data['ResultDescription']);
+        $this->setResultDescription($data['ResultDescription'] ?? '');
     }
 
     // getters and setters
@@ -156,8 +157,9 @@ class ResultType
     public function setResultTypeId(int $resultTypeId): void
     {
         if ($resultTypeId <= 0) {
-            throw new InvalidArgumentException("Invalid ID");
+            throw new InvalidArgumentException("Invalid value for ResultTypeID");
         }
+
         $this->resultTypeId = $resultTypeId;
     }
 
@@ -174,6 +176,10 @@ class ResultType
      */
     public function setResultDescription(string $resultDescription): void
     {
+        if (empty($resultDescription)) {
+            throw new InvalidArgumentException('Invalid value for ResultDescription');
+        }
+
         $this->resultDescription = $resultDescription;
     }
 
